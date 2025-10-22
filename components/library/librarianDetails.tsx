@@ -57,15 +57,15 @@ const router = useRouter();
   const [apiStatus, setApiStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [onboardLibrarian, { isLoading: isOnboarding }] = useOnboardLibrarianMutation();
   const [uploadProfilePhoto, { isLoading: isUploadingPhoto }] = useUploadProfilePhotoMutation();
   const [uploadAddressProof, { isLoading: isUploadingProof }] = useUploadAddressProofMutation();
 
-  let upload = uploadProfilePhoto || uploadAddressProof;
-  
-  upload=null;
 
-  const isLoading = isOnboarding || isUploadingPhoto || isUploadingProof;
+ 
+
+  const isLoading = isOnboarding || isUploadingPhoto || isUploadingProof ;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));

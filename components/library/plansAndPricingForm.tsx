@@ -156,8 +156,8 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         const rounded = Math.round(num); // Ensure it's an integer
         return Math.max(0, Math.min(100, rounded)); // Clamp between 0-100
     };
-
-    const validateTimeSlot = (ts: TimeSlot, _allTimeSlots: TimeSlot[]) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const validateTimeSlot = (ts: TimeSlot, allTimeSlots: TimeSlot[]) => {
         if (ts.startTime && ts.endTime && ts.startTime === ts.endTime) {
             setTimeSlotErrors(prev => ({
                 ...prev,
