@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 'use client';
 
 import { Dispatch, SetStateAction, useState } from 'react';
@@ -57,7 +59,7 @@ const router = useRouter();
   const [apiStatus, setApiStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const [onboardLibrarian, { isLoading: isOnboarding }] = useOnboardLibrarianMutation();
   const [uploadProfilePhoto, { isLoading: isUploadingPhoto }] = useUploadProfilePhotoMutation();
   const [uploadAddressProof, { isLoading: isUploadingProof }] = useUploadAddressProofMutation();
