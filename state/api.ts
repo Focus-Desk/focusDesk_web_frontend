@@ -1,808 +1,980 @@
 import { createNewUserInDatabase, withToast } from "@/lib/utils";
-import { Student, Mentor, Librarian, Library, TimeSlot, Plan, Locker, PackageRule, Offer } from "@/types/prismaTypes";
+import {
+  Student,
+  Mentor,
+  Librarian,
+  Library,
+  TimeSlot,
+  Plan,
+  Locker,
+  PackageRule,
+  Offer,
+} from "@/types/prismaTypes";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 
 type User = {
-  userId: string;
-  username: string;
-  attributes?: Record<string, any>;
+  userId: string;
+  username: string;
+  attributes?: Record<string, any>;
 };
 
 type OnboardLibrarianArgs = {
-    cognitoId: string;
-    email: string;
-    username: string;
-    firstName: string;
-    lastName: string;
-    profilePhoto?: File;
-    contactNumber: string;
-    alternateContactNumber?: string;
-    dateOfBirth: string; 
-    address: string;
-    city: string;
-    state: string;
-    pincode: string;
-    country: string;
-    bankAccountNumber: string;
-    bankIfsc: string;
-    bankName: string;
-    accountHolderName: string;
-    panNumber: string;
-    gstin?: string;
-    aadhaarNumber: string;
-    addressProofType: string;
-    addressProof: File;
+  cognitoId: string;
+  email: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  profilePhoto?: File;
+  contactNumber: string;
+  alternateContactNumber?: string;
+  dateOfBirth: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+  bankAccountNumber: string;
+  bankIfsc: string;
+  bankName: string;
+  accountHolderName: string;
+  panNumber: string;
+  gstin?: string;
+  aadhaarNumber: string;
+  addressProofType: string;
+  addressProof: File;
 };
 
 type CreateLibraryStep1Args = {
-    librarianId: string;
-    libraryName: string;
-    address: string;
-    contactNumber: string;
+  librarianId: string;
+  libraryName: string;
+  address: string;
+  contactNumber: string;
 };
 
 type CreateTimeSlotArgs = {
-    libraryId: string;
-    name: string;
-    startTime: string;
-    endTime: string;
-    dailyHours: number;
-    slotPools: string[];
+  libraryId: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  dailyHours: number;
+  slotPools: string[];
 };
 
 type CreatePlanArgs = {
-    libraryId: string;
-    planName: string;
-    planType: 'Fixed' | 'Float';
-    price: number;
-    hours: number;
-    timeSlotId?: string;
-    slotPools?: string[];
-    description?: string;
+  libraryId: string;
+  planName: string;
+  planType: "Fixed" | "Float";
+  price: number;
+  hours: number;
+  timeSlotId?: string;
+  slotPools?: string[];
+  description?: string;
 };
 
 type CreateLockerArgs = {
-    libraryId: string;
-    lockerType: string;
-    numberOfLockers: number;
-    price: number;
-    description?: string;
+  libraryId: string;
+  lockerType: string;
+  numberOfLockers: number;
+  price: number;
+  description?: string;
 };
 
 type CreatePackageRuleArgs = {
-    libraryId: string;
-    planId: string;
-    months: number;
-    percentOff: number;
+  libraryId: string;
+  planId: string;
+  months: number;
+  percentOff: number;
 };
 
 type CreateOfferArgs = {
-    libraryId: string;
-    title: string;
-    couponCode?: string;
-    discountPct?: number;
-    flatAmount?: number;
-    maxDiscount?: number;
-    validFrom?: string;
-    validTo?: string;
-    oncePerUser?: boolean;
-    newUsersOnly?: boolean;
-    planIds?: string[];
+  libraryId: string;
+  title: string;
+  couponCode?: string;
+  discountPct?: number;
+  flatAmount?: number;
+  maxDiscount?: number;
+  validFrom?: string;
+  validTo?: string;
+  oncePerUser?: boolean;
+  newUsersOnly?: boolean;
+  planIds?: string[];
 };
 
 type ConfigureSeatRangesArgs = {
-    libraryId: string;
-    ranges: {
-        from: number;
-        to: number;
-        mode: 'FIXED' | 'FLOAT' | 'SPECIAL';
-        fixedPlanId?: string;
-        lockerAutoInclude?: boolean;
-        lockerId?: string;
-    }[];
+  libraryId: string;
+  ranges: {
+    from: number;
+    to: number;
+    mode: "FIXED" | "FLOAT" | "SPECIAL";
+    fixedPlanId?: string;
+    lockerAutoInclude?: boolean;
+    lockerId?: string;
+  }[];
 };
 
 type LibraryListItem = {
-    id: string;
-    libraryName: string;
-    city: string;
-    state: string;
-    reviewStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-    contactPersonName:string;
-    librarian: {
-      firstName: string | null;
-      lastName: string | null;
-    };
-    //Other properties from the full response can be added here if needed in the list view.
+  id: string;
+  libraryName: string;
+  city: string;
+  state: string;
+  reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
+  contactPersonName: string;
+  librarian: {
+    firstName: string | null;
+    lastName: string | null;
+  };
+  //Other properties from the full response can be added here if needed in the list view.
 };
-  
+
 type GetLibrariesParams = {
-    search?: string;
-    status?: string;
-    city?: string;
-    page?: number;
-    limit?: number;
+  search?: string;
+  status?: string;
+  city?: string;
+  page?: number;
+  limit?: number;
 };
 
 type PaginationInfo = {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 };
 
 type GetLibrariesResponse = {
-    data: LibraryListItem[];
-    pagination: PaginationInfo;
+  data: LibraryListItem[];
+  pagination: PaginationInfo;
 };
 
-type UpdateLibraryArgs = { 
-    id: string; 
-    data: Partial<Library> 
+type UpdateLibraryArgs = {
+  id: string;
+  data: Partial<Library>;
 };
 
-type UpdatePlanArgs = { 
-    id: string; 
-    data: Partial<Plan> 
+type UpdatePlanArgs = {
+  id: string;
+  data: Partial<Plan>;
 };
 
-type UpdateLockerArgs = { 
-    id: string; 
-    data: Partial<Locker> 
+type UpdateLockerArgs = {
+  id: string;
+  data: Partial<Locker>;
 };
 
-type UpdateTimeSlotArgs = { 
-    id: string; 
-    data: Partial<TimeSlot> 
+type UpdateTimeSlotArgs = {
+  id: string;
+  data: Partial<TimeSlot>;
 };
 
-type UpdateSeatArgs = { 
-    id: string; 
-    data: any 
-}; 
-
-type UpdatePackageRuleArgs = { 
-    id: string; 
-    data: Partial<PackageRule> 
+type UpdateSeatArgs = {
+  id: string;
+  data: any;
 };
 
-type UpdateOfferArgs = { 
-    id: string; 
-    data: Partial<Offer> 
+type UpdatePackageRuleArgs = {
+  id: string;
+  data: Partial<PackageRule>;
+};
+
+type UpdateOfferArgs = {
+  id: string;
+  data: Partial<Offer>;
 };
 
 export const api = createApi({
-    baseQuery: fetchBaseQuery({
-        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
-        prepareHeaders: async (headers) => {
-            const session = await fetchAuthSession();
-            const { idToken } = session.tokens ?? {};
-            if (idToken) {
-                headers.set("Authorization", `Bearer ${idToken}`);
-            }
-            return headers;
-        },
+  baseQuery: fetchBaseQuery({
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
+    prepareHeaders: async (headers) => {
+      const session = await fetchAuthSession();
+      const { idToken } = session.tokens ?? {};
+      if (idToken) {
+        headers.set("Authorization", `Bearer ${idToken}`);
+      }
+      return headers;
+    },
+  }),
+  reducerPath: "api",
+  tagTypes: [
+    "Students",
+    "Mentors",
+    "Librarians",
+    "Payments",
+    "Applications",
+    "Libraries",
+    "TimeSlots",
+    "Plans",
+    "Lockers",
+    "PackageRules",
+    "Offers",
+    "Seats",
+  ],
+  endpoints: (build) => ({
+    getAuthUser: build.query<
+      {
+        cognitoInfo: User;
+        userInfo: Student | Mentor | Librarian;
+        userRole: string;
+      },
+      void
+    >({
+      queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
+        try {
+          const session = await fetchAuthSession();
+          const { idToken } = session.tokens ?? {};
+          const user = await getCurrentUser();
+          let userRole = idToken?.payload["custom:role"] as string;
+
+          userRole = "librarian"; // TEMPORARY FIX UNTIL ROLES ARE SET IN COGNITO
+          let endpoint = "";
+
+          if (userRole === "mentor") {
+            endpoint = `/mentors/${user.userId}`;
+          } else if (userRole === "student") {
+            endpoint = `/students/${user.userId}`;
+          } else if (userRole === "librarian") {
+            endpoint = `/librarians/${user.userId}`;
+          } else {
+            throw new Error("Invalid user role detected");
+          }
+
+          let userDetailsResponse = await fetchWithBQ(endpoint);
+          if (
+            userDetailsResponse.error &&
+            userDetailsResponse.error.status === 404
+          ) {
+            userDetailsResponse = await createNewUserInDatabase(
+              user,
+              idToken,
+              userRole,
+              fetchWithBQ
+            );
+          }
+          return {
+            data: {
+              cognitoInfo: { ...user },
+              userInfo: userDetailsResponse.data as
+                | Student
+                | Mentor
+                | Librarian,
+              userRole,
+            },
+          };
+        } catch (error: any) {
+          return { error: error.message || "Could not fetch user data" };
+        }
+      },
     }),
-    reducerPath: "api",
-    tagTypes: ["Students", "Mentors", "Librarians", "Payments", "Applications", "Libraries", "TimeSlots", "Plans", "Lockers", "PackageRules", "Offers", "Seats"],
-    endpoints: (build) => ({
-        getAuthUser: build.query< { cognitoInfo: User; userInfo: Student | Mentor | Librarian; userRole: string; }, void >({
-        queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
-            try {
-                const session = await fetchAuthSession();
-                const { idToken } = session.tokens ?? {};
-                const user = await getCurrentUser();
-                let userRole = idToken?.payload["custom:role"] as string;
-
-
-                userRole="librarian"; // TEMPORARY FIX UNTIL ROLES ARE SET IN COGNITO
-                let endpoint = "";
-
-                if (userRole === "mentor") {
-                    endpoint = `/mentors/${user.userId}`;
-                } 
-                else if (userRole === "student") {
-                    endpoint = `/students/${user.userId}`;
-                } 
-                else if (userRole === "librarian") {
-                    endpoint = `/librarians/${user.userId}`;
-                } 
-                else {
-                    throw new Error("Invalid user role detected");
-                }
-
-                let userDetailsResponse = await fetchWithBQ(endpoint);
-                if (userDetailsResponse.error && userDetailsResponse.error.status === 404 ) {
-                    userDetailsResponse = await createNewUserInDatabase(
-                        user,
-                        idToken,
-                        userRole,
-                        fetchWithBQ
-                    );
-                }
-                return {
-                    data: {
-                        cognitoInfo: { ...user },
-                        userInfo: userDetailsResponse.data as
-                        | Student
-                        | Mentor
-                        | Librarian,
-                        userRole,
-                    },
-                };
-            } catch (error: any) {
-                return { error: error.message || "Could not fetch user data" };
-            }}, 
-        }),
-        getLibrarian: build.query<Librarian, string>({
-            query: (cognitoId) => `librarians/${cognitoId}`,
-            providesTags: (result) => [{ type: "Librarians", id: result?.id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    error: "Failed to load librarian profile.",
-                });
-            },
-        }),
-        
-        onboardLibrarian: build.mutation<Librarian, OnboardLibrarianArgs>({
-            query: (body) => ({
-                url: `librarians/onboarding`,
-                method: "POST",
-                body,
-            }),
-            invalidatesTags: [{ type: "Librarians" }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: "Onboarding completed successfully!",
-                    error: "Failed to complete onboarding.",
-                });
-            },
-        }),
-                
-        createLibraryStep1: build.mutation<Library, CreateLibraryStep1Args>({
-            query: (body) => ({
-                url: 'library/step1',
-                method: "POST",
-                body,
-            }),
-            invalidatesTags: [{ type: "Libraries" }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                success: "Basic details saved!",
-                error: "Failed to save basic details.",
-                });
-            },
-        }),
-
-        updateLibraryStep2: build.mutation<Library, { libraryId: string, data: any }>({
-            query: ({ libraryId, data }) => ({
-                url: `library/step2/${libraryId}`,
-                method: 'PUT',
-                body: data,
-            }),
-            invalidatesTags: (_result, _error, { libraryId }) => [{ type: "Libraries", id: libraryId }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: "Detailed information saved!",
-                    error: "Failed to save detailed information.",
-                });
-            },
-        }),
-
-        createTimeSlot: build.mutation<TimeSlot, CreateTimeSlotArgs>({
-            query: (body) => ({
-            url: 'timeslots',
-            method: 'POST',
-            body,
-            }),
-            invalidatesTags: ['TimeSlots'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: 'Timeslot created successfully!',
-                    error: 'Failed to create timeslot.'
-                });
-            }
-        }),
-
-        createPlan: build.mutation<Plan, CreatePlanArgs>({
-            query: (body) => ({
-                url: 'plans',
-                method: 'POST',
-                body,
-            }),
-            invalidatesTags: ['Plans'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: 'Plan created successfully!',
-                    error: 'Failed to create plan.'
-                });
-            }
-        }),
-
-        createLocker: build.mutation<Locker, CreateLockerArgs>({
-            query: (body) => ({
-                url: 'lockers',
-                method: 'POST',
-                body,
-            }),
-            invalidatesTags: ['Lockers'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: 'Locker created successfully!',
-                    error: 'Failed to create locker.'
-                });
-            }
-        }),
-
-        configureSeatRanges: build.mutation<any, ConfigureSeatRangesArgs>({
-            query: (body) => ({
-                url: 'seats/configure-range',
-                method: 'POST',
-                body,
-            }),
-            invalidatesTags: ['Seats'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: 'Seat configurations saved!',
-                    error: 'Failed to save seat configurations.'
-                });
-            }
-        }),
-
-        createPackageRule: build.mutation<PackageRule, CreatePackageRuleArgs>({
-            query: (body) => ({
-                url: '/package-rules',
-                method: 'POST',
-                body,
-            }),
-            invalidatesTags: ['PackageRules'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: 'Package rule created successfully!',
-                    error: 'Failed to create package rule.'
-                });
-            }
-        }),
-
-        createOffer: build.mutation<Offer, CreateOfferArgs>({
-            query: (body) => ({
-                url: 'offers',
-                method: 'POST',
-                body,
-            }),
-            invalidatesTags: ['Offers'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: 'Offer created successfully!',
-                    error: 'Failed to create offer.'
-                });
-            }
-        }),
-
-        getPlans: build.query<Plan[], string>({
-            query: (libraryId) => `plans/${libraryId}`,
-            providesTags: (result) => result ? [...result.map(({ id }) => ({ type: 'Plans' as const, id })), { type: 'Plans' }] : [{ type: 'Plans' }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { error: "Failed to load plans." });
-            },
-        }),
-        
-        getLockers: build.query<Locker[], string>({
-            query: (libraryId) => `lockers/${libraryId}`,
-            providesTags: (result) => result ? [...result.map(({ id }) => ({ type: 'Lockers' as const, id })), { type: 'Lockers' }] : [{ type: 'Lockers' }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { error: "Failed to load lockers." });
-            },
-        }),
-        
-        getTimeSlotsByLibraryId: build.query<TimeSlot[], string>({
-            query: (libraryId) => `timeslots/libraryId/${libraryId}`,
-            providesTags: (result) => result ? [...result.map(({ id }) => ({ type: 'TimeSlots' as const, id })), { type: 'TimeSlots' }] : [{ type: 'TimeSlots' }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { error: "Failed to load time slots." });
-            },
-        }),
-        
-        getSeatsByLibrary: build.query<any[], string>({ // Replace 'any' with a proper SeatConfiguration type
-            query: (libraryId) => `seats/library/${libraryId}`,
-            providesTags: (result) => result ? [...result.map(({ id }) => ({ type: 'Seats' as const, id })), { type: 'Seats' }] : [{ type: 'Seats' }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { error: "Failed to load seat configurations." });
-            },
-        }),
-        
-        getOffers: build.query<Offer[], string>({
-            query: (libraryId) => `offers/${libraryId}`,
-            providesTags: (result) => result ? [...result.map(({ id }) => ({ type: 'Offers' as const, id })), { type: 'Offers' }] : [{ type: 'Offers' }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { error: "Failed to load offers." });
-            },
-        }),
-        
-        getPackageRulesByLibraryId: build.query<PackageRule[], string>({
-            query: (libraryId) => `package-rules/library/${libraryId}`,
-            providesTags: (result) => result? [...result.map(({ id }) => ({ type: 'PackageRules' as const, id })), { type: 'PackageRules' }] : [{ type: 'PackageRules' }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { error: "Failed to load package rules." });
-            },
-        }),
-        
-        updateLibrary: build.mutation<Library, UpdateLibraryArgs>({
-            query: ({ id, data }) => ({ url: `library/${id}`, method: 'PUT', body: data }),
-            invalidatesTags: (_result, _error, { id }) => [{ type: 'Libraries', id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Library details updated!", error: "Failed to update library." });
-            },
-        }),
-        
-        updatePlan: build.mutation<Plan, UpdatePlanArgs>({
-            query: ({ id, data }) => ({ url: `plans/${id}`, method: 'PUT', body: data }),
-            invalidatesTags: (_result, _error, { id }) => [{ type: 'Plans', id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Plan updated!", error: "Failed to update plan." });
-            },
-        }),
-        deletePlan: build.mutation<{ success: boolean }, string>({
-            query: (id) => ({ url: `plans/${id}`, method: 'DELETE' }),
-            invalidatesTags: ['Plans'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Plan deleted!", error: "Failed to delete plan." });
-            },
-        }),
-        
-        updateLocker: build.mutation<Locker, UpdateLockerArgs>({
-            query: ({ id, data }) => ({ url: `lockers/${id}`, method: 'PUT', body: data }),
-            invalidatesTags: (_result, _error, { id }) => [{ type: 'Lockers', id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Locker updated!", error: "Failed to update locker." });
-            },
-        }),
-        
-        deleteLocker: build.mutation<{ success: boolean }, string>({
-            query: (id) => ({ url: `lockers/${id}`, method: 'DELETE' }),
-            invalidatesTags: ['Lockers'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Locker deleted!", error: "Failed to delete locker." });
-            },
-        }),
-        
-        updateTimeSlot: build.mutation<TimeSlot, UpdateTimeSlotArgs>({
-            query: ({ id, data }) => ({ url: `timeslots/${id}`, method: 'PUT', body: data }),
-            invalidatesTags: (_result, _error, { id }) => [{ type: 'TimeSlots', id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Time slot updated!", error: "Failed to update time slot." });
-            },
-        }),
-        
-        deleteTimeSlot: build.mutation<{ success: boolean }, string>({
-            query: (id) => ({ url: `timeslots/${id}`, method: 'DELETE' }),
-            invalidatesTags: ['TimeSlots'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Time slot deleted!", error: "Failed to delete time slot." });
-            },
-        }),
-        
-        updateSeat: build.mutation<any, UpdateSeatArgs>({
-            query: ({ id, data }) => ({ url: `seats/${id}`, method: 'PUT', body: data }),
-            invalidatesTags: (_result, _error, { id }) => [{ type: 'Seats', id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Seat updated!", error: "Failed to update seat." });
-            },
-        }),
-        deleteSeat: build.mutation<{ success: boolean }, string>({
-            query: (id) => ({ url: `seats/${id}`, method: 'DELETE' }),
-            invalidatesTags: ['Seats'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Seat deleted!", error: "Failed to delete seat." });
-            },
-        }),
-        
-        updatePackageRule: build.mutation<PackageRule, UpdatePackageRuleArgs>({
-            query: ({ id, data }) => ({ url: `package-rule/${id}`, method: 'PUT', body: data }),
-            invalidatesTags: (_result, _error, { id }) => [{ type: 'PackageRules', id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Package rule updated!", error: "Failed to update package rule." });
-            },
-        }),
-        
-        deletePackageRule: build.mutation<{ success: boolean }, string>({
-            query: (id) => ({ url: `package-rule/${id}`, method: 'DELETE' }),
-            invalidatesTags: ['PackageRules'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Package rule deleted!", error: "Failed to delete package rule." });
-            },
-        }),
-        
-        updateOffer: build.mutation<Offer, UpdateOfferArgs>({
-            query: ({ id, data }) => ({ url: `offers/${id}`, method: 'PUT', body: data }),
-            invalidatesTags: (_result, _error, { id }) => [{ type: 'Offers', id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Offer updated!", error: "Failed to update offer." });
-            },
-        }),
-        
-        deleteOffer: build.mutation<{ success: boolean }, string>({
-            query: (id) => ({ url: `offers/${id}`, method: 'DELETE' }),
-            invalidatesTags: ['Offers'],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, { success: "Offer deleted!", error: "Failed to delete offer." });
-            },
-        }),
-        
-        getStudent: build.query<Student, string>({
-            query: (cognitoId) => `students/${cognitoId}`,
-            providesTags: (result) => [{ type: "Students", id: result?.id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    error: "Failed to load student profile.",
-                });
-            },
-        }),
-        updateStudentSettings: build.mutation<Student, { cognitoId: string } & Partial<Student> >({
-            query: ({ cognitoId, ...updatedStudent }) => ({
-                url: `students/${cognitoId}`,
-                method: "PUT",
-                body: updatedStudent,
-            }),
-            invalidatesTags: (result) => [{ type: "Students", id: result?.id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: "Settings updated successfully!",
-                    error: "Failed to update settings.",
-                });
-            },
-        }),
-        
-        getMentor: build.query<Mentor, string>({
-            query: (cognitoId) => `mentors/${cognitoId}`,
-            providesTags: (result) => [{ type: "Mentors", id: result?.id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    error: "Failed to load mentor profile.",
-                });
-            },
-        }),
-        
-        updateMentorSettings: build.mutation< Mentor, { cognitoId: string } & Partial<Mentor> >({
-            query: ({ cognitoId, ...updatedMentor }) => ({
-                url: `mentors/${cognitoId}`,
-                method: "PUT",
-                body: updatedMentor,
-            }),
-            invalidatesTags: (result) => [{ type: "Mentors", id: result?.id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: "Settings updated successfully!",
-                    error: "Failed to update settings.",
-                });
-            },
-        }),
-        
-        getLibrarianProfileCompleted: build.query< { profileCompleted: boolean }, string >({
-            query: (librarianId) => `librarians/${librarianId}/profile-completed`,
-            providesTags: (_result, _error, id) => [{ type: "Librarians", id }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    error: "Failed to check if profile is completed.",
-                });
-            },
-        }),
-        
-        getLibrariesByLibrarian: build.query<Library[], string>({
-            query: (librarianId) => `library/getlibraries/librarianId?librarianId=${librarianId}`,
-            providesTags: (result) =>
-                result ? [
-                    ...result.map(({ id }) => ({ type: "Libraries" as const, id })),
-                    { type: "Libraries" },
-                ]
-                : [{ type: "Libraries" }],
-                async onQueryStarted(_, { queryFulfilled }) {
-                    await withToast(queryFulfilled, {
-                        error: "Failed to load libraries.",
-                    });
-                },
-        }),
-
-        uploadProfilePhoto: build.mutation<{ url: string }, File>({
-            query: (file) => {
-                const formData = new FormData();
-                formData.append("file", file);
-                return {
-                url: `librarians/upload-photo`, // Endpoint for profile photos
-                method: "POST",
-                body: formData,
-                };
-            },
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                error: "Profile photo upload failed.",
-                });
-            },
-        }),
-
-        uploadAddressProof: build.mutation<{ url: string }, File>({
-            query: (file) => {
-                const formData = new FormData();
-                formData.append("file", file);
-                return {
-                    url: `librarians/upload-address-proof`, // Endpoint for address proofs
-                    method: "POST",
-                    body: formData,
-                };
-            },
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    error: "Address proof upload failed.",
-                });
-            },
-        }),
-        
-        uploadLibraryPhoto: build.mutation<{ url: string }, File>({
-            query: (file) => {
-                const formData = new FormData();
-                formData.append("file", file);
-                return {
-                    url: `libraries/upload-photo`,
-                    method: "POST",
-                    body: formData,
-                };
-            },
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    error: "Photo upload failed.",
-                });
-            },
-        }),
-        
-        createLibraryWithPlans: build.mutation<Library, any>({
-            query: (libraryData) => ({
-                url: `libraries/create-with-plans`,
-                method: "POST",
-                body: libraryData,
-            }),
-            invalidatesTags: [{ type: "Libraries" }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: "Library submitted successfully!",
-                    error: "Failed to submit library.",
-                });
-            },
-        }),
-        
-        submitLibraryDetails: build.mutation<Library, any>({
-            query: (libraryDetails) => ({
-                url: `libraries/${libraryDetails.get("libraryId")}/details`,
-                method: "POST",
-                body: libraryDetails,
-            }),
-            invalidatesTags: [{ type: "Libraries" }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: "Library details submitted!",
-                    error: "Failed to submit library details.",
-                });
-            },
-        }),
-        
-        deleteLibrary: build.mutation<{ success: boolean }, string>({
-            query: (id) => ({
-                url: `libraries/${id}`,
-                method: "DELETE",
-            }),
-            invalidatesTags: (_result, _error, id) => [
-                { type: "Libraries", id },
-                { type: "Libraries" },
-            ],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: "Library deleted successfully!",
-                    error: "Failed to delete library.",
-                });
-            },
-        }),
-        
-        getAllLibraries: build.query<Library[], void>({
-            query: () => `libraries/all`,
-            providesTags: (result) =>
-                result
-            ? [ ...result.map(({ id }) => ({ type: "Libraries" as const, id })), { type: "Libraries" } ]
-            : [{ type: "Libraries" }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    error: "Failed to load libraries.",
-                });
-            },
-        }),
-        
-        getLibraryById: build.query<Library, string>({
-            query: (libraryId) => `library/${libraryId}`,
-            providesTags: (result) => [{ type: "Libraries", id: result?.id }],
-        }),
-        
-        reviewLibrary: build.mutation<Library, { libraryId: string; status: 'APPROVED' | 'REJECTED'; reason?: string }>({
-            query: ({ libraryId, ...body }) => ({
-                url: `library/${libraryId}/review`,
-                method: 'PUT',
-                body,
-            }),
-            invalidatesTags: (_result, error, { libraryId }) => [{ type: "Libraries", id: libraryId }],
-            async onQueryStarted(_, { queryFulfilled }) {
-                await withToast(queryFulfilled, {
-                    success: "Library review status updated!",
-                    error: "Failed to update review status.",
-                });
-            },
-        }),
-        getLibraries: build.query<GetLibrariesResponse, GetLibrariesParams>({
-            query: (params) => {
-              const queryParams = new URLSearchParams();
-              
-              if (params.search) queryParams.append('search', params.search);
-              if (params.city) queryParams.append('city', params.city);
-              if (params.status && params.status !== 'ALL') queryParams.append('status', params.status);
-              if (params.page) queryParams.append('page', String(params.page));
-              if (params.limit) queryParams.append('limit', String(params.limit));
-      
-              return `library/getLibrary?${queryParams.toString()}`;
-            },
-            providesTags: (result) =>
-              result?.data
-                ? [
-                    ...result.data.map(({ id }) => ({ type: 'Libraries' as const, id })),
-                    { type: 'Libraries', id: 'LIST' },
-                  ]
-                : [{ type: 'Libraries', id: 'LIST' }],
-        }),      
+    getLibrarian: build.query<Librarian, string>({
+      query: (cognitoId) => `librarians/${cognitoId}`,
+      providesTags: (result) => [{ type: "Librarians", id: result?.id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load librarian profile.",
+        });
+      },
     }),
+
+    onboardLibrarian: build.mutation<Librarian, OnboardLibrarianArgs>({
+      query: (body) => ({
+        url: `librarians/onboarding`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "Librarians" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Onboarding completed successfully!",
+          error: "Failed to complete onboarding.",
+        });
+      },
+    }),
+
+    createLibraryStep1: build.mutation<Library, CreateLibraryStep1Args>({
+      query: (body) => ({
+        url: "library/step1",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "Libraries" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Basic details saved!",
+          error: "Failed to save basic details.",
+        });
+      },
+    }),
+
+    updateLibraryStep2: build.mutation<
+      Library,
+      { libraryId: string; data: any }
+    >({
+      query: ({ libraryId, data }) => ({
+        url: `library/step2/${libraryId}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { libraryId }) => [
+        { type: "Libraries", id: libraryId },
+      ],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Detailed information saved!",
+          error: "Failed to save detailed information.",
+        });
+      },
+    }),
+
+    createTimeSlot: build.mutation<TimeSlot, CreateTimeSlotArgs>({
+      query: (body) => ({
+        url: "timeslots",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["TimeSlots"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Timeslot created successfully!",
+          error: "Failed to create timeslot.",
+        });
+      },
+    }),
+
+    createPlan: build.mutation<Plan, CreatePlanArgs>({
+      query: (body) => ({
+        url: "plans",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Plans"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Plan created successfully!",
+          error: "Failed to create plan.",
+        });
+      },
+    }),
+
+    createLocker: build.mutation<Locker, CreateLockerArgs>({
+      query: (body) => ({
+        url: "lockers",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Lockers"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Locker created successfully!",
+          error: "Failed to create locker.",
+        });
+      },
+    }),
+
+    configureSeatRanges: build.mutation<any, ConfigureSeatRangesArgs>({
+      query: (body) => ({
+        url: "seats/configure-range",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Seats"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Seat configurations saved!",
+          error: "Failed to save seat configurations.",
+        });
+      },
+    }),
+
+    createPackageRule: build.mutation<PackageRule, CreatePackageRuleArgs>({
+      query: (body) => ({
+        url: "/package-rules",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["PackageRules"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Package rule created successfully!",
+          error: "Failed to create package rule.",
+        });
+      },
+    }),
+
+    createOffer: build.mutation<Offer, CreateOfferArgs>({
+      query: (body) => ({
+        url: "offers",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Offers"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Offer created successfully!",
+          error: "Failed to create offer.",
+        });
+      },
+    }),
+
+    getPlans: build.query<Plan[], string>({
+      query: (libraryId) => `plans/${libraryId}`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Plans" as const, id })),
+              { type: "Plans" },
+            ]
+          : [{ type: "Plans" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, { error: "Failed to load plans." });
+      },
+    }),
+
+    getLockers: build.query<Locker[], string>({
+      query: (libraryId) => `lockers/${libraryId}`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Lockers" as const, id })),
+              { type: "Lockers" },
+            ]
+          : [{ type: "Lockers" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, { error: "Failed to load lockers." });
+      },
+    }),
+
+    getTimeSlotsByLibraryId: build.query<TimeSlot[], string>({
+      query: (libraryId) => `timeslots/libraryId/${libraryId}`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "TimeSlots" as const, id })),
+              { type: "TimeSlots" },
+            ]
+          : [{ type: "TimeSlots" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load time slots.",
+        });
+      },
+    }),
+
+    getSeatsByLibrary: build.query<any[], string>({
+      // Replace 'any' with a proper SeatConfiguration type
+      query: (libraryId) => `seats/library/${libraryId}`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Seats" as const, id })),
+              { type: "Seats" },
+            ]
+          : [{ type: "Seats" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load seat configurations.",
+        });
+      },
+    }),
+
+    getOffers: build.query<Offer[], string>({
+      query: (libraryId) => `offers/${libraryId}`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Offers" as const, id })),
+              { type: "Offers" },
+            ]
+          : [{ type: "Offers" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, { error: "Failed to load offers." });
+      },
+    }),
+
+    getPackageRulesByLibraryId: build.query<PackageRule[], string>({
+      query: (libraryId) => `package-rules/library/${libraryId}`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({
+                type: "PackageRules" as const,
+                id,
+              })),
+              { type: "PackageRules" },
+            ]
+          : [{ type: "PackageRules" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load package rules.",
+        });
+      },
+    }),
+
+    updateLibrary: build.mutation<Library, UpdateLibraryArgs>({
+      query: ({ id, data }) => ({
+        url: `library/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Libraries", id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Library details updated!",
+          error: "Failed to update library.",
+        });
+      },
+    }),
+
+    updatePlan: build.mutation<Plan, UpdatePlanArgs>({
+      query: ({ id, data }) => ({
+        url: `plans/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Plans", id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Plan updated!",
+          error: "Failed to update plan.",
+        });
+      },
+    }),
+    deletePlan: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({ url: `plans/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Plans"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Plan deleted!",
+          error: "Failed to delete plan.",
+        });
+      },
+    }),
+
+    updateLocker: build.mutation<Locker, UpdateLockerArgs>({
+      query: ({ id, data }) => ({
+        url: `lockers/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Lockers", id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Locker updated!",
+          error: "Failed to update locker.",
+        });
+      },
+    }),
+
+    deleteLocker: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({ url: `lockers/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Lockers"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Locker deleted!",
+          error: "Failed to delete locker.",
+        });
+      },
+    }),
+
+    updateTimeSlot: build.mutation<TimeSlot, UpdateTimeSlotArgs>({
+      query: ({ id, data }) => ({
+        url: `timeslots/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "TimeSlots", id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Time slot updated!",
+          error: "Failed to update time slot.",
+        });
+      },
+    }),
+
+    deleteTimeSlot: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({ url: `timeslots/${id}`, method: "DELETE" }),
+      invalidatesTags: ["TimeSlots"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Time slot deleted!",
+          error: "Failed to delete time slot.",
+        });
+      },
+    }),
+
+    updateSeat: build.mutation<any, UpdateSeatArgs>({
+      query: ({ id, data }) => ({
+        url: `seats/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Seats", id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Seat updated!",
+          error: "Failed to update seat.",
+        });
+      },
+    }),
+    deleteSeat: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({ url: `seats/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Seats"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Seat deleted!",
+          error: "Failed to delete seat.",
+        });
+      },
+    }),
+
+    updatePackageRule: build.mutation<PackageRule, UpdatePackageRuleArgs>({
+      query: ({ id, data }) => ({
+        url: `package-rule/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "PackageRules", id },
+      ],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Package rule updated!",
+          error: "Failed to update package rule.",
+        });
+      },
+    }),
+
+    deletePackageRule: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({ url: `package-rule/${id}`, method: "DELETE" }),
+      invalidatesTags: ["PackageRules"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Package rule deleted!",
+          error: "Failed to delete package rule.",
+        });
+      },
+    }),
+
+    updateOffer: build.mutation<Offer, UpdateOfferArgs>({
+      query: ({ id, data }) => ({
+        url: `offers/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Offers", id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Offer updated!",
+          error: "Failed to update offer.",
+        });
+      },
+    }),
+
+    deleteOffer: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({ url: `offers/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Offers"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Offer deleted!",
+          error: "Failed to delete offer.",
+        });
+      },
+    }),
+
+    getStudent: build.query<Student, string>({
+      query: (cognitoId) => `students/${cognitoId}`,
+      providesTags: (result) => [{ type: "Students", id: result?.id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load student profile.",
+        });
+      },
+    }),
+    updateStudentSettings: build.mutation<
+      Student,
+      { cognitoId: string } & Partial<Student>
+    >({
+      query: ({ cognitoId, ...updatedStudent }) => ({
+        url: `students/${cognitoId}`,
+        method: "PUT",
+        body: updatedStudent,
+      }),
+      invalidatesTags: (result) => [{ type: "Students", id: result?.id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Settings updated successfully!",
+          error: "Failed to update settings.",
+        });
+      },
+    }),
+
+    getMentor: build.query<Mentor, string>({
+      query: (cognitoId) => `mentors/${cognitoId}`,
+      providesTags: (result) => [{ type: "Mentors", id: result?.id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load mentor profile.",
+        });
+      },
+    }),
+
+    updateMentorSettings: build.mutation<
+      Mentor,
+      { cognitoId: string } & Partial<Mentor>
+    >({
+      query: ({ cognitoId, ...updatedMentor }) => ({
+        url: `mentors/${cognitoId}`,
+        method: "PUT",
+        body: updatedMentor,
+      }),
+      invalidatesTags: (result) => [{ type: "Mentors", id: result?.id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Settings updated successfully!",
+          error: "Failed to update settings.",
+        });
+      },
+    }),
+
+    getLibrarianProfileCompleted: build.query<
+      { profileCompleted: boolean },
+      string
+    >({
+      query: (librarianId) => `librarians/${librarianId}/profile-completed`,
+      providesTags: (_result, _error, id) => [{ type: "Librarians", id }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to check if profile is completed.",
+        });
+      },
+    }),
+
+    getLibrariesByLibrarian: build.query<Library[], string>({
+      query: (librarianId) =>
+        `library/getlibraries/librarianId?librarianId=${librarianId}`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Libraries" as const, id })),
+              { type: "Libraries" },
+            ]
+          : [{ type: "Libraries" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load libraries.",
+        });
+      },
+    }),
+
+    uploadProfilePhoto: build.mutation<{ url: string }, File>({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return {
+          url: `librarians/upload-photo`, // Endpoint for profile photos
+          method: "POST",
+          body: formData,
+        };
+      },
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Profile photo upload failed.",
+        });
+      },
+    }),
+
+    uploadAddressProof: build.mutation<{ url: string }, File>({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return {
+          url: `librarians/upload-address-proof`, // Endpoint for address proofs
+          method: "POST",
+          body: formData,
+        };
+      },
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Address proof upload failed.",
+        });
+      },
+    }),
+
+    uploadLibraryPhoto: build.mutation<{ url: string }, File>({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return {
+          url: `libraries/upload-photo`,
+          method: "POST",
+          body: formData,
+        };
+      },
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Photo upload failed.",
+        });
+      },
+    }),
+
+    createLibraryWithPlans: build.mutation<Library, any>({
+      query: (libraryData) => ({
+        url: `libraries/create-with-plans`,
+        method: "POST",
+        body: libraryData,
+      }),
+      invalidatesTags: [{ type: "Libraries" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Library submitted successfully!",
+          error: "Failed to submit library.",
+        });
+      },
+    }),
+
+    submitLibraryDetails: build.mutation<Library, any>({
+      query: (libraryDetails) => ({
+        url: `libraries/${libraryDetails.get("libraryId")}/details`,
+        method: "POST",
+        body: libraryDetails,
+      }),
+      invalidatesTags: [{ type: "Libraries" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Library details submitted!",
+          error: "Failed to submit library details.",
+        });
+      },
+    }),
+
+    deleteLibrary: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({
+        url: `library/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: "Libraries", id },
+        { type: "Libraries" },
+      ],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Library deleted successfully!",
+          error: "Failed to delete library.",
+        });
+      },
+    }),
+
+    getAllLibraries: build.query<Library[], void>({
+      query: () => `libraries/all`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: "Libraries" as const, id })),
+              { type: "Libraries" },
+            ]
+          : [{ type: "Libraries" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load libraries.",
+        });
+      },
+    }),
+
+    getLibraryById: build.query<Library, string>({
+      query: (libraryId) => `library/${libraryId}`,
+      providesTags: (result) => [{ type: "Libraries", id: result?.id }],
+    }),
+
+    reviewLibrary: build.mutation<
+      Library,
+      { libraryId: string; status: "APPROVED" | "REJECTED"; reason?: string }
+    >({
+      query: ({ libraryId, ...body }) => ({
+        url: `library/${libraryId}/review`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (_result, error, { libraryId }) => [
+        { type: "Libraries", id: libraryId },
+      ],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Library review status updated!",
+          error: "Failed to update review status.",
+        });
+      },
+    }),
+    getLibraries: build.query<GetLibrariesResponse, GetLibrariesParams>({
+      query: (params) => {
+        const queryParams = new URLSearchParams();
+
+        if (params.search) queryParams.append("search", params.search);
+        if (params.city) queryParams.append("city", params.city);
+        if (params.status && params.status !== "ALL")
+          queryParams.append("status", params.status);
+        if (params.page) queryParams.append("page", String(params.page));
+        if (params.limit) queryParams.append("limit", String(params.limit));
+
+        return `library/getLibrary?${queryParams.toString()}`;
+      },
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ id }) => ({
+                type: "Libraries" as const,
+                id,
+              })),
+              { type: "Libraries", id: "LIST" },
+            ]
+          : [{ type: "Libraries", id: "LIST" }],
+    }),
+  }),
 });
 
-
 export const {
-    useGetAuthUserQuery,
-    useGetLibrarianQuery,
-    useOnboardLibrarianMutation,
-    useCreateLibraryStep1Mutation,
-    useUpdateLibraryStep2Mutation,
-    useGetStudentQuery,
-    useUpdateStudentSettingsMutation,
-    useGetMentorQuery,
-    useUpdateMentorSettingsMutation,
-    useGetLibrarianProfileCompletedQuery,
-    useGetLibrariesByLibrarianQuery,
-    useUploadLibraryPhotoMutation,  
-    useUploadProfilePhotoMutation,    
-    useUploadAddressProofMutation,
-    useCreateLibraryWithPlansMutation,
-    useDeleteLibraryMutation,
-    useGetAllLibrariesQuery,
-    useGetLibraryByIdQuery,
-    useReviewLibraryMutation,
-    useSubmitLibraryDetailsMutation,
-    useCreateTimeSlotMutation,  
-    useCreatePlanMutation,    
-    useCreateLockerMutation,    
-    useConfigureSeatRangesMutation, 
-    useCreatePackageRuleMutation,    
-    useCreateOfferMutation,
-    useGetLibrariesQuery,
-    useGetPlansQuery,
-    useUpdatePlanMutation,
-    useDeletePlanMutation,
-    useGetLockersQuery,
-    useUpdateLockerMutation,
-    useDeleteLockerMutation,
-    useGetTimeSlotsByLibraryIdQuery,
-    useUpdateTimeSlotMutation,
-    useDeleteTimeSlotMutation,
-    useGetSeatsByLibraryQuery,
-    useUpdateSeatMutation,
-    useDeleteSeatMutation,
-    useUpdatePackageRuleMutation,
-    useDeletePackageRuleMutation,
-    useGetOffersQuery,
-    useUpdateOfferMutation,
-    useDeleteOfferMutation,
-    useUpdateLibraryMutation,
-    useGetPackageRulesByLibraryIdQuery,
+  useGetAuthUserQuery,
+  useGetLibrarianQuery,
+  useOnboardLibrarianMutation,
+  useCreateLibraryStep1Mutation,
+  useUpdateLibraryStep2Mutation,
+  useGetStudentQuery,
+  useUpdateStudentSettingsMutation,
+  useGetMentorQuery,
+  useUpdateMentorSettingsMutation,
+  useGetLibrarianProfileCompletedQuery,
+  useGetLibrariesByLibrarianQuery,
+  useUploadLibraryPhotoMutation,
+  useUploadProfilePhotoMutation,
+  useUploadAddressProofMutation,
+  useCreateLibraryWithPlansMutation,
+  useDeleteLibraryMutation,
+  useGetAllLibrariesQuery,
+  useGetLibraryByIdQuery,
+  useReviewLibraryMutation,
+  useSubmitLibraryDetailsMutation,
+  useCreateTimeSlotMutation,
+  useCreatePlanMutation,
+  useCreateLockerMutation,
+  useConfigureSeatRangesMutation,
+  useCreatePackageRuleMutation,
+  useCreateOfferMutation,
+  useGetLibrariesQuery,
+  useGetPlansQuery,
+  useUpdatePlanMutation,
+  useDeletePlanMutation,
+  useGetLockersQuery,
+  useUpdateLockerMutation,
+  useDeleteLockerMutation,
+  useGetTimeSlotsByLibraryIdQuery,
+  useUpdateTimeSlotMutation,
+  useDeleteTimeSlotMutation,
+  useGetSeatsByLibraryQuery,
+  useUpdateSeatMutation,
+  useDeleteSeatMutation,
+  useUpdatePackageRuleMutation,
+  useDeletePackageRuleMutation,
+  useGetOffersQuery,
+  useUpdateOfferMutation,
+  useDeleteOfferMutation,
+  useUpdateLibraryMutation,
+  useGetPackageRulesByLibraryIdQuery,
 } = api;
