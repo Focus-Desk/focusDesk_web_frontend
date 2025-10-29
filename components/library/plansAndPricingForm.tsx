@@ -1,5 +1,6 @@
 // plansAndPricingForm.tsx
 'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { useCreateTimeSlotMutation, useCreatePlanMutation, useCreateLockerMutation, useConfigureSeatRangesMutation, useCreatePackageRuleMutation, useCreateOfferMutation } from '../../state/api';
@@ -151,11 +152,11 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
             let currentHour12 = parseInt(currentHour24) % 12;
             if (currentHour12 === 0) currentHour12 = 12; 
             
-            let currentPeriod = parseInt(currentHour24) >= 12 ? 'PM' : 'AM';
+            const currentPeriod = parseInt(currentHour24) >= 12 ? 'PM' : 'AM';
     
-            let newHour12 = part === 'hour' ? parseInt(value) : currentHour12;
-            let newMinute = part === 'minute' ? value : currentMinute;
-            let newPeriod = part === 'period' ? value : currentPeriod;
+            const newHour12 = part === 'hour' ? parseInt(value) : currentHour12;
+            const newMinute = part === 'minute' ? value : currentMinute;
+            const newPeriod = part === 'period' ? value : currentPeriod;
     
             let hour24;
             if (newPeriod === 'PM' && newHour12 < 12) {

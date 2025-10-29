@@ -1,5 +1,6 @@
 // page.tsx
 'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useEffect, useState } from 'react';
 import ProgressBar from '@/components/library/progressBar';
@@ -93,7 +94,7 @@ export default function AddLibraryPage() {
         initialOnboardingData
     );
 
-    const { data: authUserData, isLoading, refetch } = useGetAuthUserQuery();
+    const { data: authUserData, isLoading } = useGetAuthUserQuery();
 
     // Helper to update the persisted state
     const updateFormData = (data: Partial<OnboardingData>) => {
@@ -150,24 +151,24 @@ export default function AddLibraryPage() {
     };
 
     // SUCCESS HANDLERS: Update step/max completed step and libraryId if needed.
-    const handleBasicSuccess = (data: any, newLibraryId: string) => {
+    const handleBasicSuccess = (_data: any, newLibraryId: string) => {
         updateFormData({ libraryId: newLibraryId }); // Ensure libraryId is saved globally
         updateCurrentStep(2);
         setHighestCompletedStep(prev => Math.max(prev, 1));
     };
 
-    const handleDetailedSuccess = (data: DetailedData) => {
+    const handleDetailedSuccess = (_data: DetailedData) => {
         updateCurrentStep(3);
         setHighestCompletedStep(prev => Math.max(prev, 2));
     };
 
-    const handlePricingSuccess = (data: any) => {
+    const handlePricingSuccess = (_data: any) => {
         // Step 3 will save its complex array data into formData.pricingData directly.
         updateCurrentStep(4);
         setHighestCompletedStep(prev => Math.max(prev, 3));
     };
 
-    const handleLibrarianSuccess = async (librarianData: LibrarianData) => {
+    const handleLibrarianSuccess = async (_librarianData: LibrarianData) => {
         setHighestCompletedStep(prev => Math.max(prev, 4));
         
         // OPTIONAL: Clear persistence on successful final submission

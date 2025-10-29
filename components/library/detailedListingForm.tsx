@@ -122,7 +122,7 @@ const convertTime12to24 = (
   minute: string,
   period: string
 ): string => {
-  let hour12 = parseInt(hour12Str, 10);
+  const hour12 = parseInt(hour12Str, 10);
   let hour24 = hour12;
 
   if (period === "PM" && hour12 !== 12) {
@@ -219,9 +219,9 @@ export default function DetailedListingForm({
 
   const handleMultiPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    let newPhotos: File[] = [];
-    let newPreviews: string[] = [];
-    let newErrors: string[] = [];
+    const newPhotos: File[] = [];
+    const newPreviews: string[] = [];
+    const newErrors: string[] = [];
     let hasError = false;
 
     if (files.length > 6) {
