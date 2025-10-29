@@ -1,3 +1,4 @@
+// plansAndPricingForm.tsx
 'use client';
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
@@ -9,6 +10,7 @@ import { Input } from '../ui/input';
 const Select = ({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) => (
     <select 
         className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+       
         {...props}
     >
         {children}
@@ -26,79 +28,60 @@ const Checkbox = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputElemen
     </div>
 );
 
+// Define the shape of the complex local state (same as parent's formData.pricingData)
+interface PricingData {
+    timeSlots: any[];
+    plans: any[];
+    lockers: any[];
+    seatConfigurations: any[];
+    packageRules: any[];
+    offers: any[];
+    submittedTabs: string[];
+}
+
+// Initial state for the complex objects (for local component use)
+const initialPricingData: PricingData = {
+    timeSlots: [{ id: 1, name: '', startTime: '09:00', endTime: '17:00', hours: '8.00', slotPools: [] }],
+    plans: [{ id: 1, hours: '', planType: 'Fixed', timeSlotId: '', slotPools: [], monthlyFee: '', description: '' }],
+    seatConfigurations: [{ id: 1, seatNumbers: '', seatType: 'Float', attachLocker: false, lockerTypeId: '', applicablePlanIds: [] }],
+    lockers: [{ id: 1, lockerType: 'Standard', numberOfLockers: '', charge: '', description: '' }],
+    packageRules: [{ id: 1, planId: '', duration: 4, discount: '0' }],
+    offers: [{ id: 1, title: '', couponCode: '', discountType: '%', discountValue: '', maxDiscount: '', validFrom: '', validTo: '', slotPools: [], planIds: [], isForNewUsers: false, isOncePerUser: false }],
+    submittedTabs: [],
+};
+
+
 type FormProps = {
     libraryId: string;
     isReadOnly: boolean;
     setCurrentStep: Dispatch<SetStateAction<number>>;
     onSuccess: (data: any) => void;
+    // NEW PROPS
+    formData: { pricingData: PricingData } & Record<string, any>; // Assumes complex data is nested
+    updateFormData: (data: Partial<FormProps['formData']>) => void;
 };
 
 const SLOT_POOLS = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'];
 const tabOrder = ['timeslot', 'plan', 'locker', 'seat', 'package', 'offer'];
 
-export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentStep, onSuccess }: FormProps) {
-    const [activeTab, setActiveTab] = useState('timeslot');
-    const [submittedTabs, setSubmittedTabs] = useState<string[]>([]);
+export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentStep, onSuccess, formData, updateFormData }: FormProps) {
+    
+    // --- LOCAL STATE INITIALIZATION (FROM PERSISTED DATA) ---
+    const initialLocalData = formData.pricingData || initialPricingData;
 
-    const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([{ 
-        id: 1, 
-        name: '', 
-        startTime: '', 
-        endTime: '', 
-        hours: '0.00', 
-        slotPools: [] 
-    }]);
+    const [activeTab, setActiveTab] = useState(initialLocalData.submittedTabs.slice(-1)[0] || 'timeslot'); 
+    const [submittedTabs, setSubmittedTabs] = useState(initialLocalData.submittedTabs);
+
+    const [timeSlots, setTimeSlots] = useState(initialLocalData.timeSlots);
+    const [plans, setPlans] = useState(initialLocalData.plans);
+    const [seatConfigurations, setSeatConfigurations] = useState(initialLocalData.seatConfigurations);
+    const [lockers, setLockers] = useState(initialLocalData.lockers);
+    const [packageRules, setPackageRules] = useState(initialLocalData.packageRules);
+    const [offers, setOffers] = useState(initialLocalData.offers);
+    
+    // ... (rest of local state and mutation hooks remain the same) ...
 
     const [timeSlotErrors, setTimeSlotErrors] = useState<{[id: number]: string}>({});
-
-    const [plans, setPlans] = useState<Plan[]>([{ 
-        id: 1, 
-        hours: '',
-        planType: 'Fixed', 
-        timeSlotId: '', 
-        slotPools: [], 
-        monthlyFee: '', 
-        description: '' 
-
-    }]);
-    const [seatConfigurations, setSeatConfigurations] = useState<SeatConfiguration[]>([{ 
-        id: 1, 
-        seatNumbers: '', 
-        seatType: 'Float', 
-        attachLocker: false, 
-        lockerTypeId: '', 
-        applicablePlanIds: [] 
-
-    }]);
-    const [lockers, setLockers] = useState<Locker[]>([{ 
-        id: 1, 
-        lockerType: 'Standard', 
-        numberOfLockers: '', 
-        charge: '', 
-        description: ''
-
-    }]);
-    const [packageRules, setPackageRules] = useState<PackageRule[]>([{ 
-        id: 1, 
-        planId: '', 
-        duration: 4, 
-        discount: '' 
-    }]);
-    const [offers, setOffers] = useState<Offer[]>([{ 
-        id: 1, 
-        title: '', 
-        couponCode: '', 
-        discountType: '%', 
-        discountValue: '', 
-        maxDiscount: '', 
-        validFrom: '', 
-        validTo: '', 
-        slotPools: [], 
-        planIds: [], 
-        isForNewUsers: false, 
-        isOncePerUser: false
-    }]);
-    
 
     const [createTimeSlot, { isLoading: isCreatingTimeSlot }] = useCreateTimeSlotMutation();
     const [createPlan, { isLoading: isCreatingPlan }] = useCreatePlanMutation();
@@ -109,6 +92,29 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const isSubmitting = isCreatingTimeSlot || isCreatingPlan || isCreatingLocker || isConfiguringSeats || isCreatingPackageRule || isCreatingOffer;
     const [apiStatus, setApiStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+
+    // --- SIDE EFFECT FOR PERSISTENCE ---
+    useEffect(() => {
+        // Debounce or minimize updates to parent state
+        const timer = setTimeout(() => {
+            updateFormData({ 
+                pricingData: {
+                    timeSlots,
+                    plans,
+                    lockers,
+                    seatConfigurations,
+                    packageRules,
+                    offers,
+                    submittedTabs,
+                }
+            });
+        }, 500); // Debounce by 500ms
+        
+        return () => clearTimeout(timer);
+    }, [timeSlots, plans, lockers, seatConfigurations, packageRules, offers, submittedTabs]);
+    // --- END SIDE EFFECT ---
+
 
     const addState = <T,>(setter: React.Dispatch<React.SetStateAction<T[]>>, initialState: Omit<T, 'id'>) => {
         setter(prev => [...prev, { id: (prev.length > 0 ? Math.max(...prev.map((p: any) => p.id)) : 0) + 1, ...initialState } as T]);
@@ -128,6 +134,45 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
     };
     const removeState = <T,>(setter: React.Dispatch<React.SetStateAction<T[]>>, id: number) => {
         setter(prev => prev.length > 1 ? prev.filter(item => (item as any).id !== id) : prev);
+    };
+
+    const timeSelectChange = (
+        setter: React.Dispatch<React.SetStateAction<any[]>>, 
+        itemId: number,        
+        field: string,         
+        part: 'hour' | 'minute' | 'period',          
+        value: string          
+    ) => {
+        setter(prevSlots => {
+            const currentSlot = prevSlots.find(ts => ts.id === itemId);
+            if (!currentSlot) return prevSlots;
+    
+            const [currentHour24, currentMinute] = currentSlot[field]?.split(':') || ['00', '00'];
+            let currentHour12 = parseInt(currentHour24) % 12;
+            if (currentHour12 === 0) currentHour12 = 12; 
+            
+            let currentPeriod = parseInt(currentHour24) >= 12 ? 'PM' : 'AM';
+    
+            let newHour12 = part === 'hour' ? parseInt(value) : currentHour12;
+            let newMinute = part === 'minute' ? value : currentMinute;
+            let newPeriod = part === 'period' ? value : currentPeriod;
+    
+            let hour24;
+            if (newPeriod === 'PM' && newHour12 < 12) {
+                hour24 = newHour12 + 12;
+            } else if (newPeriod === 'AM' && newHour12 === 12) {
+                hour24 = 0; 
+            } else {
+                hour24 = newHour12;
+            }
+            
+            const newHour24Padded = String(hour24).padStart(2, '0');
+            const newTime24 = `${newHour24Padded}:${newMinute}`;
+    
+            return prevSlots.map(ts => 
+                ts.id === itemId ? { ...ts, [field]: newTime24 } : ts
+            );
+        });
     };
 
     useEffect(() => {
@@ -153,11 +198,11 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
     const sanitizePercentOff = (value: string | number): number => {
         const num = Number(value);
         if (isNaN(num)) return 0;
-        const rounded = Math.round(num); // Ensure it's an integer
-        return Math.max(0, Math.min(100, rounded)); // Clamp between 0-100
+        const rounded = Math.round(num); 
+        return Math.max(0, Math.min(100, rounded)); 
     };
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const validateTimeSlot = (ts: TimeSlot, allTimeSlots: TimeSlot[]) => {
+
+    const validateTimeSlot = (ts: any, allTimeSlots: any[]) => {
         if (ts.startTime && ts.endTime && ts.startTime === ts.endTime) {
             setTimeSlotErrors(prev => ({
                 ...prev,
@@ -172,7 +217,6 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
             });
             return true;
         }
-        
     };
 
     const handlePlanSelectionChange = <T extends { planIds: string[] } | { applicablePlanIds: string[] }>(
@@ -184,12 +228,12 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         setter(prevItems => 
             prevItems.map(item => {
                 if ((item as any).id === itemId) {
-                    const key = 'planIds' in item ? 'planIds' : 'applicablePlanIds';
-                    const currentPlanIds = item[key] || [];
+                    const key = ('planIds' in item) ? 'planIds' : 'applicablePlanIds';
+                    const currentPlanIds = (item as any)[key] || [];
 
                     const newPlanIds = isChecked
                         ? [...currentPlanIds, planId]
-                        : currentPlanIds.filter(id => id !== planId);
+                        : currentPlanIds.filter((id: string) => id !== planId);
                     
                     return { ...item, [key]: newPlanIds };
                 }
@@ -202,10 +246,10 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         setCurrentStep(4);
     }
 
+    // --- SUBMISSION LOGIC (Remains the same as before) ---
     const submitTimeSlots = async () => {
         setApiStatus('idle');
         try {
-            console.log("Submitting time slots:", timeSlots);
             const results = await Promise.all(
                 timeSlots.map(ts => createTimeSlot({ 
                     libraryId, 
@@ -216,11 +260,9 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     slotPools: ts.slotPools 
                 }).unwrap())
             );
-            console.log(results);
             setApiStatus('success');
             return true;
         } catch (error) {
-            console.error("Error submitting time slots:", error);
             setApiStatus('error');
             return false;
         }
@@ -228,36 +270,47 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitPlans = async () => {
         setApiStatus('idle');
+        // Filter out plans with no monthly fee or hours
+        const validPlans = plans.filter(p => p.monthlyFee && p.hours); 
+        if (validPlans.length === 0) {
+            console.log("No valid plans to submit — skipping API call.");
+            return true;
+        }
         try {
-            console.log("Submitting plans:", plans);
             const results = await Promise.all(
-                plans.map(p => createPlan({ 
+                validPlans.map(p => createPlan({ 
                     libraryId, 
                     planName: p.description, 
                     planType: p.planType, 
                     price: parseFloat(p.monthlyFee), 
                     hours: parseInt(p.hours), 
-                    timeSlotId: p.timeSlotId || undefined, 
+                    timeSlotId: p.planType === 'Fixed' ? p.timeSlotId : undefined, // Only pass timeSlotId for Fixed
                     slotPools: p.slotPools, 
                     description: p.description 
                 }).unwrap())
             );
-            console.log(results);
             setApiStatus('success');
             return true;
         } catch (error) {
-            console.error("Error submitting plans:", error);
             setApiStatus('error');
             return false;
         }
     };
 
     const submitLockers = async () => {
+        const validLockers = lockers.filter(l =>
+            l.numberOfLockers.trim() !== '' &&
+            l.charge.trim() !== '' &&
+            parseInt(l.numberOfLockers) > 0
+        );
+        if (validLockers.length === 0) {
+            console.log("No valid lockers to submit — skipping API call.");
+            return true;
+        }
         setApiStatus('idle');
         try {
-            console.log("Submitting lockers:", lockers);
             const results = await Promise.all(
-                lockers.map(l => createLocker({ 
+                validLockers.map(l => createLocker({ 
                     libraryId, 
                     lockerType: l.lockerType, 
                     numberOfLockers: parseInt(l.numberOfLockers), 
@@ -265,22 +318,28 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     description: l.description 
                 }).unwrap())
             );
-            console.log(results);
+            console.log("Locker submission results:", results);
             setApiStatus('success');
             return true;
         } catch (error) {
-            console.error("Error submitting lockers:", error);
             setApiStatus('error');
             return false;
         }
     };
 
     const submitSeatConfigurations = async () => {
+        const validSeatConfigurations = seatConfigurations.filter(sc =>
+            sc.seatNumbers.trim() !== '' &&
+            sc.seatType.trim() !== ''
+        );
+        if (validSeatConfigurations.length === 0) {
+            console.log("No valid seat configurations to submit — skipping API call.");
+            return true;
+        }
         setApiStatus('idle');
         try {
-            console.log("Submitting seat configurations:", seatConfigurations);
             const results = await Promise.all(
-                seatConfigurations.map(sc => configureSeatRanges({ 
+                validSeatConfigurations.map(sc => configureSeatRanges({ 
                     libraryId, 
                     ranges: [{ 
                         from: parseInt(sc.seatNumbers.split('-')[0]), 
@@ -290,44 +349,54 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     }] 
                 }).unwrap())
             );
-            console.log(results);
             setApiStatus('success');
             return true;
         } catch (error) {
-            console.error("Error submitting seat configurations:", error);
             setApiStatus('error');
             return false;
         }
     };
 
     const submitPackageRules = async () => {
+        const validPackageRules = packageRules.filter(pr => 
+            pr.planId.trim() !== '' && pr.discount.toString().trim() !== ''
+        );
+        if (validPackageRules.length === 0) {
+            console.log("No valid package rules to submit — skipping API call.");
+            return true;
+        }
         setApiStatus('idle');
         try {
-            console.log("Submitting package rules:", packageRules);
             const results = await Promise.all(
-                packageRules.map(pr => createPackageRule({ 
+                validPackageRules.map(pr => createPackageRule({ 
                     libraryId,
                     planId: pr.planId, 
                     months: pr.duration, 
                     percentOff: Math.round(parseFloat(pr.discount) || 0)
                 }).unwrap())
             );
-            console.log(results);
             setApiStatus('success');
             return true;
         } catch (error) {
-            console.error("Error submitting package rules:", error);
             setApiStatus('error');
             return false;
         }
     };
 
     const submitOffers = async () => {
+        const validOffers = offers.filter(o => 
+            o.title.trim() !== '' || 
+            o.couponCode.trim() !== '' || 
+            o.discountValue.toString().trim() !== ''
+        );
+        if (validOffers.length === 0) {
+            console.log("No valid offers to submit — skipping API call.");
+            return true;
+        }
         setApiStatus('idle');
         try {
-            console.log("Submitting offers:", offers);
             const results = await Promise.all(
-                offers.map(o => createOffer({ 
+                validOffers.map(o => createOffer({ 
                     libraryId, 
                     title: o.title, 
                     couponCode: o.couponCode, 
@@ -341,11 +410,9 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     planIds: o.planIds 
                 }).unwrap())
             );
-            console.log(results);
             setApiStatus('success');
             return true;
         } catch (error) {
-            console.error("Error submitting offers:", error);
             setApiStatus('error');
             return false;
         }
@@ -366,6 +433,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         if (activeTab === 'timeslot') {
             let hasErrors = false;
             timeSlots.forEach(ts => {
+                // Re-run validation logic before submission
                 if (ts.startTime && ts.endTime && ts.startTime === ts.endTime) {
                     hasErrors = true;
                     setTimeSlotErrors(prev => ({
@@ -409,6 +477,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         if (success) {
             setSubmittedTabs(prev => [...prev, activeTab]);
             if (isLastTab) {
+                // Pass all complex local state arrays back to the parent to signal completion
                 onSuccess({ timeSlots, plans, lockers, seatConfigurations, packageRules, offers });
             } else {
                 const nextTab = tabOrder[currentIndex + 1];
@@ -422,7 +491,6 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         const isLastTab = currentIndex === tabOrder.length - 1;
         
         if (!isLastTab) {
-            // Move to next tab without submitting
             const nextTab = tabOrder[currentIndex + 1];
             setActiveTab(nextTab);
         }
@@ -460,81 +528,161 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
             </div>
 
             <div className="space-y-8">
-                {activeTab === 'timeslot' && (
-                    <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
-                        <h3 className="text-xl font-semibold">TimeSlot Form</h3>
-                        {timeSlots.map((ts, index) => (
-                            <div key={ts.id} className="p-4 border rounded-lg bg-gray-50/70 space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h4 className="font-semibold text-gray-800">TimeSlot {index + 1}</h4>
-                                    {timeSlots.length > 1 && <button type="button" onClick={() => removeState(setTimeSlots, ts.id)} className="text-red-500 hover:text-red-700 font-medium text-sm">Remove</button>}
-                                </div>
-                                <div className="grid md:grid-cols-3 gap-4">
-                                    <div>
-                                        <Label>Slot Name</Label>
-                                        <Input value={ts.name} onChange={e => updateState(setTimeSlots, ts.id, 'name', e.target.value)} placeholder="e.g., Morning Shift" disabled={isReadOnly} />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <Label>Start Time</Label>
-                                            <Input 
-                                            disabled={isReadOnly} 
-                                            type="time" 
-                                            value={ts.startTime} 
-                                            onChange={e => {
-                                                const newValue = e.target.value;
-                                                updateState(setTimeSlots, ts.id, 'startTime', newValue );
-                                                setTimeout(() => {
-                                                    const updatedTs = {...ts, startTime: newValue};
-                                                    validateTimeSlot(updatedTs, timeSlots);
-                                                }, 0);
-                                            }}
-                                            className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>End Time</Label>
-                                            <Input 
-                                            disabled={isReadOnly} 
-                                            type="time" 
-                                            value={ts.endTime} 
-                                            onChange={e => {
-                                                const newValue = e.target.value;
-                                                updateState(setTimeSlots, ts.id, 'endTime', newValue);
-                                                const updatedTs = {...ts, endTime: newValue};
-                                                validateTimeSlot(updatedTs, timeSlots);
-                                            }}
-                                            className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
-                                            />
-                                        </div>
-                                    </div>
-                                    {timeSlotErrors[ts.id] && (
-                                        <p className="text-sm text-red-500 mt-1">
-                                            {timeSlotErrors[ts.id]}
-                                        </p>
-                                    )}
-                                    <div>
-                                        <Label>Hours</Label>
-                                        <Input value={ts.hours} disabled />
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label>Slot Pool</Label>
-                                    <div className="flex flex-wrap gap-4">
-                                        {SLOT_POOLS.map(pool => <Checkbox key={pool} label={pool} checked={ts.slotPools.includes(pool)} onChange={e => updateCheckboxState(setTimeSlots, ts.id, 'slotPools', pool, e.target.checked)} />)}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                        <button 
-                        type="button" 
-                        onClick={() => addState(setTimeSlots, { name: '', startTime: '', endTime: '', hours: '0.00', slotPools: [] })} 
-                        className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100"
-                        >
-                            + Add TimeSlot
-                        </button>
+            {activeTab === 'timeslot' && (
+    <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+        <h3 className="text-xl font-semibold">TimeSlot Form </h3>
+        
+        {timeSlots.map((ts, index) => {
+            // Helper to get 12-hour display values from the 24-hour state (HH:MM)
+            const get12HourTime = (time24: string) => {
+                const [h, m] = time24.split(':');
+                const hour24 = parseInt(h);
+                let hour12 = hour24 % 12;
+                hour12 = hour12 === 0 ? 12 : hour12;
+                const period = hour24 >= 12 ? 'PM' : 'AM';
+                return { hour: String(hour12).padStart(2, '0'), minute: m, period: period };
+            };
+
+            const start12 = get12HourTime(ts.startTime);
+            const end12 = get12HourTime(ts.endTime);
+
+            // Generate hour options (1 to 12)
+            const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+            // Generate minute options (00, 15, 30, 45)
+            const minutes = ['00', '15', '30', '45'];
+
+
+            return (
+                <div key={ts.id} className="p-4 border rounded-lg bg-gray-50/70 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h4 className="font-semibold text-gray-800">TimeSlot {index + 1}</h4>
+                        {timeSlots.length > 0 && 
+                            <button 
+                                type="button" 
+                                onClick={() => removeState(setTimeSlots, ts.id)} 
+                                className="text-red-500 hover:text-red-700 font-medium text-sm"
+                            >
+                                Remove
+                            </button>
+                        }
                     </div>
-                )}
+                    
+                    <div className="grid md:grid-cols-3 gap-4">
+                        
+                        {/* Slot Name */}
+                        <div>
+                            <Label>Slot Name</Label>
+                            <Input value={ts.name} onChange={e => updateState(setTimeSlots, ts.id, 'name', e.target.value)} placeholder="e.g., Morning Shift" disabled={isReadOnly} />
+                        </div>
+
+                        {/* START TIME SELECTS (ADDED BORDER) */}
+                        <div className="">
+                            <Label>Start Time</Label>
+                            <div className="grid grid-cols-3 gap-1 mt-1 border border-gray-300 rounded-md p-2">
+                                <Select 
+                                    disabled={isReadOnly}
+                                    value={start12.hour}
+                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>)  => timeSelectChange(setTimeSlots, ts.id, 'startTime', 'hour', e.target.value)}
+                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
+                                >
+                                    {hours.map(h => <option key={h} value={h}>{h}</option>)}
+                                </Select>
+                                <Select 
+                                    disabled={isReadOnly}
+                                    value={start12.minute}
+                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'startTime', 'minute', e.target.value)}
+                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
+                                >
+                                    {minutes.map(m => <option key={m} value={m}>{m}</option>)}
+                                </Select>
+                                <Select 
+                                    disabled={isReadOnly}
+                                    value={start12.period}
+                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'startTime', 'period', e.target.value)}
+                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
+                                >
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* END TIME SELECTS (ADDED BORDER) */}
+                        <div className="col-span-1  bg-white">
+                            <Label>End Time</Label>
+                            <div className="grid grid-cols-3 gap-1 border border-gray-300 rounded-md p-2 mt-1">
+                                <Select 
+                                    disabled={isReadOnly}
+                                    value={end12.hour}
+                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'endTime', 'hour', e.target.value)}
+                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
+                                >
+                                    {hours.map(h => <option key={h} value={h}>{h}</option>)}
+                                </Select>
+                                <Select 
+                                    disabled={isReadOnly}
+                                    value={end12.minute}
+                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'endTime', 'minute', e.target.value)}
+                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
+                                >
+                                    {minutes.map(m => <option key={m} value={m}>{m}</option>)}
+                                </Select>
+                                <Select 
+                                    disabled={isReadOnly}
+                                    value={end12.period}
+                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'endTime', 'period', e.target.value)}
+                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
+                                >
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </Select>
+                            </div>
+                        </div>
+                        
+                        {/* Hours (Display) */}
+                        <div className="col-span-1">
+                            <Label>Duration (Hours)</Label>
+                            <Input value={ts.hours} disabled placeholder="Calculated" />
+                        </div>
+
+                        {/* Error Message */}
+                        {timeSlotErrors[ts.id] && (
+                            <div className="md:col-span-3">
+                                <p className="text-sm text-red-600 mt-1">
+                                    🚨 {timeSlotErrors[ts.id]}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Slot Pool */}
+                    <div>
+                        <Label>Slot Pool (Applicable User Types)</Label>
+                        
+                        <div className="flex flex-wrap gap-4">
+                            {SLOT_POOLS.map(pool => 
+                                <Checkbox 
+                                    key={pool} 
+                                    label={pool} 
+                                    checked={ts.slotPools.includes(pool)} 
+                                    onChange={e => updateCheckboxState(setTimeSlots, ts.id, 'slotPools', pool, e.target.checked)} 
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )
+        })}
+        
+        <button 
+            type="button" 
+            onClick={() => addState(setTimeSlots, { name: '', startTime: '09:00', endTime: '17:00', hours: '8.00', slotPools: [] })} 
+            className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100"
+        >
+            + Add TimeSlot
+        </button>
+    </div>
+)}
                 
                 {activeTab === 'plan' && (
                      <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
@@ -637,7 +785,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                                 <div>
                                     <Label>Seat Type</Label>
                                     <div className="flex gap-4 items-center mt-2">
-                                        {['Float', 'Fixed', 'Special'].map(type => (<div key={type} className="flex items-center">
+                                        {['Float', 'Fixed'].map(type => (<div key={type} className="flex items-center">
                                             <input id={`seatType-${config.id}-${type}`} type="radio" name={`seatType-${config.id}`} value={type} checked={config.seatType === type} onChange={e => updateState(setSeatConfigurations, config.id, 'seatType', e.target.value)} className="h-4 w-4" />
                                             <label htmlFor={`seatType-${config.id}-${type}`} className="ml-2">{type} Seat</label>
                                         </div>))}
@@ -680,72 +828,205 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     </div>
                 )}
 
-                {activeTab === 'package' && (
-                    <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
-                        <h3 className="text-xl font-semibold">Package Rule Form</h3>
-                        {packageRules.map((rule, index) => (
-                            <div key={rule.id} className="p-4 border rounded-lg bg-gray-50/70 space-y-4">
-                                <div className="flex justify-between items-center"><h4 className="font-semibold text-gray-800">Package Rule {index + 1}</h4>{packageRules.length > 1 && <button type="button" onClick={() => removeState(setPackageRules, rule.id)} className="text-red-500 hover:text-red-700 font-medium text-sm">Remove</button>}</div>
-                                <div className="grid md:grid-cols-3 gap-4">
-                                    <div><Label>Plan</Label><Select value={rule.planId} onChange={e => updateState(setPackageRules, rule.id, 'planId', e.target.value)}><option value="">Select a plan</option>{plans.map(p => <option key={p.id} value={String(p.id)}>{p.description}</option>)}</Select></div>
-                                    <div><Label>Duration (Months)</Label><Select value={rule.duration} onChange={e => updateState(setPackageRules, rule.id, 'duration', parseInt(e.target.value))}>{([1, 4, 6, 12]).map(d => <option key={d} value={d}>{d} Month(s)</option>)}</Select></div>
-                                    <div><Label>Discount (%)</Label><Input type="number" min={0} max={100} step={1} value={rule.discount} onChange={e => updateState(setPackageRules, rule.id, 'discount', sanitizePercentOff(e.target.value))} placeholder="e.g., 10" /></div>
-                                </div>
-                            </div>
-                        ))}
-                        <button type="button" onClick={() => addState(setPackageRules, { planId: '', duration: 4, discount: '0' })} className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100">+ Add Package Rule</button>
+{activeTab === 'package' && (
+    <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+        <h3 className="text-xl font-semibold">Package Rule Form (Subscription Discounts)<span className='text-red-400 font-thin text-lg'>  Optional</span></h3>
+        <p className="text-sm text-gray-500">Define automatic discounts applied based on the chosen subscription duration (e.g., 10% off for 12 months).</p>
+        
+        {packageRules.map((rule, index) => (
+            <div key={rule.id} className="p-4 border rounded-lg bg-gray-50/70 space-y-4">
+                <div className="flex justify-between items-center">
+                    <h4 className="font-semibold text-gray-800">Package Rule {index + 1}</h4>
+                    {packageRules.length > 1 && 
+                        <button 
+                            type="button" 
+                            onClick={() => removeState(setPackageRules, rule.id)} 
+                            className="text-red-500 hover:text-red-700 font-medium text-sm"
+                        >
+                            Remove Rule
+                        </button>
+                    }
+                </div>
+                
+                <div className="grid md:grid-cols-3 gap-4">
+                    {/* Plan */}
+                    <div>
+                        <Label>Base Plan</Label>
+                        <Select value={rule.planId} onChange={e => updateState(setPackageRules, rule.id, 'planId', e.target.value)}>
+                            <option value="">Select a base plan</option>
+                            {plans.map(p => <option key={p.id} value={String(p.id)}>{p.description}</option>)}
+                        </Select>
                     </div>
-                )}
+                    
+                    {/* Duration */}
+                    <div>
+                        <Label>Duration (Months)</Label>
+                        <Select value={rule.duration} onChange={e => updateState(setPackageRules, rule.id, 'duration', parseInt(e.target.value))}>
+                            {([1, 4, 6, 12]).map(d => <option key={d} value={d}>{d} Month(s)</option>)}
+                        </Select>
+                    </div>
+                    
+                    {/* Discount */}
+                    <div>
+                        <Label>Discount (%)</Label>
+                        <Input 
+                            type="number" 
+                            min={0} 
+                            max={100} 
+                            step={1} 
+                            value={rule.discount} 
+                            onChange={e => updateState(setPackageRules, rule.id, 'discount', sanitizePercentOff(e.target.value))} 
+                            placeholder="e.g., 10" 
+                        />
+                    </div>
+                </div>
+            </div>
+        ))}
+        <button 
+            type="button" 
+            onClick={() => addState(setPackageRules, { planId: '', duration: 4, discount: '0' })} 
+            className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100"
+        >
+            + Add Package Rule
+        </button>
+    </div>
+)}
 
-                {activeTab === 'offer' && (
-                    <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
-                        <h3 className="text-xl font-semibold">Offer Form</h3>
-                        {offers.map((offer, index) => (
-                             <div key={offer.id} className="p-4 border rounded-lg bg-gray-50/70 space-y-4">
-                                 <div className="flex justify-between items-center"><h4 className="font-semibold text-gray-800">Offer {index + 1}</h4>{offers.length > 1 && <button type="button" onClick={() => removeState(setOffers, offer.id)} className="text-red-500 hover:text-red-700 font-medium text-sm">Remove</button>}</div>
-                                 <div className="grid md:grid-cols-2 gap-4">
-                                    <div><Label>Title</Label><Input value={offer.title} onChange={e => updateState(setOffers, offer.id, 'title', e.target.value)} placeholder="e.g., Diwali Offer" /></div>
-                                    <div><Label>Coupon Code (Optional)</Label><Input value={offer.couponCode} onChange={e => updateState(setOffers, offer.id, 'couponCode', e.target.value)} placeholder="e.g., DIWALI20" /></div>
-                                 </div>
-                                 <div className="grid md:grid-cols-3 gap-4">
-                                     <div><Label>Discount Type</Label><Select value={offer.discountType} onChange={e => updateState(setOffers, offer.id, 'discountType', e.target.value)}><option value="%">%</option><option value="Flat">Flat</option></Select></div>
-                                     <div><Label>Discount Value</Label><Input type="number" value={offer.discountValue} onChange={e => updateState(setOffers, offer.id, 'discountValue', e.target.value)} placeholder="e.g., 20 or 100" /></div>
-                                     <div><Label>Max Discount (₹, Optional)</Label><Input type="number" value={offer.maxDiscount} onChange={e => updateState(setOffers, offer.id, 'maxDiscount', e.target.value)} placeholder="e.g., 500" /></div>
-                                 </div>
-                                  <div className="grid md:grid-cols-2 gap-4">
-                                     <div><Label>Valid From</Label><Input type="date" value={offer.validFrom} onChange={e => updateState(setOffers, offer.id, 'validFrom', e.target.value)} /></div>
-                                     <div><Label>Valid To</Label><Input type="date" value={offer.validTo} onChange={e => updateState(setOffers, offer.id, 'validTo', e.target.value)} /></div>
-                                 </div>
-                                <div>
-                                    <Label>Applicable Plan(s)</Label>
-                                    <div className="max-h-32 overflow-y-auto rounded-md border p-2 bg-white space-y-1">
-                                        {plans.length > 0 ? (
-                                            plans.map(plan => (
-                                                <Checkbox 
-                                                    key={plan.id}
-                                                    id={`offer-${offer.id}-plan-${plan.id}`}
-                                                    label={plan.description || `Plan ID: ${plan.id}`} 
-                                                    checked={offer.planIds.includes(String(plan.id))}
-                                                    onChange={e => handlePlanSelectionChange(
-                                                        setOffers, 
-                                                        offer.id, 
-                                                        String(plan.id), 
-                                                        e.target.checked
-                                                    )}
-                                                />
-                                            ))
-                                        ) : (
-                                            <p className="text-sm text-gray-500 px-2">No plans defined yet.</p>
-                                        )}
-                                    </div>
-                                </div>
-                                 <div><Label>Applicable Slot Pool(s)</Label><div className="flex flex-wrap gap-4">{SLOT_POOLS.map(pool => <Checkbox key={pool} label={pool} checked={offer.slotPools.includes(pool)} onChange={e => updateCheckboxState(setOffers, offer.id, 'slotPools', pool, e.target.checked)} />)}</div></div>
-                                 <div className="flex gap-4"><Checkbox id={`newUsers-${offer.id}`} label="For New Users Only" checked={offer.isForNewUsers} onChange={e => updateState(setOffers, offer.id, 'isForNewUsers', e.target.checked)} /><Checkbox id={`oncePerUser-${offer.id}`} label="Once Per User" checked={offer.isOncePerUser} onChange={e => updateState(setOffers, offer.id, 'isOncePerUser', e.target.checked)} /></div>
-                            </div>
-                        ))}
-                        <button type="button" onClick={() => addState(setOffers, { title: '', couponCode: '', discountType: '%', discountValue: '', maxDiscount: '', validFrom: '', validTo: '', slotPools: [], planIds: [], isForNewUsers: false, isOncePerUser: false })} className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100">+ Add Offer</button>
+{activeTab === 'offer' && (
+    <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+        <h3 className="text-xl font-semibold">Offer Form (Promotional/Coupon Discounts)<span className='text-red-400 font-thin text-lg'>  Optional</span></h3>
+        <p className="text-sm text-gray-500">Create time-bound or conditional promotions that can be applied using a coupon code or automatically (e.g., Festival Sale).</p>
+        
+        {offers.map((offer, index) => (
+            <div key={offer.id} className="p-4 border rounded-lg bg-gray-50/70 space-y-4">
+                <div className="flex justify-between items-center">
+                    <h4 className="font-semibold text-gray-800">Offer {index + 1}</h4>
+                    {offers.length > 0 && 
+                        <button 
+                            type="button" 
+                            onClick={() => removeState(setOffers, offer.id)} 
+                            className="text-red-500 hover:text-red-700 font-medium text-sm"
+                        >
+                            Remove
+                        </button>
+                    }
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <Label>Title (Required)</Label>
+                        <Input value={offer.title} onChange={e => updateState(setOffers, offer.id, 'title', e.target.value)} placeholder="e.g., Diwali Offer" />
                     </div>
-                )}
+                    <div>
+                        <Label>Coupon Code (Optional)</Label>
+                        <Input value={offer.couponCode} onChange={e => updateState(setOffers, offer.id, 'couponCode', e.target.value)} placeholder="e.g., DIWALI20" />
+                    </div>
+                </div>
+                
+                <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                        <Label>Discount Type</Label>
+                        <Select value={offer.discountType} onChange={e => updateState(setOffers, offer.id, 'discountType', e.target.value)}>
+                            <option value="%">% (Percentage)</option>
+                            <option value="Flat">Flat (Amount in ₹)</option>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label>Discount Value</Label>
+                        <Input 
+                            type="number" 
+                            value={offer.discountValue} 
+                            onChange={e => updateState(setOffers, offer.id, 'discountValue', e.target.value)} 
+                            placeholder="e.g., 20 or 100" 
+                        />
+                    </div>
+                    <div>
+                        <Label>Max Discount (₹, Optional)</Label>
+                        <Input 
+                            type="number" 
+                            value={offer.maxDiscount} 
+                            onChange={e => updateState(setOffers, offer.id, 'maxDiscount', e.target.value)} 
+                            placeholder="e.g., 500" 
+                        />
+                    </div>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <Label>Valid From (Start Date)</Label>
+                        <Input type="date" value={offer.validFrom} onChange={e => updateState(setOffers, offer.id, 'validFrom', e.target.value)} />
+                    </div>
+                    <div>
+                        <Label>Valid To (End Date)</Label>
+                        <Input type="date" value={offer.validTo} onChange={e => updateState(setOffers, offer.id, 'validTo', e.target.value)} />
+                    </div>
+                </div>
+                
+                <div>
+                    <Label>Applicable Plan(s)</Label>
+                    <p className="text-xs text-gray-500 mb-1">Select all plans this offer can be redeemed against.</p>
+                    <div className="max-h-32 overflow-y-auto rounded-md border p-2 bg-white space-y-1">
+                        {plans.length > 0 ? (
+                            plans.map(plan => (
+                                <Checkbox 
+                                    key={plan.id}
+                                    id={`offer-${offer.id}-plan-${plan.id}`}
+                                    label={plan.description || `Plan ID: ${plan.id}`} 
+                                    checked={offer.planIds.includes(String(plan.id))}
+                                    onChange={e => handlePlanSelectionChange(
+                                        setOffers, 
+                                        offer.id, 
+                                        String(plan.id), 
+                                        e.target.checked
+                                    )}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-sm text-gray-500 px-2">No plans defined yet.</p>
+                        )}
+                    </div>
+                </div>
+                
+                <div>
+                    <Label>Applicable Slot Pool(s)</Label>
+                    <p className="text-xs text-gray-500 mb-1">Select user groups (e.g., Student, Mentor) that can use this offer.</p>
+                    <div className="flex flex-wrap gap-4">
+                        {SLOT_POOLS.map(pool => 
+                            <Checkbox 
+                                key={pool} 
+                                label={pool} 
+                                checked={offer.slotPools.includes(pool)} 
+                                onChange={e => updateCheckboxState(setOffers, offer.id, 'slotPools', pool, e.target.checked)} 
+                            />
+                        )}
+                    </div>
+                </div>
+                
+                <div className="flex gap-4">
+                    <Checkbox 
+                        id={`newUsers-${offer.id}`} 
+                        label="For New Users Only" 
+                        checked={offer.isForNewUsers} 
+                        onChange={e => updateState(setOffers, offer.id, 'isForNewUsers', e.target.checked)} 
+                    />
+                    <Checkbox 
+                        id={`oncePerUser-${offer.id}`} 
+                        label="Once Per User" 
+                        checked={offer.isOncePerUser} 
+                        onChange={e => updateState(setOffers, offer.id, 'isOncePerUser', e.target.checked)} 
+                    />
+                </div>
+            </div>
+        ))}
+        <button 
+            type="button" 
+            onClick={() => addState(setOffers, { title: '', couponCode: '', discountType: '%', discountValue: '', maxDiscount: '', validFrom: '', validTo: '', slotPools: [], planIds: [], isForNewUsers: false, isOncePerUser: false })} 
+            className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100"
+        >
+            + Add Offer
+        </button>
+    </div>
+)}
 
                 {apiStatus === 'success' && <div className="p-4 mt-4 text-sm text-green-800 rounded-lg bg-green-50" role="alert"><strong>Success!</strong> All library data has been submitted successfully.</div>}
                 {apiStatus === 'error' && <div className="p-4 mt-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert"><strong>Error!</strong> Some data failed to submit. Please review your forms and try again.</div>}
@@ -767,15 +1048,16 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     ) :
                     (<div className="w-full flex gap-2">
                         {/* Show Skip button only if not on last tab */}
-                        {!isLastTab && submittedTabs.includes(activeTab) ? (
-                            <button 
-                            type="button" 
-                            onClick={handleSkip}
-                            className="w-full px-6 py-3 border border-gray-400 rounded-xl bg-transparent text-gray-600 text-lg font-[500] cursor-pointer transition-all duration-300 hover:bg-gray-100"
-                            >
-                            Skip & Continue
-                            </button>
-                            ):
+                        {
+                        // !isLastTab && submittedTabs.includes(activeTab) ? (
+                        //     <button 
+                        //     type="button" 
+                        //     onClick={handleSkip}
+                        //     className="w-full px-6 py-3 border border-gray-400 rounded-xl bg-transparent text-gray-600 text-lg font-[500] cursor-pointer transition-all duration-300 hover:bg-gray-100"
+                        //     >
+                        //     Skip & Continue
+                        //     </button>
+                        //     ):
                             <button 
                                 type="button" 
                                 onClick={handlePrimaryAction}

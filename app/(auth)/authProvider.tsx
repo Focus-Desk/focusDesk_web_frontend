@@ -4,16 +4,16 @@ import React, { useEffect } from "react";
 import { Amplify } from "aws-amplify";
 import {
   Authenticator,
-  // Heading,
   Radio,
   RadioGroupField,
   useAuthenticator,
   View,
-  ThemeProvider
+  ThemeProvider,
+  Text, // Added Text component for helper message
 } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import { useRouter, usePathname } from "next/navigation";
-// import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
+import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
 
 Amplify.configure({
   Auth: {
@@ -24,6 +24,27 @@ Amplify.configure({
     },
   },
 });
+
+// Function for custom password validation
+const passwordValidator = (field, value) => {
+  // Define the criteria regex and message
+  const criteria = [
+    { regex: /.{8,}/, message: "Minimum 8 characters" },
+    { regex: /[A-Z]/, message: "At least 1 uppercase letter" },
+    { regex: /[a-z]/, message: "At least 1 lowercase letter" },
+    { regex: /[0-9]/, message: "At least 1 number" },
+    { regex: /[^A-Za-z0-9]/, message: "At least 1 symbol" },
+  ];
+
+  const failedCriteria = criteria.filter((item) => !item.regex.test(value));
+
+  if (failedCriteria.length > 0) {
+    // Return a combined error message with all failed criteria
+    return `Password does not meet requirements: ${failedCriteria
+      .map((item) => item.message)
+      .join(", ")}.`;
+  }
+};
 
 const components = {
   Header() {
@@ -62,21 +83,26 @@ const components = {
 
       return (
         <>
-        <div className="my-custom-container flex flex-col gap-y-2">
-          <Authenticator.SignUp.FormFields />
-          <RadioGroupField
-            legend="Role"
-            name="custom:role"
-            errorMessage={validationErrors?.["custom:role"]}
-            hasError={!!validationErrors?.["custom:role"]}
-            isRequired
-          >
-            <Radio value="student">Student</Radio>
-            <Radio value="librarian">Librarian</Radio>
-            <Radio value="mentor">Mentor</Radio>
-          </RadioGroupField>
-        </div>
-          
+          <div className="my-custom-container flex flex-col gap-y-2">
+            <Authenticator.SignUp.FormFields />
+            
+            {/* Helper text for password requirements */}
+            <Text className="text-sm text-gray-500 mt-[-0.5rem] mb-2">
+              Password must contain: min 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.
+            </Text>
+
+            <RadioGroupField
+              legend="Role"
+              name="custom:role"
+              errorMessage={validationErrors?.["custom:role"]}
+              hasError={!!validationErrors?.["custom:role"]}
+              isRequired
+            >
+              <Radio value="student">Student</Radio>
+              <Radio value="librarian">Librarian</Radio>
+              <Radio value="mentor">Mentor</Radio>
+            </RadioGroupField>
+          </div>
         </>
       );
     },
@@ -131,6 +157,8 @@ const formFields = {
       placeholder: "Create a password",
       label: "Password",
       isRequired: true,
+      // Apply the custom validator to the password field
+      validator: passwordValidator,
     },
     confirm_password: {
       order: 4,
@@ -182,7 +210,7 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
       // async function fn(){
       //   const session = await fetchAuthSession();
       //   const { idToken } = session.tokens ?? {};
-      //   console.log("ID Token:", idToken);    
+      //   console.log("ID Token:", idToken);      
 
       //   const user = await getCurrentUser();
       //   console.log("Current User:", user);

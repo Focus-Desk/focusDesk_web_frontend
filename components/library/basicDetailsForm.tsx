@@ -1,3 +1,4 @@
+// basicDetailsForm.tsx
 'use client';
 
 import { Dispatch, SetStateAction, useState } from 'react';
@@ -6,25 +7,30 @@ import { Label } from '@/components/ui/label';
 import { useCreateLibraryStep1Mutation } from '@/state/api';
 import { SubmitButton } from '@/components/ui/submitButton';
 import React from 'react';
-// import router from 'next/router';
 
-export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep, onSuccess } : { cognitoId: string; isReadOnly: boolean; setCurrentStep: Dispatch<SetStateAction<number>>; onSuccess: (data: basicLibraryDetailsType, libraryId: string) => void }) {
-    const [formData, setFormData] = useState<basicLibraryDetailsType>({
-        libraryName: '',
-        address: '',
-        contactNumber: '',
-        personName: '',
-        email: '',
-        interestedInListing: false
-    });
-    isReadOnly=false
+interface OnboardingDataSlice {
+    libraryName: string; address: string; contactNumber: string; personName: string; email: string; interestedInListing: boolean;
+}
+
+interface BasicDetailsFormProps {
+    cognitoId: string | null;
+    isReadOnly: boolean;
+    setCurrentStep: Dispatch<SetStateAction<number>>;
+    onSuccess: (data: any, libraryId: string) => void;
+    formData: OnboardingDataSlice;
+    updateFormData: (data: Partial<OnboardingDataSlice>) => void;
+}
+
+export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep, onSuccess, formData, updateFormData } : BasicDetailsFormProps) {
+    
     const [createLibraryStep1, { isLoading }] = useCreateLibraryStep1Mutation();
     const [apiStatus, setApiStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
-        setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+        const newValue = type === 'checkbox' ? checked : value;
+        updateFormData({ [name]: newValue });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -47,13 +53,10 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
                 interestedInListing: formData.interestedInListing
             };
 
-            console.log("Submitting basic details the:", payload);
             const result = await createLibraryStep1(payload).unwrap();
             
             setApiStatus('success');
-           
-            onSuccess(result,result.data.id);
-            console.log("uploaded basic details:", result , result.data.id);
+            onSuccess(formData, result.data.id);
          
         } catch (error: any) {
             setApiStatus('error');
@@ -62,7 +65,6 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
     };
 
     const handleNext = () => {
-        // This function is for the "Next" button in read-only mode
         setCurrentStep(2);
     };
 
@@ -76,7 +78,7 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
                     <Input
                         placeholder="Enter Library Name"
                         name="libraryName"
-                        value={formData?.libraryName}
+                        value={formData.libraryName}
                         onChange={handleChange}
                         disabled={isReadOnly}
                         required
@@ -88,7 +90,7 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
                     <Input
                         placeholder="Enter Library Address"
                         name="address"
-                        value={formData?.address}
+                        value={formData.address}
                         onChange={handleChange}
                         disabled={isReadOnly}
                         required
@@ -101,7 +103,7 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
                         <Input
                             placeholder="Enter Library Phone Number"
                             name="contactNumber"
-                            value={formData?.contactNumber}
+                            value={formData.contactNumber}
                             type='tel'
                             pattern='[0-9]{10}'
                             onChange={handleChange}
@@ -115,7 +117,7 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
                         <Input
                             placeholder="Enter Contact Person Name"
                             name="personName"
-                            value={formData?.personName}
+                            value={formData.personName}
                             onChange={handleChange}
                             disabled={isReadOnly}
                             required
@@ -129,7 +131,7 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
                     <Input
                         placeholder="Enter Library Email"
                         name="email"
-                        value={formData?.email}
+                        value={formData.email}
                         onChange={handleChange}
                         disabled={isReadOnly}
                     />
@@ -148,7 +150,7 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
                     Next
             </button>
             ) :
-            (<SubmitButton isLoading={isLoading}></SubmitButton>)
+            (<SubmitButton isLoading={isLoading}>Save & Continue</SubmitButton>)
             }
             </form>
         </div>

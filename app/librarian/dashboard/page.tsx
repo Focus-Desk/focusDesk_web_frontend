@@ -30,7 +30,7 @@ export default function LibrarianDashboard() {
     id: string;
     libraryName: string;
     address: string;
-    review_status: "pending" | "approved" | "rejected";
+    reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
     photos?: string[];
   }
 
@@ -50,7 +50,7 @@ export default function LibrarianDashboard() {
 
   const [deleteLibrary, { isLoading: deleting }] = useDeleteLibraryMutation();
 
-  const reviewedCount = libraries?.filter((lib) => lib.review_status !== "pending")
+  const reviewedCount = libraries?.filter((lib) => lib.reviewStatus !== "PENDING")
     .length || 0;
   const pendingCount = libraries?.length
     ? libraries.length - reviewedCount
@@ -64,6 +64,7 @@ export default function LibrarianDashboard() {
 
     try {
       await deleteLibrary(id).unwrap();
+      console.log("Library deleted successfully!")
       toast.success("Library deleted successfully!");
     } catch (error) {
       console.error("Error deleting library:", error);
@@ -227,15 +228,15 @@ export default function LibrarianDashboard() {
                           {library.address}
                         </TableCell>
                         <TableCell className="text-right">
-                          {library.review_status === "approved" ? (
+                          {library.reviewStatus === "APPROVED" ? (
                             <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
                               Approved
                             </Badge>
-                          ) : library.review_status === "pending" ? (
+                          ) : library.reviewStatus === "PENDING" ? (
                             <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">
                               Pending
                             </Badge>
-                          ) : library.review_status === "rejected" ? (
+                          ) : library.reviewStatus === "REJECTED" ? (
                             <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
                               Rejected
                             </Badge>
