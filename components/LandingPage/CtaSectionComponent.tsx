@@ -39,7 +39,7 @@ export default function CtaSectionComponent() {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
+    <section id="cta" className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 scroll-m-15">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           {/* Left Side - FAQ Section */}

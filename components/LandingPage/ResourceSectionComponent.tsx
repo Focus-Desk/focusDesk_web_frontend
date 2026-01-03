@@ -65,7 +65,7 @@ const resourcesData = [
 
 export default function ResourcesSectionComponent() {
   return (
-    <section className="py-20 bg-slate-50 px-12" id="resources">
+    <section className="mt-20 mb-40 bg-slate-50 px-12 scroll-m-25 " id="resources">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-slate-900 mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
@@ -80,6 +80,7 @@ export default function ResourcesSectionComponent() {
           modules={[Navigation, Pagination, Autoplay]}
           spaceBetween={30}
           slidesPerView={1}
+
           navigation
           pagination={{ clickable: true }}
           autoplay={{
@@ -96,7 +97,7 @@ export default function ResourcesSectionComponent() {
               spaceBetween: 30,
             },
             1024: {
-              slidesPerView: 2,
+              slidesPerView: 3,
               spaceBetween: 30,
             },
           }}
@@ -106,7 +107,7 @@ export default function ResourcesSectionComponent() {
             const IconComponent = resource.icon
             return (
               <SwiperSlide key={resource.id}>
-                <Card className={`${resource.bgColor} border-0 rounded-2xl h-72 hover:shadow-lg transition-all duration-300 hover:scale-105 p-10`}>
+                <Card className={`${resource.bgColor} border-0 rounded-2xl h-80 hover:shadow-lg transition-all duration-300 hover:scale-98 p-10`}>
                   <CardHeader className="">
                     <div className="flex items-center justify-between">
                       <div>
@@ -115,12 +116,12 @@ export default function ResourcesSectionComponent() {
                         </CardTitle>
                       </div>
                       <div className="flex flex-col items-center">
-                        <div className={`w-16 h-16 ${resource.iconBgColor} rounded-xl flex items-center justify-center mb-2 shadow-md`}>
+                        <div className={`w-14 h-14 ${resource.iconBgColor} rounded-xl flex items-center justify-center mb-2 shadow-md`}>
                           <IconComponent className="w-8 h-8 text-white" />
                         </div>
-                        <span className="text-sm font-bold text-slate-700 bg-white/70 px-3 py-1 rounded-full">
+                        {/* <span className="text-sm font-bold text-slate-700 bg-white/70 px-3 py-1 rounded-full">
                           {resource.subtitle}
-                        </span>
+                        </span> */}
                       </div>
                     </div>
                   </CardHeader>
@@ -129,7 +130,7 @@ export default function ResourcesSectionComponent() {
                     <ul className="space-y-3">
                       {resource.resources.map((item, index) => (
                         <li key={index} className="flex items-start">
-                          <div className="w-2 h-2 bg-slate-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-slate-600 rounded-full mt-2 mr-3 flex-shrink-0 "></div>
                           <span className="text-slate-700 text-sm leading-relaxed font-medium">
                             {item}
                           </span>
@@ -142,7 +143,9 @@ export default function ResourcesSectionComponent() {
             )
           })}
         </Swiper>
+        
       </div>
+      
     </section>
   )
 }
