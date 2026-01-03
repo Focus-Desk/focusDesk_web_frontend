@@ -22,10 +22,10 @@ export default function Header() {
   // Navigation items (static)
   const navItems = [
     { href: "/", label: "Home" },
-    { href: "/about", label: "About Us" },
-    { href: "/libraries", label: "Libraries" },
+    { href: "/#about", label: "About Us" },
+    { href: "/#library", label: "Libraries" },
     // { href: "/contact", label: "Contact Us" }, // Uncomment if needed
-    { href: "/mentors", label: "Mentors" }
+    { href: "/#mentorship", label: "Mentors" }
   ];
 
   // Role-based desktop actions

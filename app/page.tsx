@@ -16,7 +16,7 @@ export default function LandingPage() {
       <FeaturesSectionComponent />
       <MentorsShowcaseComponent />
       <ResourcesSectionComponent />
-      <PricingSectionComponent />
+      {/* <PricingSectionComponent /> */}
       <CtaSectionComponent />
     </div>
   )

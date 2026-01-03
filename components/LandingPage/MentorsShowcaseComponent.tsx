@@ -121,7 +121,7 @@ export default function MentorsShowcaseComponent() {
   };
 
   return (
-    <section className="py-16 px-12 bg-slate-50" id="mentorship">
+    <section className="py-16 px-12 bg-slate-50 scroll-m-12" id="mentorship">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2
@@ -160,7 +160,7 @@ export default function MentorsShowcaseComponent() {
                 spaceBetween: 20,
               },
               768: {
-                slidesPerView: 3,
+                slidesPerView: 2,
                 spaceBetween: 24,
               },
               1024: {
@@ -179,7 +179,7 @@ export default function MentorsShowcaseComponent() {
               return (
                 <SwiperSlide key={index}>
                   <Card
-                    className={`${theme.bg} ${theme.border} hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-[30rem] object-cover`}
+                    className={`${theme.bg} ${theme.border} hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-98 h-[30rem] object-cover`}
                   >
                     <CardHeader className="text-center pb-4">
                       <div className="mb-4">
@@ -299,7 +299,7 @@ export default function MentorsShowcaseComponent() {
 
         {/* Stats Section */}
         <div className="text-center">
-          <h3 className="text-2xl font-semibold text-slate-800 mb-8">
+          <h3 className="text-2xl font-semibold text-slate-800 mt-8 mb-8">
             Why Choose Our Mentors?
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">

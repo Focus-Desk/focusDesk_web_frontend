@@ -104,7 +104,7 @@ export default function LibrariesSectionComponent() {
   };
 
   return (
-    <section id="libraries" className="py-20 bg-slate-50 px-12">
+    <section id="library" className="py-20 bg-slate-50 px-12 scroll-m-10">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
           <h2 className="text-4xl font-bold text-slate-900 mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
@@ -148,7 +148,7 @@ export default function LibrariesSectionComponent() {
               <SwiperSlide key={library.id}>
                 <Card className="pt-0 overflow-hidden duration-300 hover:shadow-2xl transition-shadow border-2 rounded-xl h-full bg-white">
                   <div className="relative h-56 w-full group">
-                    <div className="absolute inset-0 bg-blue-900/30 opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
+                    <div className="absolute inset-0 bg-blue-900/30 opacity-0 group-hover:opacity-100  group-hover:scale-105  duration-500  transition-opacity z-10"></div>
                     <img
                       src={library.photos[0] || "/globe.svg"}
                       alt={library.libraryName}

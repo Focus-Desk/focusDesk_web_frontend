@@ -140,7 +140,7 @@
   background-color: #0f172a;
   opacity: 1;
 }
-
+/* 
 .resources-swiper .swiper-button-next,
 .resources-swiper .swiper-button-prev {
   color: #0f172a;
@@ -155,7 +155,7 @@
 .resources-swiper .swiper-button-prev:after {
   font-size: 16px;
   font-weight: bold;
-}
+} */
 
 div {
   border-radius: 15px;
