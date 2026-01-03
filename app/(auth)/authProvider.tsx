@@ -13,7 +13,7 @@ import {
 } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import { useRouter, usePathname } from "next/navigation";
-import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
+// import { fetchAuthSession, getCurrentUser, signOut } from "aws-amplify/auth";
 
 Amplify.configure({
   Auth: {
