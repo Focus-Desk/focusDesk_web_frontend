@@ -91,7 +91,8 @@ const components = {
               Password must contain: min 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 symbol.
             </Text>
 
-            <RadioGroupField
+            {/* Temporarily commented out until custom:role attribute is added in Cognito */}
+            {/* <RadioGroupField
               legend="Role"
               name="custom:role"
               errorMessage={validationErrors?.["custom:role"]}
@@ -101,7 +102,7 @@ const components = {
               <Radio value="student">Student</Radio>
               <Radio value="librarian">Librarian</Radio>
               <Radio value="mentor">Mentor</Radio>
-            </RadioGroupField>
+            </RadioGroupField> */}
           </div>
         </>
       );

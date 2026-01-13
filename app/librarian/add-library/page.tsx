@@ -106,7 +106,11 @@ export default function AddLibraryPage() {
         if(typeof window !== 'undefined') {
             try {
                 const storedStep = localStorage.getItem('currentStep');
-                if (storedStep) setCurrentStep(parseInt(storedStep, 10));
+                if (storedStep) {
+                    const step = parseInt(storedStep, 10);
+                    // Ensure step is at least 1
+                    setCurrentStep(step > 0 ? step : 1);
+                }
             } catch (error) {
                 console.error('Error restoring meta state:', error);
             }
@@ -120,15 +124,16 @@ export default function AddLibraryPage() {
                 cognitoId: authUserData.cognitoInfo.userId,
                 email: authUserData.userInfo.email,
                 librarianId: authUserData.userInfo.id,
-                firstName: authUserData.userInfo.firstName,
-                lastName: authUserData.userInfo.lastName,
+                firstName: authUserData.userInfo.firstName || '',
+                lastName: authUserData.userInfo.lastName || '',
             };
 
             // Conditionally pre-fill only if the form field is currently empty 
-            if (!formData.personName) updates.personName = authUserData.userInfo.firstName + ' ' + authUserData.userInfo.lastName;
+            const fullName = [authUserData.userInfo.firstName, authUserData.userInfo.lastName].filter(Boolean).join(' ');
+            if (!formData.personName && fullName) updates.personName = fullName;
             if (!formData.email) updates.email = authUserData.userInfo.email;
-            if (!formData.kyc_firstName) updates.kyc_firstName = authUserData.userInfo.firstName;
-            if (!formData.kyc_lastName) updates.kyc_lastName = authUserData.userInfo.lastName;
+            if (!formData.kyc_firstName && authUserData.userInfo.firstName) updates.kyc_firstName = authUserData.userInfo.firstName;
+            if (!formData.kyc_lastName && authUserData.userInfo.lastName) updates.kyc_lastName = authUserData.userInfo.lastName;
             
             // Apply updates
             if (Object.keys(updates).length > 0) {

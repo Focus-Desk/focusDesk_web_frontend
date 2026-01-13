@@ -299,11 +299,11 @@ if (formData.pincode.length !== 6 || pincodeError) {
                 <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="firstName">First Name</Label>
-                        <Input id="firstName" name="firstName" value={formData.kyc_firstName} onChange={handleChange} required />
+                        <Input id="firstName" name="kyc_firstName" value={formData.kyc_firstName} onChange={handleChange} required />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="lastName">Last Name</Label>
-                        <Input id="lastName" name="lastName" value={formData.kyc_lastName} onChange={handleChange} required />
+                        <Input id="lastName" name="kyc_lastName" value={formData.kyc_lastName} onChange={handleChange} required />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="username">Username</Label>
