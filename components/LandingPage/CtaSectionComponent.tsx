@@ -39,47 +39,50 @@ export default function CtaSectionComponent() {
   }
 
   return (
-    <section id="cta" className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 scroll-m-15">
-      <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
+    <section id="cta" className="py-24 bg-[#004aad] scroll-m-15 relative overflow-hidden">
+      {/* Decorative background element */}
+      <div className="absolute top-0 right-0 w-1/3 h-full bg-white/5 skew-x-[-20deg] translate-x-1/2"></div>
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 items-start">
           {/* Left Side - FAQ Section */}
           <div className="text-white">
-            <div className="text-center lg:text-left">
-              <h2 
-                className="text-4xl font-bold mb-6"
+            <div className="text-center lg:text-left mb-12">
+              <h2
+                className="text-4xl font-extrabold mb-6 tracking-tight"
                 style={{ fontFamily: 'var(--font-inter)' }}
               >
                 Frequently Asked Questions
               </h2>
-              
-              <p className="text-xl text-blue-100 mb-8">
+
+              <p className="text-xl text-blue-100/80 max-w-lg">
                 Get answers to common questions about Focus Desk
               </p>
             </div>
-            
+
             <div className="space-y-4">
               {faqData.map((faq, index) => (
                 <motion.div
                   key={faq.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ 
-                    duration: 0.4, 
+                  transition={{
+                    duration: 0.4,
                     delay: index * 0.1,
-                    ease: "easeOut" 
+                    ease: "easeOut"
                   }}
-                  className="bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 overflow-hidden"
+                  className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden"
                 >
                   <motion.div
-                    className="p-4 cursor-pointer"
+                    className="p-5 cursor-pointer"
                     onClick={() => toggleFaq(faq.id)}
-                    whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.15)" }}
+                    whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.08)" }}
                     transition={{ duration: 0.2 }}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-start gap-3">
-                        <HelpCircle className="w-5 h-5 text-yellow-300 mt-1 flex-shrink-0" />
-                        <h3 className="font-semibold text-white text-lg leading-tight">
+                      <div className="flex items-start gap-4">
+                        <HelpCircle className="w-6 h-6 text-blue-300 mt-0.5 flex-shrink-0" />
+                        <h3 className="font-bold text-white text-lg leading-snug">
                           {faq.question}
                         </h3>
                       </div>
@@ -87,11 +90,11 @@ export default function CtaSectionComponent() {
                         animate={{ rotate: openFaq === faq.id ? 180 : 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <ChevronDown className="w-5 h-5 text-white" />
+                        <ChevronDown className="w-5 h-5 text-white/70" />
                       </motion.div>
                     </div>
                   </motion.div>
-                  
+
                   <AnimatePresence>
                     {openFaq === faq.id && (
                       <motion.div
@@ -101,9 +104,9 @@ export default function CtaSectionComponent() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 ml-8">
-                          <motion.p 
-                            className="text-blue-100 leading-relaxed"
+                        <div className="px-6 pb-6 ml-10">
+                          <motion.p
+                            className="text-blue-100/90 leading-relaxed text-base"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.3, delay: 0.1 }}
@@ -120,50 +123,50 @@ export default function CtaSectionComponent() {
           </div>
 
           {/* Right Side - Contact Form */}
-          <div className="w-full">
-            <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
-              <CardContent className="p-8">
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-slate-800 mb-2">Get in Touch</h3>
-                  <p className="text-slate-600">Have questions? We&apos;d love to help you get started.</p>
+          <div className="w-full lg:sticky lg:top-24">
+            <Card className="bg-white/98 backdrop-blur-lg border-0 shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-[2.5rem] overflow-hidden">
+              <CardContent className="p-10">
+                <div className="text-center mb-10">
+                  <h3 className="text-3xl font-bold text-slate-800 mb-3">Get in Touch</h3>
+                  <p className="text-slate-500 font-medium">Have questions? We&apos;d love to help you get started.</p>
                 </div>
-                
+
                 <form className="space-y-6" action="https://formsubmit.co/focusdesk.in@gmail.com" method="POST">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-slate-700 font-medium">
+                    <Label htmlFor="name" className="text-slate-700 font-semibold ml-1">
                       Name
                     </Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <User className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
                       <Input
                         id="name"
                         name="name"
                         type="text"
                         placeholder="Enter your name"
-                        className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                        className="h-12 pl-12 rounded-xl border-slate-200 bg-slate-50/50 focus:border-blue-500 focus:ring-blue-500 transition-all"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-slate-700 font-medium">
+                    <Label htmlFor="email" className="text-slate-700 font-semibold ml-1">
                       Email Address
                     </Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <Mail className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
                       <Input
                         id="email"
                         type="email"
                         name="email"
                         required
                         placeholder="Enter your email"
-                        className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                        className="h-12 pl-12 rounded-xl border-slate-200 bg-slate-50/50 focus:border-blue-500 focus:ring-blue-500 transition-all"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="message" className="text-slate-700 font-medium">
+                    <Label htmlFor="message" className="text-slate-700 font-semibold ml-1">
                       Message
                     </Label>
                     <Textarea
@@ -172,13 +175,13 @@ export default function CtaSectionComponent() {
                       name="message"
                       required
                       rows={4}
-                      className="border-slate-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                      className="rounded-xl border-slate-200 bg-slate-50/50 focus:border-blue-500 focus:ring-blue-500 resize-none transition-all p-4"
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 text-lg"
+                  <Button
+                    type="submit"
+                    className="w-full h-14 bg-[#004aad] hover:bg-[#003c8b] text-white font-bold py-3 text-lg rounded-xl shadow-lg shadow-blue-900/20 active:scale-95 transition-all"
                   >
                     Send Message
                     <ArrowRight className="w-5 h-5 ml-2" />

@@ -92,31 +92,21 @@ const mentorsData = {
 export default function MentorsShowcaseComponent() {
   const imageStyles = "w-24 h-24 rounded-full object-cover mx-auto";
 
-  // Function to get card color based on category
+  // Function to get card color based on category - IMPROVED FOR CONSISTENCY
   const getCardTheme = (category: string) => {
-    if (category.includes("UPSC")) {
+    if (category.includes("CA") || category.includes("Chartered Accountant")) {
       return {
-        bg: "bg-blue-50",
-        border: "border-blue-200",
-        accent: "text-blue-600",
-      };
-    } else if (category.includes("Government")) {
-      return {
-        bg: "bg-green-50",
-        border: "border-green-200",
-        accent: "text-green-600",
-      };
-    } else if (category.includes("Chartered")) {
-      return {
-        bg: "bg-purple-50",
-        border: "border-purple-200",
-        accent: "text-purple-600",
+        bg: "bg-gradient-to-br from-cyan-400 to-cyan-50",
+        border: "border-cyan-200",
+        accent: "text-slate-900",
+        badge: "bg-white/40 text-slate-800",
       };
     }
     return {
-      bg: "bg-gray-50",
-      border: "border-gray-200",
-      accent: "text-gray-600",
+      bg: "bg-gradient-to-br from-sky-400 to-sky-100",
+      border: "border-sky-300",
+      accent: "text-slate-900",
+      badge: "bg-white/40 text-slate-800",
     };
   };
 
@@ -140,8 +130,8 @@ export default function MentorsShowcaseComponent() {
         <div className="mb-16">
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
-            spaceBetween={24}
             slidesPerView={1}
+            spaceBetween={0}
             navigation={{
               nextEl: ".swiper-button-next",
               prevEl: ".swiper-button-prev",
@@ -168,8 +158,8 @@ export default function MentorsShowcaseComponent() {
                 spaceBetween: 24,
               },
               1280: {
-                slidesPerView: 3,
-                spaceBetween: 24,
+                slidesPerView: 4,
+                spaceBetween: 20,
               },
             }}
             className="mentors-swiper"
@@ -179,21 +169,21 @@ export default function MentorsShowcaseComponent() {
               return (
                 <SwiperSlide key={index}>
                   <Card
-                    className={`${theme.bg} ${theme.border} hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-98 h-[30rem] object-cover`}
+                    className={`${theme.bg} ${theme.border} border-0 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 h-[34rem] overflow-hidden rounded-[2.5rem]`}
                   >
-                    <CardHeader className="text-center pb-4">
+                    <CardHeader className="text-center pb-2 pt-8">
                       <div className="mb-4">
                         <img
                           src={`/${mentor.image}`}
                           alt={mentor.name}
-                          className={imageStyles}
+                          className="w-20 h-20 rounded-full object-cover mx-auto ring-4 ring-white/30"
                         />
                       </div>
-                      <CardTitle className="text-slate-800 text-lg">
+                      <CardTitle className="text-slate-900 text-lg font-bold">
                         {mentor.name}
                       </CardTitle>
                       <CardDescription
-                        className={`text-sm font-medium ${theme.accent}`}
+                        className={`text-xs font-semibold uppercase tracking-wider ${theme.accent}`}
                       >
                         {mentor.category}
                       </CardDescription>
@@ -237,20 +227,20 @@ export default function MentorsShowcaseComponent() {
                       )}
 
                       {/* Specializations */}
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-2">
                         {mentor.experience.specialization
                           .slice(0, 2)
                           .map((spec, specIndex) => (
                             <Badge
                               key={specIndex}
                               variant="secondary"
-                              className="text-xs"
+                              className={`${theme.badge} border-0 px-3 py-1 rounded-full text-xs font-semibold`}
                             >
                               {spec}
                             </Badge>
                           ))}
                         {mentor.experience.specialization.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs border-slate-200">
                             +{mentor.experience.specialization.length - 2} more
                           </Badge>
                         )}
@@ -298,28 +288,28 @@ export default function MentorsShowcaseComponent() {
         </div>
 
         {/* Stats Section */}
-        <div className="text-center">
-          <h3 className="text-2xl font-semibold text-slate-800 mt-8 mb-8">
+        <div className="mt-12 overflow-hidden rounded-[2.5rem] bg-[#004aad] p-12 text-center shadow-2xl transition-all duration-500 hover:shadow-blue-500/20">
+          <h3 className="mb-12 text-3xl font-bold tracking-tight text-white">
             Why Choose Our Mentors?
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">15+</div>
-              <div className="text-sm text-slate-600">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+            <div className="group text-center">
+              <div className="mb-2 text-4xl font-black text-white transition-transform duration-300 group-hover:scale-110">15+</div>
+              <div className="text-sm font-medium text-blue-100/80">
                 Years Combined Experience
               </div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">100+</div>
-              <div className="text-sm text-slate-600">Students Mentored</div>
+            <div className="group text-center">
+              <div className="mb-2 text-4xl font-black text-white transition-transform duration-300 group-hover:scale-110">100+</div>
+              <div className="text-sm font-medium text-blue-100/80">Students Mentored</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">4</div>
-              <div className="text-sm text-slate-600">Expert Categories</div>
+            <div className="group text-center">
+              <div className="mb-2 text-4xl font-black text-white transition-transform duration-300 group-hover:scale-110">4</div>
+              <div className="text-sm font-medium text-blue-100/80">Expert Categories</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">95%</div>
-              <div className="text-sm text-slate-600">Success Rate</div>
+            <div className="group text-center">
+              <div className="mb-2 text-4xl font-black text-white transition-transform duration-300 group-hover:scale-110">95%</div>
+              <div className="text-sm font-medium text-blue-100/80">Success Rate</div>
             </div>
           </div>
         </div>

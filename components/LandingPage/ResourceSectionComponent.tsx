@@ -14,9 +14,9 @@ const resourcesData = [
     id: 1,
     title: "Chartered Accountant",
     subtitle: "CA",
-    icon: Calculator,
-    bgColor: "bg-gradient-to-br from-purple-200 to-purple-300",
-    iconBgColor: "bg-orange-400",
+    bgColor: "bg-gradient-to-br from-sky-400 to-sky-100",
+    accentColor: "text-sky-800",
+    bulletColor: "bg-sky-500",
     resources: [
       "ICAI Module PDFs & Practice Manuals",
       "RTPs, MTPs, Suggested Answers (latest + past years)",
@@ -27,9 +27,9 @@ const resourcesData = [
     id: 2,
     title: "UPSC",
     subtitle: "UPSC",
-    icon: Building,
-    bgColor: "bg-gradient-to-br from-orange-200 to-orange-300",
-    iconBgColor: "bg-slate-600",
+    bgColor: "bg-gradient-to-br from-cyan-400 to-cyan-100",
+    accentColor: "text-cyan-800",
+    bulletColor: "bg-cyan-500",
     resources: [
       "Daily Current Affairs (e.g. PIB Summary, The Hindu, Indian Express)",
       "Monthly Current Affairs Compilations (Vision IAS, InsightsIAS)",
@@ -40,9 +40,9 @@ const resourcesData = [
     id: 3,
     title: "JEE / NEET",
     subtitle: "JEE/NEET",
-    icon: Users,
-    bgColor: "bg-gradient-to-br from-blue-200 to-blue-300",
-    iconBgColor: "bg-slate-700",
+    bgColor: "bg-gradient-to-br from-blue-400 to-blue-100",
+    accentColor: "text-blue-800",
+    bulletColor: "bg-blue-500",
     resources: [
       "30/60/90 Day Revision Plans",
       "Top Coaching Institutes' Free Resources (Allen, FIITJEE, Resonance)"
@@ -52,9 +52,9 @@ const resourcesData = [
     id: 4,
     title: "SSC",
     subtitle: "SSC",
-    icon: Award,
-    bgColor: "bg-gradient-to-br from-yellow-200 to-yellow-300",
-    iconBgColor: "bg-yellow-600",
+    bgColor: "bg-gradient-to-br from-sky-300 to-sky-50",
+    accentColor: "text-sky-800",
+    bulletColor: "bg-sky-500",
     resources: [
       "Tier-wise Syllabus (Tier 1, Tier 2, Tier 3)",
       "Daily Practice Questions",
@@ -75,12 +75,11 @@ export default function ResourcesSectionComponent() {
             The Competitive Edge You’ve Been Looking For
           </p>
         </div>
-        
+
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
-          spaceBetween={30}
+          spaceBetween={0}
           slidesPerView={1}
-
           navigation
           pagination={{ clickable: true }}
           autoplay={{
@@ -104,34 +103,22 @@ export default function ResourcesSectionComponent() {
           className="resources-swiper"
         >
           {resourcesData.map((resource) => {
-            const IconComponent = resource.icon
             return (
               <SwiperSlide key={resource.id}>
-                <Card className={`${resource.bgColor} border-0 rounded-2xl h-80 hover:shadow-lg transition-all duration-300 hover:scale-98 p-10`}>
-                  <CardHeader className="">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-2xl font-bold text-slate-800 mb-1">
-                          {resource.title}
-                        </CardTitle>
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <div className={`w-14 h-14 ${resource.iconBgColor} rounded-xl flex items-center justify-center mb-2 shadow-md`}>
-                          <IconComponent className="w-8 h-8 text-white" />
-                        </div>
-                        {/* <span className="text-sm font-bold text-slate-700 bg-white/70 px-3 py-1 rounded-full">
-                          {resource.subtitle}
-                        </span> */}
-                      </div>
-                    </div>
+                <Card className={`${resource.bgColor} border-0 rounded-[2.5rem] h-[26rem] hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 p-10 flex flex-col`}>
+                  <CardHeader className="pb-6">
+                    <CardTitle className={`text-3xl font-bold tracking-tight ${resource.accentColor}`}>
+                      {resource.title}
+                    </CardTitle>
+                    <div className="w-16 h-1 bg-white/50 rounded-full mt-4"></div>
                   </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    <ul className="space-y-3">
+
+                  <CardContent className="flex-grow pt-0">
+                    <ul className="space-y-4">
                       {resource.resources.map((item, index) => (
                         <li key={index} className="flex items-start">
-                          <div className="w-2 h-2 bg-slate-600 rounded-full mt-2 mr-3 flex-shrink-0 "></div>
-                          <span className="text-slate-700 text-sm leading-relaxed font-medium">
+                          <div className={`w-2.5 h-2.5 ${resource.bulletColor} rounded-full mt-1.5 mr-4 shadow-sm ring-4 ring-white/30 flex-shrink-0 animate-pulse`}></div>
+                          <span className="text-slate-800 text-base leading-snug font-semibold">
                             {item}
                           </span>
                         </li>
@@ -143,9 +130,9 @@ export default function ResourcesSectionComponent() {
             )
           })}
         </Swiper>
-        
+
       </div>
-      
+
     </section>
   )
 }
