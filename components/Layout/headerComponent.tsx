@@ -10,7 +10,7 @@ import { useGetAuthUserQuery } from "@/state/api";
 import { signOut } from "aws-amplify/auth";
 
 export default function Header() {
- 
+
   const { data: authUser } = useGetAuthUserQuery();
   // const router = useRouter();
 
@@ -32,7 +32,7 @@ export default function Header() {
   const renderRoleActions = () => {
     const role = authUser?.userRole?.toLowerCase();
     if (!authUser) return null;
-  
+
     if (role === "student") {
       return (
         <>
@@ -208,17 +208,23 @@ export default function Header() {
   };
 
   return (
-    <header className="border-b fixed top-0 w-full backdrop-blur-md bg-white/95 z-50 shadow-sm px-4 py-2">
+    <header className="border-b border-slate-200/50 fixed top-0 w-full backdrop-blur-xl bg-white/70 z-50 px-4 py-2 transition-all duration-500">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center">
-          <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'var(--font-inter)' }}>
-                Focus Desk
-              </span>
+          <div className="flex items-center space-x-3">
+            <div className="relative w-10 h-10 overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="Focus Desk Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
+            <span className="text-2xl font-bold text-slate-800 tracking-tighter" style={{ fontFamily: 'var(--font-inter)' }}>
+              Focus Desk
+            </span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
@@ -236,8 +242,8 @@ export default function Header() {
 
         <div className="hidden md:flex items-center space-x-4">
 
-          
-       
+
+
           {authUser ? renderRoleActions() : (
             <>
               <Button
@@ -268,15 +274,15 @@ export default function Header() {
             <div className="flex flex-col h-full">
               <div className="flex justify-between items-center mb-8 pt-2">
                 <Link href="/" className="flex items-center">
-                  <div className="relative h-10 w-10">
+                  <div className="relative h-12 w-12">
                     <Image
                       src="/logo.png"
-                      alt="LibraryNear.com Logo"
+                      alt="Focus Desk Logo"
                       fill
                       className="object-contain"
                     />
                   </div>
-                  <span className="ml-2 text-lg font-semibold text-slate-800">LibraryNear</span>
+                  <span className="ml-3 text-xl font-bold text-slate-800 tracking-tighter">Focus Desk</span>
                 </Link>
               </div>
               <nav className="flex flex-col px-3 space-y-5">
