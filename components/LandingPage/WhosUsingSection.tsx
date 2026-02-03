@@ -3,41 +3,42 @@ import { motion } from "framer-motion";
 import { HeartHandshake, BookOpen, GraduationCap, Users, Building2, Sparkles, ArrowRight } from "lucide-react";
 import React from "react";
 
-const WhosUsingSectionComponent: React.FC = () => {
-  const users = [
-    {
-      title: "Students",
-      description: "Master your focus with quiet study spaces and elite resources designed for academic excellence.",
-      icon: GraduationCap,
-      color: "bg-blue-50 text-blue-600",
-      delay: 0.1,
-    },
-    {
-      title: "Educators",
-      description: "Provide your students with the perfect environment and guidance to reach their full potential.",
-      icon: BookOpen,
-      color: "bg-emerald-50 text-emerald-600",
-      delay: 0.2,
-    },
-    {
-      title: "Institutions",
-      description: "Partner with us to create world-class learning hubs and manage your student focus effectively.",
-      icon: Building2,
-      color: "bg-indigo-50 text-indigo-600",
-      delay: 0.3,
-    },
-  ];
+const users = [
+  {
+    title: "Students",
+    description: "Master your focus with quiet study spaces and elite resources designed for academic excellence.",
+    icon: GraduationCap,
+    color: "bg-blue-50 text-blue-600",
+    delay: 0.1,
+  },
+  {
+    title: "Educators",
+    description: "Provide your students with the perfect environment and guidance to reach their full potential.",
+    icon: BookOpen,
+    color: "bg-emerald-50 text-emerald-600",
+    delay: 0.2,
+  },
+  {
+    title: "Institutions",
+    description: "Partner with us to create world-class learning hubs and manage your student focus effectively.",
+    icon: Building2,
+    color: "bg-indigo-50 text-indigo-600",
+    delay: 0.3,
+  },
+];
 
-  const partners = [
-    { name: "DTU", type: "University", color: "text-red-500", icon: null },
-    { name: "E-Cell", type: "Innovation Hub", color: "bg-yellow-400", icon: "E" },
-    { name: "Hackathons", type: "Tech Community", color: "bg-blue-500", icon: "H" },
-    { name: "Local Library", type: "Knowledge Hub", color: "text-blue-500", icon: BookOpen },
-    { name: "Student Unions", type: "Student Support", color: "text-blue-400", icon: HeartHandshake },
-  ];
+const partners = [
+  { name: "DTU", type: "University", color: "text-red-500", icon: null },
+  { name: "E-Cell", type: "Innovation Hub", color: "bg-yellow-400", icon: "E" },
+  { name: "Hackathons", type: "Tech Community", color: "bg-blue-500", icon: "H" },
+  { name: "Local Library", type: "Knowledge Hub", color: "text-blue-500", icon: BookOpen },
+  { name: "Student Unions", type: "Student Support", color: "text-blue-400", icon: HeartHandshake },
+];
+
+const WhosUsingSectionComponent: React.FC = () => {
 
   return (
-    <section className="relative py-24 bg-white overflow-hidden" id="about">
+    <section className="relative py-16 bg-white overflow-hidden" id="about">
       {/* Subtle background glow */}
       <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-blue-50/50 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-emerald-50/50 rounded-full blur-[120px] pointer-events-none" />
@@ -45,7 +46,7 @@ const WhosUsingSectionComponent: React.FC = () => {
       <div className="container mx-auto px-6 md:px-12 relative z-10">
 
         {/* Header Section */}
-        <div className="text-center max-w-3xl mx-auto mb-20">
+        <div className="text-center max-w-3xl mx-auto mb-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -63,7 +64,7 @@ const WhosUsingSectionComponent: React.FC = () => {
         </div>
 
         {/* User Content Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-32">
+        <div className="grid md:grid-cols-3 gap-8 mb-20">
           {users.map((user, idx) => (
             <motion.div
               key={idx}

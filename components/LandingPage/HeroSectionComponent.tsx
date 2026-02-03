@@ -1,7 +1,7 @@
 "use client"
 import { motion } from "framer-motion";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 // Define the type for card data
@@ -71,7 +71,7 @@ const cardData: CardData[] = [
   },
 ];
 
-const Card: React.FC<CardProps> = ({ card }) => {
+const Card = memo(({ card }: CardProps) => {
   const [imgError, setImgError] = useState<boolean>(false);
 
   return (
@@ -117,6 +117,8 @@ const Card: React.FC<CardProps> = ({ card }) => {
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 src={card.image}
                 alt={card.title}
+                loading="lazy"
+                decoding="async"
                 className="max-w-full max-h-full object-contain filter drop-shadow-[0_12px_15px_rgba(0,0,0,0.15)] group-hover:scale-110 group-hover:rotate-[-2deg] transition-all duration-700 origin-bottom-right"
                 onError={() => setImgError(true)}
               />
@@ -130,11 +132,13 @@ const Card: React.FC<CardProps> = ({ card }) => {
       </Link>
     </motion.div>
   );
-};
+});
+
+Card.displayName = "Card";
 
 const HeroSectionComponent: React.FC = () => {
   return (
-    <section className="relative min-h-[90vh] bg-white flex items-center pt-32 pb-32 overflow-hidden">
+    <section className="relative min-h-[90vh] bg-white flex items-center pt-20 pb-20 overflow-hidden">
 
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
         <motion.div

@@ -4,7 +4,7 @@ import { FileText, BookOpen, Cpu, ClipboardList, Star, ArrowRight, ArrowLeft, Do
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Autoplay } from 'swiper/modules'
 import { motion, AnimatePresence } from "framer-motion"
-import React from "react"
+import React, { memo } from "react"
 
 // Import Swiper styles
 import 'swiper/css'
@@ -83,9 +83,79 @@ const resourcesData = [
   }
 ]
 
+const ResourceCard = memo(({ resource }: { resource: any }) => (
+  <Card className="group relative h-[42rem] border-0 rounded-[4rem] bg-white/40 backdrop-blur-2xl hover:bg-white transition-all duration-700 hover:shadow-[0_80px_120px_-40px_rgba(30,58,138,0.15)] flex flex-col overflow-hidden ring-1 ring-gray-100/50 hover:ring-blue-100">
+
+    {/* Category Accent Pod */}
+    <div className={`absolute top-0 right-0 w-40 h-40 ${resource.glow} rounded-full blur-[70px] opacity-40 group-hover:opacity-100 transition-opacity duration-700`} />
+
+    {/* Shimmer Light Effect */}
+    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+    <CardHeader className="p-12 pb-0 relative z-10">
+      <div className="flex justify-between items-start mb-10">
+        <motion.div
+          whileHover={{ y: -5, rotate: 10 }}
+          className={`w-18 h-18 rounded-[2rem] bg-gradient-to-br ${resource.gradient} flex items-center justify-center text-white shadow-2xl shadow-indigo-200 transition-all duration-500`}
+        >
+          <resource.icon className="w-9 h-9" />
+        </motion.div>
+        <div className="flex flex-col items-end pt-2">
+          <div className={`px-4 py-1.5 rounded-full bg-white border border-gray-100 shadow-sm text-[10px] font-black tracking-widest ${resource.accent} uppercase group-hover:scale-110 transition-transform duration-500`}>
+            {resource.status}
+          </div>
+          <span className="text-[11px] font-black text-gray-400 mt-3 tracking-widest uppercase">{resource.downloads} <span className="text-[9px] text-gray-300">Assets</span></span>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300">
+          {resource.category}
+        </span>
+        <CardTitle className="text-4xl font-[1000] text-gray-900 tracking-[-0.04em] leading-tight group-hover:text-blue-600 transition-colors duration-500">
+          {resource.title}
+        </CardTitle>
+      </div>
+    </CardHeader>
+
+    <CardContent className="p-12 pt-8 flex-grow relative z-10 flex flex-col">
+      <div className="space-y-6 flex-grow">
+        {resource.resources.map((item: string, index: number) => (
+          <motion.div
+            key={index}
+            whileHover={{ x: 10 }}
+            className="flex items-center space-x-5 group/item cursor-pointer"
+          >
+            <div className={`w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center group-hover/item:bg-white border border-transparent group-hover/item:border-gray-100 transition-all duration-300 shadow-sm`}>
+              <TrendingUp className={`w-4.5 h-4.5 ${resource.accent} opacity-30 group-hover/item:opacity-100 transition-opacity`} />
+            </div>
+            <span className="text-gray-500 group-hover/item:text-gray-900 font-black text-[13px] leading-tight tracking-tight transition-colors">
+              {item}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Elite Action Button */}
+      <div className="mt-12 relative group/btn">
+        <div className={`absolute inset-0 bg-gradient-to-r ${resource.gradient} blur-2xl opacity-0 group-hover/btn:opacity-20 transition-opacity duration-500 rounded-3xl`} />
+        <button className="w-full relative py-6 rounded-[2.2rem] bg-gray-900 text-white font-black text-xs tracking-[0.3em] uppercase flex items-center justify-center hover:bg-blue-600 transition-all duration-500 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] hover:scale-[1.02] transform-gpu">
+          Open Repository <ArrowRight className="ml-3 w-5 h-5 group-hover/btn:translate-x-2 transition-transform duration-500" />
+        </button>
+      </div>
+    </CardContent>
+
+    {/* High-End Decorative Layers */}
+    <div className="absolute inset-x-8 top-8 bottom-8 border border-gray-100/50 rounded-[3.5rem] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+    <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+  </Card>
+));
+
+ResourceCard.displayName = "ResourceCard";
+
 export default function ResourcesSectionComponent() {
   return (
-    <section className="relative py-48 bg-white px-6 md:px-12 scroll-m-20 overflow-hidden" id="resources">
+    <section className="relative py-24 bg-white px-6 md:px-12 scroll-m-20 overflow-hidden" id="resources">
       {/* Elite Background Atmosphere - Multiple Layers */}
       <div className="absolute inset-0 pointer-events-none -z-10">
         <motion.div
@@ -104,7 +174,7 @@ export default function ResourcesSectionComponent() {
       <div className="container mx-auto relative z-10">
 
         {/* Masterpiece Header Design */}
-        <div className="text-center max-w-4xl mx-auto mb-28">
+        <div className="text-center max-w-4xl mx-auto mb-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -152,73 +222,9 @@ export default function ResourcesSectionComponent() {
             }}
             className="res-master-swiper !pb-32 !px-4"
           >
-            {resourcesData.map((resource, idx) => (
+            {resourcesData.map((resource) => (
               <SwiperSlide key={resource.id} className="h-auto">
-                <Card className="group relative h-[42rem] border-0 rounded-[4rem] bg-white/40 backdrop-blur-2xl hover:bg-white transition-all duration-700 hover:shadow-[0_80px_120px_-40px_rgba(30,58,138,0.15)] flex flex-col overflow-hidden ring-1 ring-gray-100/50 hover:ring-blue-100">
-
-                  {/* Category Accent Pod */}
-                  <div className={`absolute top-0 right-0 w-40 h-40 ${resource.glow} rounded-full blur-[70px] opacity-40 group-hover:opacity-100 transition-opacity duration-700`} />
-
-                  {/* Shimmer Light Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out pointer-events-none" />
-
-                  <CardHeader className="p-12 pb-0 relative z-10">
-                    <div className="flex justify-between items-start mb-10">
-                      <motion.div
-                        whileHover={{ y: -5, rotate: 10 }}
-                        className={`w-18 h-18 rounded-[2rem] bg-gradient-to-br ${resource.gradient} flex items-center justify-center text-white shadow-2xl shadow-indigo-200 transition-all duration-500`}
-                      >
-                        <resource.icon className="w-9 h-9" />
-                      </motion.div>
-                      <div className="flex flex-col items-end pt-2">
-                        <div className={`px-4 py-1.5 rounded-full bg-white border border-gray-100 shadow-sm text-[10px] font-black tracking-widest ${resource.accent} uppercase group-hover:scale-110 transition-transform duration-500`}>
-                          {resource.status}
-                        </div>
-                        <span className="text-[11px] font-black text-gray-400 mt-3 tracking-widest uppercase">{resource.downloads} <span className="text-[9px] text-gray-300">Assets</span></span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300">
-                        {resource.category}
-                      </span>
-                      <CardTitle className="text-4xl font-[1000] text-gray-900 tracking-[-0.04em] leading-tight group-hover:text-blue-600 transition-colors duration-500">
-                        {resource.title}
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="p-12 pt-8 flex-grow relative z-10 flex flex-col">
-                    <div className="space-y-6 flex-grow">
-                      {resource.resources.map((item, index) => (
-                        <motion.div
-                          key={index}
-                          whileHover={{ x: 10 }}
-                          className="flex items-center space-x-5 group/item cursor-pointer"
-                        >
-                          <div className={`w-11 h-11 rounded-2xl bg-gray-50 flex items-center justify-center group-hover/item:bg-white border border-transparent group-hover/item:border-gray-100 transition-all duration-300 shadow-sm`}>
-                            <TrendingUp className={`w-4.5 h-4.5 ${resource.accent} opacity-30 group-hover/item:opacity-100 transition-opacity`} />
-                          </div>
-                          <span className="text-gray-500 group-hover/item:text-gray-900 font-black text-[13px] leading-tight tracking-tight transition-colors">
-                            {item}
-                          </span>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    {/* Elite Action Button */}
-                    <div className="mt-12 relative group/btn">
-                      <div className={`absolute inset-0 bg-gradient-to-r ${resource.gradient} blur-2xl opacity-0 group-hover/btn:opacity-20 transition-opacity duration-500 rounded-3xl`} />
-                      <button className="w-full relative py-6 rounded-[2.2rem] bg-gray-900 text-white font-black text-xs tracking-[0.3em] uppercase flex items-center justify-center hover:bg-blue-600 transition-all duration-500 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] hover:scale-[1.02] transform-gpu">
-                        Open Repository <ArrowRight className="ml-3 w-5 h-5 group-hover/btn:translate-x-2 transition-transform duration-500" />
-                      </button>
-                    </div>
-                  </CardContent>
-
-                  {/* High-End Decorative Layers */}
-                  <div className="absolute inset-x-8 top-8 bottom-8 border border-gray-100/50 rounded-[3.5rem] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                  <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                </Card>
+                <ResourceCard resource={resource} />
               </SwiperSlide>
             ))}
           </Swiper>
@@ -241,7 +247,7 @@ export default function ResourcesSectionComponent() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 1, delay: 0.8 }}
-          className="mt-48 flex flex-col items-center"
+          className="mt-24 flex flex-col items-center"
         >
           <div className="flex items-center space-x-4 mb-8">
             <div className="flex -space-x-4">

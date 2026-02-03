@@ -8,18 +8,19 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { librariesData } from "@/lib/librariesData"
 
+const calculateHourlyRate = (totalSeats: number) => {
+  return Math.floor(totalSeats / 10) + 50;
+};
+
 export default function LibrariesSectionComponent() {
-  const calculateHourlyRate = (totalSeats: number) => {
-    return Math.floor(totalSeats / 10) + 50;
-  };
 
   return (
-    <section id="library" className="py-32 bg-white px-6 md:px-12 scroll-m-20 overflow-hidden relative">
+    <section id="library" className="py-20 bg-white px-6 md:px-12 scroll-m-20 overflow-hidden relative">
       <div className="absolute top-1/4 left-0 w-1/4 h-1/4 bg-blue-50/40 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="container mx-auto">
         {/* Animated Header */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -78,6 +79,8 @@ export default function LibrariesSectionComponent() {
                       <img
                         src={library.photos[0] || "/globe.svg"}
                         alt={library.libraryName}
+                        loading="lazy"
+                        decoding="async"
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
 

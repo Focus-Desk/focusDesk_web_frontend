@@ -11,7 +11,7 @@ import { GraduationCap, Award, Users, Star, ArrowRight, ArrowLeft, CheckCircle2,
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import { motion } from "framer-motion";
-import React from "react";
+import React, { memo } from "react";
 
 // Import Swiper styles
 import "swiper/css";
@@ -92,7 +92,7 @@ const mentorsData = {
   ],
 };
 
-const MentorCard = ({ mentor, theme }: { mentor: any; theme: any }) => {
+const MentorCard = memo(({ mentor, theme }: { mentor: any; theme: any }) => {
   return (
     <Card
       className={`relative group ${theme.bg} border-0 rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-15px_rgba(30,58,138,0.2)] h-[36rem] flex flex-col`}
@@ -109,6 +109,8 @@ const MentorCard = ({ mentor, theme }: { mentor: any; theme: any }) => {
             <img
               src={`/${mentor.image}`}
               alt={mentor.name}
+              loading="lazy"
+              decoding="async"
               className="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-xl transition-all duration-700"
             />
             <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-lg">
@@ -175,30 +177,33 @@ const MentorCard = ({ mentor, theme }: { mentor: any; theme: any }) => {
       </CardContent>
     </Card>
   );
+});
+
+MentorCard.displayName = "MentorCard";
+
+const getVibrantTheme = (category: string) => {
+  if (category.includes("CA") || category.includes("Chartered Accountant")) {
+    return {
+      bg: "bg-gradient-to-br from-cyan-400 to-cyan-50",
+      gradient: "from-cyan-400 to-emerald-400"
+    };
+  }
+  return {
+    bg: "bg-gradient-to-br from-sky-400 to-sky-100",
+    gradient: "from-blue-600 to-indigo-600"
+  };
 };
 
 export default function MentorsShowcaseComponent() {
-  const getVibrantTheme = (category: string) => {
-    if (category.includes("CA") || category.includes("Chartered Accountant")) {
-      return {
-        bg: "bg-gradient-to-br from-cyan-400 to-cyan-50",
-        gradient: "from-cyan-400 to-emerald-400"
-      };
-    }
-    return {
-      bg: "bg-gradient-to-br from-sky-400 to-sky-100",
-      gradient: "from-blue-600 to-indigo-600"
-    };
-  };
 
   return (
-    <section className="relative py-32 bg-white px-6 md:px-12 scroll-m-20 overflow-hidden" id="mentorship">
+    <section className="relative py-20 bg-white px-6 md:px-12 scroll-m-20 overflow-hidden" id="mentorship">
       <div className="absolute top-1/2 left-0 w-1/3 h-1/3 bg-blue-50/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-indigo-50/20 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto relative z-10">
 
-        <div className="text-center max-w-3xl mx-auto mb-20">
+        <div className="text-center max-w-3xl mx-auto mb-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -264,8 +269,8 @@ export default function MentorsShowcaseComponent() {
         </motion.div>
 
         {/* FINAL POLISHED STATS SECTION - ELITE, BALANCED, CINEMATIC */}
-        <div className="mt-64 relative">
-          <div className="text-center mb-24">
+        <div className="mt-32 relative">
+          <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
