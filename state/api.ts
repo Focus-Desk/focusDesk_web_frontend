@@ -45,6 +45,31 @@ type OnboardLibrarianArgs = {
   addressProof: File;
 };
 
+// For updating existing librarian (Step 4 KYC form)
+type UpdateLibrarianArgs = {
+  cognitoId: string;
+  firstName: string;
+  lastName: string;
+  profilePhoto?: string;
+  contactNumber: string;
+  alternateContactNumber?: string;
+  dateOfBirth: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+  bankAccountNumber: string;
+  bankIfsc: string;
+  bankName: string;
+  accountHolderName: string;
+  panNumber: string;
+  gstin?: string;
+  aadhaarNumber: string;
+  addressProofType: string;
+  addressProofUrl?: string;
+};
+
 type CreateLibraryStep1Args = {
   librarianId: string;
   libraryName: string;
@@ -290,6 +315,24 @@ export const api = createApi({
       },
     }),
 
+    // Update existing librarian (Step 4 KYC form)
+    updateLibrarian: build.mutation<Librarian, UpdateLibrarianArgs>({
+      query: ({ cognitoId, ...body }) => ({
+        url: `librarians/${cognitoId}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { cognitoId }) => [
+        { type: "Librarians", id: cognitoId },
+      ],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Profile updated successfully!",
+          error: "Failed to update profile.",
+        });
+      },
+    }),
+
     createLibraryStep1: build.mutation<Library, CreateLibraryStep1Args>({
       query: (body) => ({
         url: "library/step1",
@@ -420,9 +463,9 @@ export const api = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: "Plans" as const, id })),
-              { type: "Plans" },
-            ]
+            ...result.map(({ id }) => ({ type: "Plans" as const, id })),
+            { type: "Plans" },
+          ]
           : [{ type: "Plans" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, { error: "Failed to load plans." });
@@ -434,9 +477,9 @@ export const api = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: "Lockers" as const, id })),
-              { type: "Lockers" },
-            ]
+            ...result.map(({ id }) => ({ type: "Lockers" as const, id })),
+            { type: "Lockers" },
+          ]
           : [{ type: "Lockers" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, { error: "Failed to load lockers." });
@@ -448,9 +491,9 @@ export const api = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: "TimeSlots" as const, id })),
-              { type: "TimeSlots" },
-            ]
+            ...result.map(({ id }) => ({ type: "TimeSlots" as const, id })),
+            { type: "TimeSlots" },
+          ]
           : [{ type: "TimeSlots" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -465,9 +508,9 @@ export const api = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: "Seats" as const, id })),
-              { type: "Seats" },
-            ]
+            ...result.map(({ id }) => ({ type: "Seats" as const, id })),
+            { type: "Seats" },
+          ]
           : [{ type: "Seats" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -481,9 +524,9 @@ export const api = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: "Offers" as const, id })),
-              { type: "Offers" },
-            ]
+            ...result.map(({ id }) => ({ type: "Offers" as const, id })),
+            { type: "Offers" },
+          ]
           : [{ type: "Offers" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, { error: "Failed to load offers." });
@@ -495,12 +538,12 @@ export const api = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({
-                type: "PackageRules" as const,
-                id,
-              })),
-              { type: "PackageRules" },
-            ]
+            ...result.map(({ id }) => ({
+              type: "PackageRules" as const,
+              id,
+            })),
+            { type: "PackageRules" },
+          ]
           : [{ type: "PackageRules" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -754,9 +797,9 @@ export const api = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: "Libraries" as const, id })),
-              { type: "Libraries" },
-            ]
+            ...result.map(({ id }) => ({ type: "Libraries" as const, id })),
+            { type: "Libraries" },
+          ]
           : [{ type: "Libraries" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -768,7 +811,7 @@ export const api = createApi({
     uploadProfilePhoto: build.mutation<{ url: string }, File>({
       query: (file) => {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("profilePhoto", file);
         return {
           url: `librarians/upload-photo`, // Endpoint for profile photos
           method: "POST",
@@ -785,7 +828,7 @@ export const api = createApi({
     uploadAddressProof: build.mutation<{ url: string }, File>({
       query: (file) => {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("addressProof", file);
         return {
           url: `librarians/upload-address-proof`, // Endpoint for address proofs
           method: "POST",
@@ -868,9 +911,9 @@ export const api = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: "Libraries" as const, id })),
-              { type: "Libraries" },
-            ]
+            ...result.map(({ id }) => ({ type: "Libraries" as const, id })),
+            { type: "Libraries" },
+          ]
           : [{ type: "Libraries" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -919,12 +962,12 @@ export const api = createApi({
       providesTags: (result) =>
         result?.data
           ? [
-              ...result.data.map(({ id }) => ({
-                type: "Libraries" as const,
-                id,
-              })),
-              { type: "Libraries", id: "LIST" },
-            ]
+            ...result.data.map(({ id }) => ({
+              type: "Libraries" as const,
+              id,
+            })),
+            { type: "Libraries", id: "LIST" },
+          ]
           : [{ type: "Libraries", id: "LIST" }],
     }),
   }),
@@ -934,6 +977,7 @@ export const {
   useGetAuthUserQuery,
   useGetLibrarianQuery,
   useOnboardLibrarianMutation,
+  useUpdateLibrarianMutation,
   useCreateLibraryStep1Mutation,
   useUpdateLibraryStep2Mutation,
   useGetStudentQuery,

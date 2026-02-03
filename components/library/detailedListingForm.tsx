@@ -19,11 +19,11 @@ type DetailedData = { [key: string]: any };
 
 interface OnboardingDataSlice {
   libraryName: string;
-  address: string;
+  libraryAddress: string;
   city: string;
   state: string;
   pincode: string;
-  contactNumber: string;
+  libraryContactNo: string;
   googleMapLink: string;
   totalSeats: string;
   openingTime: string;
@@ -502,8 +502,8 @@ export default function DetailedListingForm({
         totalSeats: parseInt(formData.totalSeats),
         facilities: selectedFacilities,
         photos: photoUrls,
-        llbraryVideo: videoUrl,
-        visitingCard: visitingCardUrl,
+        videos: videoUrl ? [videoUrl] : [],
+        cardImages: visitingCardUrl ? [visitingCardUrl] : [],
       };
 
       const result = await updateLibraryStep2({
@@ -569,7 +569,7 @@ export default function DetailedListingForm({
                 id="libraryContactNo"
                 name="libraryContactNo"
                 type="tel"
-                value={formData.contactNumber}
+                value={formData.libraryContactNo}
                 onChange={handleChange}
                 required
                 disabled={isReadOnly}
@@ -581,7 +581,7 @@ export default function DetailedListingForm({
             <Input
               id="libraryAddress"
               name="libraryAddress"
-              value={formData.address}
+              value={formData.libraryAddress}
               onChange={handleChange}
               disabled={isReadOnly}
               required
