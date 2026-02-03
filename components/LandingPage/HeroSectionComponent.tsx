@@ -30,7 +30,7 @@ const cardData: CardData[] = [
     link: "#library",
     image: "/library.png",
     className: "md:col-span-2 md:row-span-1",
-    gradient: "from-blue-600 to-blue-400",
+    gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.1,
   },
   {
@@ -39,7 +39,7 @@ const cardData: CardData[] = [
     link: "#mentorship",
     image: "/mentor.png",
     className: "md:col-span-1 md:row-span-2",
-    gradient: "from-blue-500 to-indigo-600",
+    gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.2,
   },
   {
@@ -47,8 +47,8 @@ const cardData: CardData[] = [
     description: "Tools for productivity",
     image: "/focus_mode.png",
     link: "/focus",
-    className: "md:col-span-1 md:row-span-1",
-    gradient: "from-cyan-400 to-blue-500",
+    className: "md:col-span-1 md:row-span-2",
+    gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.3,
   },
   {
@@ -57,7 +57,7 @@ const cardData: CardData[] = [
     link: "#resources",
     image: "/resources.png",
     className: "md:col-span-1 md:row-span-1",
-    gradient: "from-blue-400 to-cyan-400",
+    gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.4,
   },
   {
@@ -65,8 +65,8 @@ const cardData: CardData[] = [
     description: "Get in touch",
     link: "#cta",
     image: "/tasks.png",
-    className: "md:col-span-3 md:row-span-1",
-    gradient: "from-blue-600 to-indigo-800",
+    className: "md:col-span-2 md:row-span-1",
+    gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.5,
   },
 ];
@@ -88,25 +88,25 @@ const Card: React.FC<CardProps> = ({ card }) => {
     >
       <Link
         href={card.link || "#"}
-        className={`group relative h-full flex flex-col overflow-hidden rounded-[2.2rem] bg-gradient-to-br ${card.gradient} transition-all duration-500 hover:shadow-[0_25px_50px_-12px_rgba(30,58,138,0.25)] hover:-translate-y-2 block`}
+        className={`group relative h-full flex flex-col overflow-hidden rounded-[2.5rem] bg-gradient-to-br ${card.gradient} transition-all duration-500 hover:shadow-[0_25px_50px_-12px_rgba(59,130,246,0.15)] hover:-translate-y-2 block`}
       >
         <div className="absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] skew-x-[-15deg] group-hover:animate-shine transition-transform duration-1000" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50/40 to-transparent translate-x-[-100%] skew-x-[-15deg] group-hover:animate-shine transition-transform duration-1000" />
         </div>
 
         <div className="p-6 h-full flex flex-col relative z-10">
           <div className="relative z-20">
             <motion.h3
-              className="text-xl lg:text-2xl font-bold text-white mb-1.5 tracking-tight leading-none"
+              className="text-xl lg:text-2xl font-bold text-gray-900 mb-1.5 tracking-tight leading-none"
             >
               {card.title}
             </motion.h3>
-            <p className="text-xs font-medium text-white/80 leading-snug max-w-[90%]">
+            <p className="text-xs font-semibold text-blue-900/70 leading-snug max-w-[90%]">
               {card.description}
             </p>
           </div>
 
-          <div className="mt-4 flex items-center text-white font-bold text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0">
+          <div className="mt-4 flex items-center text-blue-950 font-bold text-[10px] uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0">
             Learn More <ArrowRight className="ml-2 w-3.5 h-3.5" />
           </div>
 
@@ -121,8 +121,8 @@ const Card: React.FC<CardProps> = ({ card }) => {
                 onError={() => setImgError(true)}
               />
             ) : (
-              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
-                <span className="text-white/40 font-bold text-lg">{card.title.charAt(0)}</span>
+              <div className="w-12 h-12 bg-blue-900/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-blue-900/10">
+                <span className="text-blue-900/40 font-bold text-lg">{card.title.charAt(0)}</span>
               </div>
             )}
           </div>
@@ -134,7 +134,7 @@ const Card: React.FC<CardProps> = ({ card }) => {
 
 const HeroSectionComponent: React.FC = () => {
   return (
-    <section className="relative min-h-[90vh] bg-white flex items-center pt-48 pb-32 overflow-hidden">
+    <section className="relative min-h-[90vh] bg-white flex items-center pt-32 pb-32 overflow-hidden">
 
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
         <motion.div
@@ -221,7 +221,7 @@ const HeroSectionComponent: React.FC = () => {
           </div>
 
           <div className="lg:col-span-7">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:auto-rows-[195px]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:auto-rows-[140px]">
               {cardData.map((card, idx) => (
                 <Card key={idx} card={card} />
               ))}
