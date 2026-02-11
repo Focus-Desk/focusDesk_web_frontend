@@ -1,9 +1,8 @@
-// plansAndPricingForm.tsx
 'use client';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
-import { useCreateTimeSlotMutation, useCreatePlanMutation, useCreateLockerMutation, useConfigureSeatRangesMutation, useCreatePackageRuleMutation, useCreateOfferMutation } from '../../state/api';
+import { useCreateSlotConfigMutation, useAddSlotsToConfigMutation, useCreatePlanMutation, useCreateLockerMutation, useConfigureSeatRangesMutation, useCreatePackageRuleMutation, useCreateOfferMutation, useCreateSlotMutation } from '../../state/api';
 import { Label } from '../ui/label';
 import { TabButton } from '../ui/tabButton';
 import { Input } from '../ui/input';
@@ -31,7 +30,8 @@ const Checkbox = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputElemen
 
 // Define the shape of the complex local state (same as parent's formData.pricingData)
 interface PricingData {
-    timeSlots: any[];
+    masterSlots: any[];
+    slotConfigs: any[];
     plans: any[];
     lockers: any[];
     seatConfigurations: any[];
@@ -42,8 +42,9 @@ interface PricingData {
 
 // Initial state for the complex objects (for local component use)
 const initialPricingData: PricingData = {
-    timeSlots: [{ id: 1, dbId: '', name: '', startTime: '09:00', endTime: '17:00', hours: '8.00', slotPools: [] }],
-    plans: [{ id: 1, dbId: '', planName: '', hours: '', planType: 'Fixed', timeSlotId: '', slotPools: [], monthlyFee: '', description: '' }],
+    masterSlots: [{ id: 1, dbId: '', tag: 'Morning', startTime: '06:00', endTime: '12:00' }],
+    slotConfigs: [{ id: 1, dbId: '', name: 'Standard Shifts', slotIds: [] }],
+    plans: [{ id: 1, dbId: '', planName: '', hours: '', planType: 'Fixed', slotIds: [], slotPools: [], monthlyFee: '', description: '' }],
     seatConfigurations: [{ id: 1, seatNumbers: '', seatType: 'Float', attachLocker: false, lockerTypeId: '', applicablePlanIds: [] }],
     lockers: [{ id: 1, dbId: '', lockerType: 'Standard', numberOfLockers: '', charge: '', description: '' }],
     packageRules: [{ id: 1, planId: '', duration: 4, discount: '0' }],
@@ -73,35 +74,37 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
     const [activeTab, setActiveTab] = useState(initialLocalData.submittedTabs.slice(-1)[0] || 'timeslot');
     const [submittedTabs, setSubmittedTabs] = useState(initialLocalData.submittedTabs);
 
-    const [timeSlots, setTimeSlots] = useState(initialLocalData.timeSlots);
+    const [masterSlots, setMasterSlots] = useState(initialLocalData.masterSlots || initialPricingData.masterSlots);
+    const [slotConfigs, setSlotConfigs] = useState(initialLocalData.slotConfigs);
     const [plans, setPlans] = useState(initialLocalData.plans);
     const [seatConfigurations, setSeatConfigurations] = useState(initialLocalData.seatConfigurations);
     const [lockers, setLockers] = useState(initialLocalData.lockers);
     const [packageRules, setPackageRules] = useState(initialLocalData.packageRules);
     const [offers, setOffers] = useState(initialLocalData.offers);
 
-    // ... (rest of local state and mutation hooks remain the same) ...
+    const [slotErrors, setSlotErrors] = useState<{ [id: string]: string }>({});
 
-    const [timeSlotErrors, setTimeSlotErrors] = useState<{ [id: number]: string }>({});
+    const [createSlot, { isLoading: isCreatingSlot }] = useCreateSlotMutation();
+    const [createSlotConfig, { isLoading: isCreatingSlotConfig }] = useCreateSlotConfigMutation();
+    const [addSlotsToConfig, { isLoading: isAddingSlots }] = useAddSlotsToConfigMutation();
 
-    const [createTimeSlot, { isLoading: isCreatingTimeSlot }] = useCreateTimeSlotMutation();
     const [createPlan, { isLoading: isCreatingPlan }] = useCreatePlanMutation();
     const [createLocker, { isLoading: isCreatingLocker }] = useCreateLockerMutation();
     const [configureSeatRanges, { isLoading: isConfiguringSeats }] = useConfigureSeatRangesMutation();
     const [createPackageRule, { isLoading: isCreatingPackageRule }] = useCreatePackageRuleMutation();
     const [createOffer, { isLoading: isCreatingOffer }] = useCreateOfferMutation();
 
-    const isSubmitting = isCreatingTimeSlot || isCreatingPlan || isCreatingLocker || isConfiguringSeats || isCreatingPackageRule || isCreatingOffer;
+    const isSubmitting = isCreatingSlot || isCreatingSlotConfig || isAddingSlots || isCreatingPlan || isCreatingLocker || isConfiguringSeats || isCreatingPackageRule || isCreatingOffer;
     const [apiStatus, setApiStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
 
     // --- SIDE EFFECT FOR PERSISTENCE ---
     useEffect(() => {
-        // Debounce or minimize updates to parent state
         const timer = setTimeout(() => {
             updateFormData({
                 pricingData: {
-                    timeSlots,
+                    masterSlots,
+                    slotConfigs,
                     plans,
                     lockers,
                     seatConfigurations,
@@ -110,10 +113,10 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     submittedTabs,
                 }
             });
-        }, 500); // Debounce by 500ms
+        }, 500);
 
         return () => clearTimeout(timer);
-    }, [timeSlots, plans, lockers, seatConfigurations, packageRules, offers, submittedTabs]);
+    }, [slotConfigs, plans, lockers, seatConfigurations, packageRules, offers, submittedTabs]);
     // --- END SIDE EFFECT ---
 
 
@@ -137,55 +140,11 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         setter(prev => prev.length > 1 ? prev.filter(item => (item as any).id !== id) : prev);
     };
 
-    const timeSelectChange = (
-        setter: React.Dispatch<React.SetStateAction<any[]>>,
-        itemId: number,
-        field: string,
-        part: 'hour' | 'minute' | 'period',
-        value: string
-    ) => {
-        setter(prevSlots => {
-            const currentSlot = prevSlots.find(ts => ts.id === itemId);
-            if (!currentSlot) return prevSlots;
 
-            const [currentHour24, currentMinute] = currentSlot[field]?.split(':') || ['00', '00'];
-            let currentHour12 = parseInt(currentHour24) % 12;
-            if (currentHour12 === 0) currentHour12 = 12;
-
-            const currentPeriod = parseInt(currentHour24) >= 12 ? 'PM' : 'AM';
-
-            const newHour12 = part === 'hour' ? parseInt(value) : currentHour12;
-            const newMinute = part === 'minute' ? value : currentMinute;
-            const newPeriod = part === 'period' ? value : currentPeriod;
-
-            let hour24;
-            if (newPeriod === 'PM' && newHour12 < 12) {
-                hour24 = newHour12 + 12;
-            } else if (newPeriod === 'AM' && newHour12 === 12) {
-                hour24 = 0;
-            } else {
-                hour24 = newHour12;
-            }
-
-            const newHour24Padded = String(hour24).padStart(2, '0');
-            const newTime24 = `${newHour24Padded}:${newMinute}`;
-
-            return prevSlots.map(ts =>
-                ts.id === itemId ? { ...ts, [field]: newTime24 } : ts
-            );
-        });
+    const toMinutes = (t: string) => {
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + m;
     };
-
-    useEffect(() => {
-        timeSlots.forEach(ts => {
-            if (ts.startTime && ts.endTime) {
-                const newHours = calculateHours(ts.startTime, ts.endTime);
-                if (newHours !== ts.hours) {
-                    updateState(setTimeSlots, ts.id, 'hours', newHours);
-                }
-            }
-        });
-    }, [timeSlots]);
 
     const calculateHours = (start: string, end: string) => {
         if (!start || !end) return '';
@@ -203,22 +162,6 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         return Math.max(0, Math.min(100, rounded));
     };
 
-    const validateTimeSlot = (ts: any, allTimeSlots: any[]) => {
-        if (ts.startTime && ts.endTime && ts.startTime === ts.endTime) {
-            setTimeSlotErrors(prev => ({
-                ...prev,
-                [ts.id]: "Start time and end time cannot be the same"
-            }));
-            return false;
-        } else {
-            setTimeSlotErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[ts.id];
-                return newErrors;
-            });
-            return true;
-        }
-    };
 
     const handlePlanSelectionChange = <T extends { planIds: string[] } | { applicablePlanIds: string[] }>(
         setter: React.Dispatch<React.SetStateAction<T[]>>,
@@ -248,41 +191,82 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
     }
 
     // --- SUBMISSION LOGIC ---
-    const submitTimeSlots = async () => {
+    const submitSlotConfigs = async () => {
         setApiStatus('idle');
+
+        // Filter out empty master slots
+        const validMasterSlots = masterSlots.filter(s => s.tag.trim() !== '');
+
+        // Filter out empty slot configurations
+        const validConfigs = slotConfigs.filter(c =>
+            c.name.trim() !== '' && (c.slotIds || []).length > 0
+        );
+
+        if (validMasterSlots.length === 0 || validConfigs.length === 0) {
+            console.warn("No valid master slots or configurations to submit.");
+            setApiStatus('error');
+            return false;
+        }
+
         try {
-            const results = await Promise.all(
-                timeSlots.map(ts => createTimeSlot({
-                    libraryId,
-                    name: ts.name,
-                    startTime: ts.startTime,
-                    endTime: ts.endTime,
-                    dailyHours: parseFloat(ts.hours),
-                    slotPools: ts.slotPools
-                }).unwrap())
+            // 1. Submit Master Slots first to get their UUIDs
+            const slotResults = await Promise.all(
+                validMasterSlots.map(async (slot) => {
+                    const res = await createSlot({
+                        libraryId,
+                        tag: slot.tag,
+                        startTime: slot.startTime,
+                        endTime: slot.endTime
+                    }).unwrap();
+                    return { localId: slot.id, dbId: res.data.id };
+                })
             );
-            // Store database IDs in local state for linking to plans
-            console.log("these are the results", results)
-            const idMapping: Record<string, string> = {};
 
-            setTimeSlots(prev => prev.map((ts, index) => {
-                const apiResult = results[index];
-                const dbId = apiResult?.data?.id || apiResult?.id || '';
-                if (dbId) idMapping[String(ts.id)] = dbId;
-                return { ...ts, dbId };
+            const masterSlotMapping: Record<number, string> = {};
+            slotResults.forEach(r => masterSlotMapping[r.localId] = r.dbId);
+
+            // 2. Submit Slot Configurations linking to these UUIDs
+            const configResults = await Promise.all(
+                validConfigs.map(async (config) => {
+                    const configRes = await createSlotConfig({
+                        libraryId,
+                        name: config.name,
+                    }).unwrap();
+
+                    const configId = configRes.data.id;
+
+                    // Link selected master slots to this configuration
+                    const selectedDbIds = config.slotIds
+                        .map((localId: number) => masterSlotMapping[localId])
+                        .filter(Boolean);
+
+                    if (selectedDbIds.length > 0) {
+                        await addSlotsToConfig({
+                            configId,
+                            slotIds: selectedDbIds
+                        }).unwrap();
+                    }
+
+                    return { dbId: configId, localId: config.id, slotDbIds: selectedDbIds };
+                })
+            );
+
+            // Also update master slots and configs with their DB IDs for future reference
+            setMasterSlots(prev => prev.map(s => {
+                const mapping = slotResults.find(r => r.localId === s.id);
+                return mapping ? { ...s, dbId: mapping.dbId } : s;
             }));
 
-            // Transform local IDs to database UUIDs in the plans state
-            setPlans(prev => prev.map(plan => {
-                if (plan.planType === 'Fixed' && plan.timeSlotId && idMapping[plan.timeSlotId]) {
-                    return { ...plan, timeSlotId: idMapping[plan.timeSlotId] };
-                }
-                return plan;
+            setSlotConfigs(prev => prev.map(c => {
+                const res = configResults.find(r => r.localId === c.id);
+                return res ? { ...c, dbId: res.dbId } : c;
             }));
 
+            setSubmittedTabs(prev => [...prev, 'timeslot']);
             setApiStatus('success');
             return true;
         } catch (error) {
+            console.error("Slot configuration error:", error);
             setApiStatus('error');
             return false;
         }
@@ -290,38 +274,38 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitPlans = async () => {
         setApiStatus('idle');
-        // Filter out plans with no monthly fee, hours, or planName
         const validPlans = plans.filter(p => p.monthlyFee && p.hours && p.planName);
-        if (validPlans.length === 0) {
-            console.log("No valid plans to submit — skipping API call.");
-            return true;
-        }
+        if (validPlans.length === 0) return true;
+
         try {
             const results = await Promise.all(
                 validPlans.map(p => {
-                    // Find the selected timeSlot's database ID for Fixed plans
-                    // Check both local id and dbId for robustness
-                    const selectedTimeSlot = timeSlots.find(ts =>
-                        String(ts.id) === p.timeSlotId || ts.dbId === p.timeSlotId
-                    );
+                    // Map local slot IDs to DB UUIDs
+                    const dbSlotIds = (p.slotIds || [])
+                        .map((localId: number) => {
+                            const foundSlot = masterSlots.find(s => s.id === localId);
+                            return foundSlot?.dbId;
+                        })
+                        .filter(Boolean) as string[];
+
                     return createPlan({
                         libraryId,
                         planName: p.planName,
                         planType: p.planType,
                         price: parseFloat(p.monthlyFee),
-                        hours: parseInt(p.hours),
-                        timeSlotId: (p.planType === 'Fixed' || p.planType === 'FIXED') && selectedTimeSlot?.dbId ? selectedTimeSlot.dbId : undefined,
+                        hours: Math.ceil(parseFloat(p.hours)),
+                        slotIds: dbSlotIds,
                         slotPools: p.slotPools,
                         description: p.description
                     }).unwrap();
                 })
             );
-            // Store database IDs for linking to package rules and offers
+            // Store database IDs for linking
             setPlans(prev => prev.map((plan) => {
                 const resultIndex = validPlans.findIndex(vp => vp.id === plan.id);
                 if (resultIndex !== -1 && results[resultIndex]) {
                     const apiResult = results[resultIndex];
-                    const dbId = apiResult?.data?.id || apiResult?.id || '';
+                    const dbId = (apiResult as any)?.data?.id || (apiResult as any)?.id || '';
                     return { ...plan, dbId };
                 }
                 return plan;
@@ -329,6 +313,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
             setApiStatus('success');
             return true;
         } catch (error) {
+            console.error("Plan submission error:", error);
             setApiStatus('error');
             return false;
         }
@@ -492,19 +477,8 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         }
 
         if (activeTab === 'timeslot') {
-            let hasErrors = false;
-            timeSlots.forEach(ts => {
-                // Re-run validation logic before submission
-                if (ts.startTime && ts.endTime && ts.startTime === ts.endTime) {
-                    hasErrors = true;
-                    setTimeSlotErrors(prev => ({
-                        ...prev,
-                        [ts.id]: "Start time and end time cannot be the same"
-                    }));
-                }
-            });
-
-            if (hasErrors || Object.keys(timeSlotErrors).length > 0) {
+            // Basic validation check for at least one config and slot
+            if (slotConfigs.length === 0 || slotConfigs.some(c => (c.slotIds || []).length === 0)) {
                 setApiStatus('error');
                 return;
             }
@@ -516,7 +490,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         let success = false;
         switch (activeTab) {
             case 'timeslot':
-                success = await submitTimeSlots();
+                success = await submitSlotConfigs();
                 break;
             case 'plan':
                 success = await submitPlans();
@@ -539,7 +513,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
             setSubmittedTabs(prev => [...prev, activeTab]);
             if (isLastTab) {
                 // Pass all complex local state arrays back to the parent to signal completion
-                onSuccess({ timeSlots, plans, lockers, seatConfigurations, packageRules, offers });
+                onSuccess({ slotConfigs, plans, lockers, seatConfigurations, packageRules, offers });
             } else {
                 const nextTab = tabOrder[currentIndex + 1];
                 setActiveTab(nextTab);
@@ -559,18 +533,6 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const isLastTab = activeTab === tabOrder[tabOrder.length - 1];
 
-    useEffect(() => {
-        timeSlots.forEach(ts => {
-            if (ts.startTime && ts.endTime) {
-                const newHours = calculateHours(ts.startTime, ts.endTime);
-                if (newHours !== ts.hours) {
-                    updateState(setTimeSlots, ts.id, 'hours', newHours);
-                }
-
-                validateTimeSlot(ts, timeSlots);
-            }
-        });
-    }, [timeSlots]);
 
     return (
         <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-gray-50 rounded-xl shadow-lg">
@@ -590,158 +552,189 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
             <div className="space-y-8">
                 {activeTab === 'timeslot' && (
-                    <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
-                        <h3 className="text-xl font-semibold">TimeSlot Form </h3>
+                    <div className="bg-white p-6 rounded-lg shadow-md space-y-8">
+                        {/* Master Slot Pool Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-semibold flex items-center">
+                                <span className="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">1</span>
+                                Master Slot Pool
+                            </h3>
+                            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                                <p className="text-sm text-blue-700">
+                                    Define all unique time segments for your library here. You will select these to build shift patterns in the next section.
+                                </p>
+                            </div>
 
-                        {timeSlots.map((ts, index) => {
-                            // Helper to get 12-hour display values from the 24-hour state (HH:MM)
-                            const get12HourTime = (time24: string) => {
-                                const [h, m] = time24.split(':');
-                                const hour24 = parseInt(h);
-                                let hour12 = hour24 % 12;
-                                hour12 = hour12 === 0 ? 12 : hour12;
-                                const period = hour24 >= 12 ? 'PM' : 'AM';
-                                return { hour: String(hour12).padStart(2, '0'), minute: m, period: period };
-                            };
-
-                            const start12 = get12HourTime(ts.startTime);
-                            const end12 = get12HourTime(ts.endTime);
-
-                            // Generate hour options (1 to 12)
-                            const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-                            // Generate minute options (00, 15, 30, 45)
-                            const minutes = ['00', '15', '30', '45'];
-
-
-                            return (
-                                <div key={ts.id} className="p-4 border rounded-lg bg-gray-50/70 space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <h4 className="font-semibold text-gray-800">TimeSlot {index + 1}</h4>
-                                        {timeSlots.length > 0 &&
-                                            <button
-                                                type="button"
-                                                onClick={() => removeState(setTimeSlots, ts.id)}
-                                                className="text-red-500 hover:text-red-700 font-medium text-sm"
-                                            >
-                                                Remove
-                                            </button>
-                                        }
-                                    </div>
-
-                                    <div className="grid md:grid-cols-3 gap-4">
-
-                                        {/* Slot Name */}
+                            <div className="space-y-3">
+                                {masterSlots.map((slot) => (
+                                    <div key={slot.id} className="grid md:grid-cols-4 gap-3 p-3 bg-white border rounded-md shadow-sm items-end">
                                         <div>
-                                            <Label>Slot Name</Label>
-                                            <Input value={ts.name} onChange={e => updateState(setTimeSlots, ts.id, 'name', e.target.value)} placeholder="e.g., Morning Shift" disabled={isReadOnly} />
+                                            <Label className="text-xs">Slot Tag / Label</Label>
+                                            <Input
+                                                value={slot.tag}
+                                                onChange={e => updateState(setMasterSlots, slot.id, 'tag', e.target.value)}
+                                                placeholder="e.g. Morning Shift"
+                                                disabled={isReadOnly}
+                                            />
                                         </div>
-
-                                        {/* START TIME SELECTS (ADDED BORDER) */}
-                                        <div className="">
-                                            <Label>Start Time</Label>
-                                            <div className="grid grid-cols-3 gap-1 mt-1 border border-gray-300 rounded-md p-2">
-                                                <Select
-                                                    disabled={isReadOnly}
-                                                    value={start12.hour}
-                                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => timeSelectChange(setTimeSlots, ts.id, 'startTime', 'hour', e.target.value)}
-                                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
-                                                >
-                                                    {hours.map(h => <option key={h} value={h}>{h}</option>)}
-                                                </Select>
-                                                <Select
-                                                    disabled={isReadOnly}
-                                                    value={start12.minute}
-                                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'startTime', 'minute', e.target.value)}
-                                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
-                                                >
-                                                    {minutes.map(m => <option key={m} value={m}>{m}</option>)}
-                                                </Select>
-                                                <Select
-                                                    disabled={isReadOnly}
-                                                    value={start12.period}
-                                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'startTime', 'period', e.target.value)}
-                                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
-                                                >
-                                                    <option value="AM">AM</option>
-                                                    <option value="PM">PM</option>
-                                                </Select>
-                                            </div>
+                                        <div>
+                                            <Label className="text-xs">Start Time</Label>
+                                            <Input
+                                                type="time"
+                                                value={slot.startTime}
+                                                onChange={e => updateState(setMasterSlots, slot.id, 'startTime', e.target.value)}
+                                                disabled={isReadOnly}
+                                            />
                                         </div>
-
-                                        {/* END TIME SELECTS (ADDED BORDER) */}
-                                        <div className="col-span-1  bg-white">
-                                            <Label>End Time</Label>
-                                            <div className="grid grid-cols-3 gap-1 border border-gray-300 rounded-md p-2 mt-1">
-                                                <Select
-                                                    disabled={isReadOnly}
-                                                    value={end12.hour}
-                                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'endTime', 'hour', e.target.value)}
-                                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
-                                                >
-                                                    {hours.map(h => <option key={h} value={h}>{h}</option>)}
-                                                </Select>
-                                                <Select
-                                                    disabled={isReadOnly}
-                                                    value={end12.minute}
-                                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'endTime', 'minute', e.target.value)}
-                                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
-                                                >
-                                                    {minutes.map(m => <option key={m} value={m}>{m}</option>)}
-                                                </Select>
-                                                <Select
-                                                    disabled={isReadOnly}
-                                                    value={end12.period}
-                                                    onChange={e => timeSelectChange(setTimeSlots, ts.id, 'endTime', 'period', e.target.value)}
-                                                    className={timeSlotErrors[ts.id] ? "border-red-500" : ""}
-                                                >
-                                                    <option value="AM">AM</option>
-                                                    <option value="PM">PM</option>
-                                                </Select>
-                                            </div>
+                                        <div>
+                                            <Label className="text-xs">End Time</Label>
+                                            <Input
+                                                type="time"
+                                                value={slot.endTime}
+                                                onChange={e => updateState(setMasterSlots, slot.id, 'endTime', e.target.value)}
+                                                disabled={isReadOnly}
+                                            />
                                         </div>
-
-                                        {/* Hours (Display) */}
-                                        <div className="col-span-1">
-                                            <Label>Duration (Hours)</Label>
-                                            <Input value={ts.hours} disabled placeholder="Calculated" />
-                                        </div>
-
-                                        {/* Error Message */}
-                                        {timeSlotErrors[ts.id] && (
-                                            <div className="md:col-span-3">
-                                                <p className="text-sm text-red-600 mt-1">
-                                                    🚨 {timeSlotErrors[ts.id]}
-                                                </p>
+                                        {!isReadOnly && (
+                                            <div className="flex justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeState(setMasterSlots, slot.id)}
+                                                    className="text-red-400 hover:text-red-600 p-2"
+                                                >
+                                                    Remove
+                                                </button>
                                             </div>
                                         )}
                                     </div>
+                                ))}
+                                {!isReadOnly && (
+                                    <button
+                                        type="button"
+                                        onClick={() => addState(setMasterSlots, { tag: '', startTime: '09:00', endTime: '13:00' })}
+                                        className="text-indigo-600 text-sm font-medium hover:underline flex items-center"
+                                    >
+                                        + Add Unique Time Segment
+                                    </button>
+                                )}
+                            </div>
+                        </div>
 
-                                    {/* Slot Pool */}
-                                    <div>
-                                        <Label>Slot Pool (Applicable User Types)</Label>
+                        <hr className="border-gray-100" />
 
-                                        <div className="flex flex-wrap gap-4">
-                                            {SLOT_POOLS.map(pool =>
-                                                <Checkbox
-                                                    key={pool}
-                                                    label={pool}
-                                                    checked={ts.slotPools.includes(pool)}
-                                                    onChange={e => updateCheckboxState(setTimeSlots, ts.id, 'slotPools', pool, e.target.checked)}
-                                                />
-                                            )}
+                        {/* Slot Configurations Section */}
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-semibold flex items-center">
+                                <span className="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">2</span>
+                                Slot Configurations (Groups)
+                            </h3>
+                            <p className="text-sm text-gray-500">Group your master slots into logical shift patterns for plans.</p>
+
+                            {slotConfigs.map((config) => (
+                                <div key={config.id} className="p-4 border-2 border-indigo-100 rounded-lg bg-indigo-50/30 space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex-1 mr-4">
+                                            <Label>Configuration Name</Label>
+                                            <Input
+                                                value={config.name}
+                                                onChange={e => updateState(setSlotConfigs, config.id, 'name', e.target.value)}
+                                                placeholder="e.g., Standard Shifts"
+                                                disabled={isReadOnly}
+                                            />
+                                        </div>
+                                        {slotConfigs.length > 1 && !isReadOnly && (
+                                            <button type="button" onClick={() => removeState(setSlotConfigs, config.id)} className="text-red-500 hover:text-red-700 font-medium text-sm mt-6">
+                                                Remove Group
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label className="text-indigo-800 font-medium">Included Segments</Label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                            {masterSlots.map(slot => {
+                                                const currentIds = config.slotIds || [];
+                                                const isSelected = currentIds.includes(slot.id);
+
+                                                // Check if this slot is a candidate for selection (touches current block)
+                                                let isSelectable = isReadOnly ? false : true;
+                                                if (!isSelected && currentIds.length > 0) {
+                                                    const selectedSlots = masterSlots.filter(s => currentIds.includes(s.id));
+                                                    const minStart = Math.min(...selectedSlots.map(s => toMinutes(s.startTime)));
+                                                    const maxEnd = Math.max(...selectedSlots.map(s => toMinutes(s.endTime)));
+
+                                                    const slotStart = toMinutes(slot.startTime);
+                                                    const slotEnd = toMinutes(slot.endTime);
+
+                                                    isSelectable = slotEnd === minStart || slotStart === maxEnd;
+                                                }
+
+                                                return (
+                                                    <button
+                                                        key={slot.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (isReadOnly) return;
+
+                                                            if (isSelected) {
+                                                                // Allow removal only if it's at the start or end of the current chain
+                                                                const remainingIds = currentIds.filter((id: number) => id !== slot.id);
+                                                                if (remainingIds.length > 0) {
+                                                                    const sortedRemaining = masterSlots
+                                                                        .filter(s => remainingIds.includes(s.id))
+                                                                        .sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
+
+                                                                    let isContig = true;
+                                                                    for (let i = 0; i < sortedRemaining.length - 1; i++) {
+                                                                        if (sortedRemaining[i].endTime !== sortedRemaining[i + 1].startTime) {
+                                                                            isContig = false;
+                                                                            break;
+                                                                        }
+                                                                    }
+
+                                                                    if (!isContig) {
+                                                                        // Optionally show a toast or alert
+                                                                        return;
+                                                                    }
+                                                                }
+                                                                updateState(setSlotConfigs, config.id, 'slotIds', remainingIds);
+                                                            } else {
+                                                                if (isSelectable) {
+                                                                    updateState(setSlotConfigs, config.id, 'slotIds', [...currentIds, slot.id]);
+                                                                }
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-3 text-left rounded-lg border-2 transition-all ${isSelected
+                                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md transform scale-[1.02]'
+                                                            : isSelectable
+                                                                ? 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50/30'
+                                                                : 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed opacity-60'
+                                                            }`}
+                                                        title={!isSelected && !isSelectable && currentIds.length > 0 ? "Only contiguous segments can be selected" : ""}
+                                                    >
+                                                        <div className="font-bold truncate">{slot.tag || 'Untitled Slot'}</div>
+                                                        <div className="text-[10px] opacity-80 mt-1 flex justify-between">
+                                                            <span>{slot.startTime} - {slot.endTime}</span>
+                                                            <span className="bg-black/20 px-1 rounded">{calculateHours(slot.startTime, slot.endTime)}h</span>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
-                            )
-                        })}
+                            ))}
 
-                        <button
-                            type="button"
-                            onClick={() => addState(setTimeSlots, { dbId: '', name: '', startTime: '09:00', endTime: '17:00', hours: '8.00', slotPools: [] })}
-                            className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100"
-                        >
-                            + Add TimeSlot
-                        </button>
+                            {!isReadOnly && (
+                                <button
+                                    type="button"
+                                    onClick={() => addState(setSlotConfigs, { name: 'New Configuration', slotIds: [] })}
+                                    className="w-full font-semibold py-3 px-4 border-2 border-dashed border-indigo-200 rounded-lg hover:bg-gray-50 text-indigo-600 transition-colors"
+                                >
+                                    + Add New Configuration Group
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -775,41 +768,94 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                                         <Input type="number" value={plan.monthlyFee} onChange={e => updateState(setPlans, plan.id, 'monthlyFee', e.target.value)} placeholder="e.g., 2000" />
                                     </div>
                                 </div>
-                                {plan.planType === 'Fixed' ? (
-                                    <div>
-                                        <Label>Select TimeSlot</Label>
-                                        <Select value={plan.timeSlotId} onChange={e => {
-                                            const selectedTsId = e.target.value;
-                                            updateState(setPlans, plan.id, 'timeSlotId', selectedTsId);
-                                            // Auto-fill hours from selected timeSlot
-                                            if (selectedTsId) {
-                                                const selectedTs = timeSlots.find(ts =>
-                                                    String(ts.id) === selectedTsId || ts.dbId === selectedTsId
-                                                );
-                                                if (selectedTs && selectedTs.hours) {
-                                                    updateState(setPlans, plan.id, 'hours', selectedTs.hours);
-                                                }
-                                            }
-                                        }}>
-                                            <option value="">Select a time slot</option>
-                                            {timeSlots.map(ts =>
-                                                <option key={ts.id} value={ts.dbId || ts.id}>{ts.name} ({ts.startTime} - {ts.endTime})</option>)}
-                                        </Select>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <Label>Select Slot Pool(s)</Label>
-                                        <div className="flex flex-wrap gap-4">{SLOT_POOLS.map(pool => <Checkbox key={pool} label={pool} checked={plan.slotPools.includes(pool)} onChange={e => updateCheckboxState(setPlans, plan.id, 'slotPools', pool, e.target.checked)} />)}
+                                {plan.planType === 'Fixed' && (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label>Select Slot Configuration</Label>
+                                            <Select
+                                                value={plan.configId || ''}
+                                                onChange={e => {
+                                                    const configId = Number(e.target.value);
+                                                    updateState(setPlans, plan.id, 'configId', configId);
+                                                    // Reset slotIds when configuration changes
+                                                    updateState(setPlans, plan.id, 'slotIds', []);
+                                                    updateState(setPlans, plan.id, 'hours', '0');
+                                                }}
+                                                disabled={isReadOnly}
+                                            >
+                                                <option value="">Select a configuration</option>
+                                                {slotConfigs.map(config => (
+                                                    <option key={config.id} value={config.id}>{config.name}</option>
+                                                ))}
+                                            </Select>
                                         </div>
+
+                                        {plan.configId && (
+                                            <div>
+                                                <Label>Included Slot Segments</Label>
+                                                <p className="text-xs text-gray-500 mb-2">Select one or more continuous slots for this plan.</p>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                    {(slotConfigs.find(c => c.id === plan.configId)?.slotIds || []).map((msId: number) => {
+                                                        const slot = masterSlots.find(s => s.id === msId);
+                                                        if (!slot) return null;
+                                                        const isSelected = (plan.slotIds || []).includes(slot.id);
+                                                        return (
+                                                            <button
+                                                                key={slot.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const currentIds = plan.slotIds || [];
+                                                                    const newIds = isSelected
+                                                                        ? currentIds.filter((id: number) => id !== slot.id)
+                                                                        : [...currentIds, slot.id];
+
+                                                                    updateState(setPlans, plan.id, 'slotIds', newIds);
+
+                                                                    // Recalculate total hours
+                                                                    const selectedSlots = masterSlots.filter(s => newIds.includes(s.id));
+                                                                    const totalHours = selectedSlots.reduce((acc, s) => acc + Number(calculateHours(s.startTime, s.endTime)), 0);
+                                                                    updateState(setPlans, plan.id, 'hours', totalHours.toFixed(2));
+                                                                }}
+                                                                className={`px-3 py-2 text-xs rounded-md border transition-all ${isSelected
+                                                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                                                                    }`}
+                                                            >
+                                                                {slot.tag}<br />
+                                                                <span className="opacity-70 text-[10px]">{slot.startTime}-{slot.endTime}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
+
+                                <div>
+                                    <Label>Plan Tags (Slot Pools)</Label>
+                                    <p className="text-xs text-gray-500 mb-2">Assign tags to this plan for flexible seating logic.</p>
+                                    <div className="flex flex-wrap gap-4">
+                                        {SLOT_POOLS.map(pool => (
+                                            <Checkbox
+                                                key={pool}
+                                                label={pool}
+                                                checked={(plan.slotPools || []).includes(pool)}
+                                                onChange={e => updateCheckboxState(setPlans, plan.id, 'slotPools', pool, e.target.checked)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div>
                                     <Label>Description</Label>
-                                    <Input value={plan.description} onChange={e => updateState(setPlans, plan.id, 'description', e.target.value)} placeholder="e.g., Full Day Access" />
+                                    <Input value={plan.description} onChange={e => updateState(setPlans, plan.id, 'description', e.target.value)} placeholder="e.g., Full Day Access" disabled={isReadOnly} />
                                 </div>
                             </div>
                         ))}
-                        <button type="button" onClick={() => addState(setPlans, { dbId: '', planName: '', hours: '', planType: 'Fixed', timeSlotId: '', slotPools: [], monthlyFee: '', description: '' })} className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100">+ Add Plan</button>
+                        {!isReadOnly && (
+                            <button type="button" onClick={() => addState(setPlans, { dbId: '', planName: '', hours: '0', planType: 'Fixed', slotIds: [], slotPools: [], monthlyFee: '', description: '', configId: null })} className="w-full font-semibold py-2 px-4 border-2 border-dashed rounded-md hover:bg-gray-100">+ Add Plan</button>
+                        )}
                     </div>
                 )}
 
@@ -883,7 +929,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                                                     <Checkbox
                                                         key={plan.id}
                                                         id={`seat-${config.id}-plan-${plan.id}`}
-                                                        label={plan.description || `Plan ID: ${plan.id}`}
+                                                        label={plan.planName || plan.description || `Plan ID: ${plan.id}`}
                                                         checked={config.applicablePlanIds.includes(String(plan.id))}
                                                         onChange={e => handlePlanSelectionChange(
                                                             setSeatConfigurations,
@@ -931,7 +977,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                                         <Label>Base Plan</Label>
                                         <Select value={rule.planId} onChange={e => updateState(setPackageRules, rule.id, 'planId', e.target.value)}>
                                             <option value="">Select a base plan</option>
-                                            {plans.map(p => <option key={p.id} value={String(p.id)}>{p.description}</option>)}
+                                            {plans.map(p => <option key={p.id} value={String(p.id)}>{p.planName || p.description || `Plan ID: ${p.id}`}</option>)}
                                         </Select>
                                     </div>
 
@@ -1048,7 +1094,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                                                 <Checkbox
                                                     key={plan.id}
                                                     id={`offer-${offer.id}-plan-${plan.id}`}
-                                                    label={plan.description || `Plan ID: ${plan.id}`}
+                                                    label={plan.planName || plan.description || `Plan ID: ${plan.id}`}
                                                     checked={offer.planIds.includes(String(plan.id))}
                                                     onChange={e => handlePlanSelectionChange(
                                                         setOffers,

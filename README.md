@@ -46,3 +46,9 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+ok, now how to allow users to add more than one slot to create a plan. 
+
+also we have to attach tags (one or more to plans). These tags could be from {MORNING,AFTERNOON,EVENING, NIGHT (may be or may notbe, optional}. 
+cause the FLEXIBLE seat plans depend on these tags

@@ -86,13 +86,43 @@ type CreateTimeSlotArgs = {
   slotPools: string[];
 };
 
+type CreateSlotConfigArgs = {
+  libraryId: string;
+  name: string;
+};
+
+type AddSlotsArgs = {
+  configId: string;
+  slots?: {
+    tag: string;
+    startTime: string;
+    endTime: string;
+  }[];
+  slotIds?: string[];
+};
+
+export interface Slot {
+  id: string;
+  libraryId: string;
+  tag: string;
+  startTime: string;
+  endTime: string;
+}
+
+export type CreateSlotArgs = {
+  libraryId: string;
+  tag: string;
+  startTime: string;
+  endTime: string;
+};
+
 type CreatePlanArgs = {
   libraryId: string;
   planName: string;
   planType: "Fixed" | "Float";
   price: number;
   hours: number;
-  timeSlotId?: string;
+  slotIds: string[]; // Changed from timeSlotId/slotId
   slotPools?: string[];
   description?: string;
 };
@@ -233,6 +263,7 @@ export const api = createApi({
     "PackageRules",
     "Offers",
     "Seats",
+    "SlotConfigs",
   ],
   endpoints: (build) => ({
     getAuthUser: build.query<
@@ -454,6 +485,83 @@ export const api = createApi({
         await withToast(queryFulfilled, {
           success: "Offer created successfully!",
           error: "Failed to create offer.",
+        });
+      },
+    }),
+
+    createSlotConfig: build.mutation<{ success: boolean, data: any }, CreateSlotConfigArgs>({
+      query: (body) => ({
+        url: "slot-configs",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Slot configuration created!",
+          error: "Failed to create slot configuration.",
+        });
+      },
+    }),
+
+    createSlot: build.mutation<{ success: boolean, data: Slot }, CreateSlotArgs>({
+      query: (body) => ({
+        url: "slot-configs/slots",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Master slot created!",
+          error: "Failed to create master slot.",
+        });
+      },
+    }),
+
+    getSlotsByLibraryId: build.query<{ success: boolean, data: Slot[] }, string>({
+      query: (libraryId) => `slot-configs/slots/library/${libraryId}`,
+      providesTags: (result) =>
+        result?.data
+          ? [
+            ...result.data.map(({ id }) => ({ type: "SlotConfigs" as const, id })),
+            { type: "SlotConfigs" },
+          ]
+          : [{ type: "SlotConfigs" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load master slots.",
+        });
+      },
+    }),
+
+    addSlotsToConfig: build.mutation<{ success: boolean, data: any }, AddSlotsArgs>({
+      query: ({ configId, ...body }) => ({
+        url: `slot-configs/${configId}/slots`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Slots generated successfully!",
+          error: "Failed to generate slots.",
+        });
+      },
+    }),
+
+    getSlotConfigsByLibraryId: build.query<{ success: boolean, data: any[] }, string>({
+      query: (libraryId) => `slot-configs/library/${libraryId}`,
+      providesTags: (result) =>
+        result?.data
+          ? [
+            ...result.data.map(({ id }) => ({ type: "SlotConfigs" as const, id })),
+            { type: "SlotConfigs" },
+          ]
+          : [{ type: "SlotConfigs" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load slot configurations.",
         });
       },
     }),
@@ -1021,4 +1129,9 @@ export const {
   useDeleteOfferMutation,
   useUpdateLibraryMutation,
   useGetPackageRulesByLibraryIdQuery,
+  useCreateSlotMutation,
+  useGetSlotsByLibraryIdQuery,
+  useCreateSlotConfigMutation,
+  useAddSlotsToConfigMutation,
+  useGetSlotConfigsByLibraryIdQuery,
 } = api;
