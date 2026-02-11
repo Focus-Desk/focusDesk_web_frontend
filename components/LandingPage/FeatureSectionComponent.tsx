@@ -6,6 +6,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Autoplay } from 'swiper/modules'
 import { motion } from "framer-motion"
 import Link from "next/link"
+import Image from "next/image"
 import { librariesData } from "@/lib/librariesData"
 
 const calculateHourlyRate = (totalSeats: number) => {
@@ -76,12 +77,12 @@ export default function LibrariesSectionComponent() {
                     {/* Media Container */}
                     <div className="relative h-64 w-full overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <img
+                      <Image
                         src={library.photos[0] || "/globe.svg"}
                         alt={library.libraryName}
-                        loading="lazy"
-                        decoding="async"
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
                       />
 
                       <div className="absolute top-6 left-6 z-20 flex gap-2">

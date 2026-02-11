@@ -12,19 +12,26 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import { motion } from "framer-motion";
 import React, { memo } from "react";
+import Image from "next/image";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-// JSON data (Keep content same as original)
+// Import static images
+import mPrachiImg from "../../public/mprachi.jpg";
+import mAmitImg from "../../public/mamitkumar.jpg";
+import mAnjaliImg from "../../public/manjali.jpg";
+import mHimanshuImg from "../../public/mcahimanshuthakur.jpg";
+
+// JSON data (Updated with static images)
 const mentorsData = {
   mentors: [
     {
       name: "Prachi",
       category: "UPSC CSE Mentor",
-      image: "mprachi.jpg",
+      image: mPrachiImg,
       qualifications: [
         "Bachelor of Management Studies (BMS), University of Delhi",
         "UPSC Foundation Course – Vision IAS",
@@ -39,7 +46,7 @@ const mentorsData = {
     {
       name: "Amit Kumar",
       category: "Government Officer / SSC CGL",
-      image: "mamitkumar.jpg",
+      image: mAmitImg,
       qualifications: [
         "Bachelor of Science (B.Sc), Ramjas College, University of Delhi",
       ],
@@ -55,7 +62,7 @@ const mentorsData = {
     {
       name: "Anjali Gupta",
       category: "UPSC CSE Mentor",
-      image: "manjali.jpg",
+      image: mAnjaliImg,
       qualifications: [
         "UGC-NET Qualified",
         "CDS Qualified (3 Times)",
@@ -71,7 +78,7 @@ const mentorsData = {
     {
       name: "CA Himanshu Thakur",
       category: "Chartered Accountant",
-      image: "mcahimanshuthakur.jpg",
+      image: mHimanshuImg,
       qualifications: [
         "B.Com (Hons), University of Delhi",
         "Chartered Accountant (CA)",
@@ -106,11 +113,11 @@ const MentorCard = memo(({ mentor, theme }: { mentor: any; theme: any }) => {
             whileHover={{ scale: 1.05 }}
             className="relative"
           >
-            <img
-              src={`/${mentor.image}`}
+            <Image
+              src={mentor.image}
               alt={mentor.name}
-              loading="lazy"
-              decoding="async"
+              width={96}
+              height={96}
               className="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-xl transition-all duration-700"
             />
             <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-lg">

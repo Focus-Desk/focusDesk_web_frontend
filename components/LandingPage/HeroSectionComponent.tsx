@@ -3,13 +3,21 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import React, { useState, memo } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
+import Image, { StaticImageData } from "next/image";
+
+// Import static images
+import libraryImg from "../../public/library.png";
+import mentorImg from "../../public/mentor.png";
+import focusModeImg from "../../public/focus_mode.png";
+import resourcesImg from "../../public/resources.png";
+import tasksImg from "../../public/tasks.png";
 
 // Define the type for card data
 interface CardData {
   title: string;
   description: string;
   link?: string;
-  image: string;
+  image: StaticImageData | string;
   className?: string;
   gradient: string;
   delay: number;
@@ -28,7 +36,7 @@ const cardData: CardData[] = [
     title: "Library",
     description: "Find nearby self-study centers",
     link: "#library",
-    image: "/library.png",
+    image: libraryImg,
     className: "md:col-span-2 md:row-span-1",
     gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.1,
@@ -37,7 +45,7 @@ const cardData: CardData[] = [
     title: "Mentorship",
     description: "Guidance from top mentors",
     link: "#mentorship",
-    image: "/mentor.png",
+    image: mentorImg,
     className: "md:col-span-1 md:row-span-2",
     gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.2,
@@ -45,7 +53,7 @@ const cardData: CardData[] = [
   {
     title: "Focus Mode",
     description: "Tools for productivity",
-    image: "/focus_mode.png",
+    image: focusModeImg,
     link: "/focus",
     className: "md:col-span-1 md:row-span-2",
     gradient: "from-[#b9e2f5] to-[#7cb9f7]",
@@ -55,7 +63,7 @@ const cardData: CardData[] = [
     title: "Resources",
     description: "Explore study materials",
     link: "#resources",
-    image: "/resources.png",
+    image: resourcesImg,
     className: "md:col-span-1 md:row-span-1",
     gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.4,
@@ -64,7 +72,7 @@ const cardData: CardData[] = [
     title: "Contact Us",
     description: "Get in touch",
     link: "#cta",
-    image: "/tasks.png",
+    image: tasksImg,
     className: "md:col-span-2 md:row-span-1",
     gradient: "from-[#b9e2f5] to-[#7cb9f7]",
     delay: 0.5,
@@ -112,19 +120,23 @@ const Card = memo(({ card }: CardProps) => {
 
           <div className="absolute bottom-4 right-4 w-[40%] h-[50%] flex items-end justify-end pointer-events-none">
             {!imgError ? (
-              <motion.img
+              <motion.div
                 animate={{ y: [0, -6, 0], rotate: [0, 1, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                src={card.image}
-                alt={card.title}
-                loading="lazy"
-                decoding="async"
-                className="max-w-full max-h-full object-contain filter drop-shadow-[0_12px_15px_rgba(0,0,0,0.15)] group-hover:scale-110 group-hover:rotate-[-2deg] transition-all duration-700 origin-bottom-right"
-                onError={() => setImgError(true)}
-              />
+                className="relative w-full h-full"
+              >
+                <Image
+                  src={card.image}
+                  alt={card.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-contain filter drop-shadow-[0_12px_15px_rgba(0,0,0,0.15)] group-hover:scale-110 group-hover:rotate-[-2deg] transition-all duration-700 origin-bottom-right"
+                  onError={() => setImgError(true)}
+                />
+              </motion.div>
             ) : (
               <div className="w-12 h-12 bg-blue-900/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-blue-900/10">
-                <span className="text-blue-900/40 font-bold text-lg">{card.title.charAt(0)}</span>
+                <span className="text-blue-900/40 font-bold text-lg">{typeof card.title === 'string' ? card.title.charAt(0) : ''}</span>
               </div>
             )}
           </div>

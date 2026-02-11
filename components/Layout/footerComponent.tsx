@@ -15,20 +15,8 @@ export default function FooterComponent() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[40%] h-[60px] bg-blue-600/10 blur-[50px] z-10 rounded-full" />
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-black/60 to-transparent z-0 pointer-events-none" />
 
-      {/* CINEMATIC DARK ATMOSPHERE - SEAMLESS CONTINUATION */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <motion.div
-          animate={{ x: [-50, 50, -50], y: [-30, 30, -30], rotate: 360 }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-[20%] left-[20%] w-[50%] h-[50%] bg-blue-900/15 rounded-full blur-[160px]"
-        />
-        <motion.div
-          animate={{ x: [50, -50, 50], y: [30, -30, 30], rotate: -360 }}
-          transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-[20%] right-[20%] w-[40%] h-[40%] bg-indigo-900/15 rounded-full blur-[140px]"
-        />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04] mix-blend-overlay" />
-      </div>
+      {/* CINEMATIC DARK ATMOSPHERE - REMOVED FOR PERFORMANCE */}
+      <div className="absolute inset-0 z-0 bg-[#01040a]" />
 
       <div className="container mx-auto px-6 md:px-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-16 lg:gap-8 items-start mb-24">

@@ -200,16 +200,36 @@ export default function CtaSectionComponent() {
       <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-black/20 to-transparent pointer-events-none z-10" />
       <div className="absolute top-0 left-0 w-full h-[1px] bg-white/5 z-20" />
       {/* CINEMATIC DARK BACKGROUND SYSTEM */}
-      <div className="absolute inset-0 pointer-events-none z-0">
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <motion.div
-          animate={{ x: [-100, 100, -100], y: [-50, 50, -50], rotate: 360 }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[10%] left-[10%] w-[70%] h-[70%] bg-blue-900/20 rounded-full blur-[160px]"
+          animate={{
+            x: [-50, 50, -50],
+            y: [-30, 30, -30],
+            rotate: 360
+          }}
+          transition={{
+            duration: 40,
+            repeat: Infinity,
+            ease: "linear",
+            repeatType: "loop"
+          }}
+          style={{ willChange: "transform" }}
+          className="absolute top-[10%] left-[10%] w-[50%] h-[50%] bg-blue-900/20 rounded-full blur-[100px]"
         />
         <motion.div
-          animate={{ x: [100, -100, 100], y: [50, -50, 50], rotate: -360 }}
-          transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[10%] right-[10%] w-[60%] h-[60%] bg-indigo-900/20 rounded-full blur-[140px]"
+          animate={{
+            x: [50, -50, 50],
+            y: [30, -30, 30],
+            rotate: -360
+          }}
+          transition={{
+            duration: 45,
+            repeat: Infinity,
+            ease: "linear",
+            repeatType: "loop"
+          }}
+          style={{ willChange: "transform" }}
+          className="absolute bottom-[10%] right-[10%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[90px]"
         />
         <div className="absolute inset-0 bg-[#004aad] opacity-[0.02]" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05] mix-blend-overlay" />
