@@ -368,24 +368,24 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         }
         setApiStatus('idle');
         try {
-            const results = await Promise.all(
-                validSeatConfigurations.map(sc => {
-                    // Resolve locker database ID
-                    const selectedLocker = lockers.find(l => String(l.id) === sc.lockerTypeId);
-                    return configureSeatRanges({
-                        libraryId,
-                        ranges: [{
-                            from: parseInt(sc.seatNumbers.split('-')[0]),
-                            to: parseInt(sc.seatNumbers.split('-')[1] || sc.seatNumbers.split('-')[0]),
-                            mode: sc.seatType.toUpperCase() as 'FIXED' | 'FLOAT' | 'SPECIAL',
-                            lockerId: selectedLocker?.dbId || undefined
-                        }]
-                    }).unwrap();
-                })
-            );
+            const allRanges = validSeatConfigurations.map(sc => {
+                const selectedLocker = lockers.find(l => String(l.id) === sc.lockerTypeId);
+                return {
+                    seatNumbers: sc.seatNumbers,
+                    mode: sc.seatType.toUpperCase() as 'FIXED' | 'FLOAT' | 'SPECIAL',
+                    lockerId: selectedLocker?.dbId || undefined
+                };
+            });
+
+            await configureSeatRanges({
+                libraryId,
+                ranges: allRanges
+            }).unwrap();
+
             setApiStatus('success');
             return true;
         } catch (error) {
+            console.error("Seat configuration error:", error);
             setApiStatus('error');
             return false;
         }

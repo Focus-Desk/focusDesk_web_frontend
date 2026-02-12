@@ -159,8 +159,9 @@ type CreateOfferArgs = {
 type ConfigureSeatRangesArgs = {
   libraryId: string;
   ranges: {
-    from: number;
-    to: number;
+    seatNumbers?: string;
+    from?: number;
+    to?: number;
     mode: "FIXED" | "FLOAT" | "SPECIAL";
     fixedPlanId?: string;
     lockerAutoInclude?: boolean;
