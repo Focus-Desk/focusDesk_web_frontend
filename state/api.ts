@@ -198,6 +198,30 @@ type PaginationInfo = {
   totalPages: number;
 };
 
+export type DetailedSeat = {
+  id: string;
+  seatNumber: number;
+  status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE" | "RESERVED";
+  isActive: boolean;
+  libraryId: string;
+  currentAvailability: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "MAINTENANCE";
+  isCurrentlyOccupied: boolean;
+  currentBooking: any | null;
+  upcomingBookingsCount: number;
+  nextBooking: any | null;
+  totalBookings: number;
+  bookings: any[];
+};
+
+export type DetailedLibrarySeatsResponse = {
+  success: boolean;
+  data: {
+    library: Library;
+    seats: DetailedSeat[];
+  };
+  message: string;
+};
+
 type GetLibrariesResponse = {
   data: LibraryListItem[];
   pagination: PaginationInfo;
@@ -1079,6 +1103,14 @@ export const api = createApi({
           ]
           : [{ type: "Libraries", id: "LIST" }],
     }),
+
+    getDetailedLibrarySeats: build.query<DetailedLibrarySeatsResponse, string>({
+      query: (libraryId) => `library/libraries/${libraryId}`,
+      providesTags: (result) => [
+        { type: "Libraries", id: result?.data.library.id },
+        { type: "Libraries", id: "DETAILED_SEATS" },
+      ],
+    }),
   }),
 });
 
@@ -1135,4 +1167,5 @@ export const {
   useCreateSlotConfigMutation,
   useAddSlotsToConfigMutation,
   useGetSlotConfigsByLibraryIdQuery,
+  useGetDetailedLibrarySeatsQuery,
 } = api;

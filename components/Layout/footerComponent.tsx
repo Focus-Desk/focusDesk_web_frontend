@@ -4,9 +4,13 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import React from "react"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 
 export default function FooterComponent() {
   const currentYear = new Date().getFullYear()
+  const pathname = usePathname()
+
+  if (pathname.includes("/librarian")) return null;
 
   return (
     <footer className="relative bg-[#01040a] text-white pt-40 pb-12 overflow-hidden">

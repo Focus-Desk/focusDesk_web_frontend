@@ -12,6 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Library, BookOpen, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   useDeleteLibraryMutation,
   useGetAuthUserQuery,
@@ -49,6 +50,7 @@ export default function LibrarianDashboard() {
   });
 
   const [deleteLibrary, { isLoading: deleting }] = useDeleteLibraryMutation();
+  const router = useRouter();
 
   const reviewedCount = libraries?.filter((lib) => lib.reviewStatus !== "PENDING")
     .length || 0;
@@ -89,15 +91,8 @@ export default function LibrarianDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <div className="mt-28">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Librarian Dashboard</h1>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 -mt-8">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="space-y-6">
         {/* Librarian Profile Card */}
         <Card className="mb-6 overflow-hidden shadow-lg">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
@@ -246,11 +241,16 @@ export default function LibrarianDashboard() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right flex items-center justify-end gap-2">
                           <Badge
-                            className={`bg-amber-100 text-red-600 hover:bg-amber-200 cursor-pointer ${
-                              deleting ? "opacity-50 pointer-events-none" : ""
-                            }`}
+                            className="bg-blue-100 text-blue-600 hover:bg-blue-200 cursor-pointer"
+                            onClick={() => router.push(`/librarian/libraries/${library.id}`)}
+                          >
+                            Manage
+                          </Badge>
+                          <Badge
+                            className={`bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer ${deleting ? "opacity-50 pointer-events-none" : ""
+                              }`}
                             onClick={() => handleDelete(library.id)}
                           >
                             Delete

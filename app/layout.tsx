@@ -4,6 +4,7 @@ import "./globals.css";
 import HeaderComponent from "@/components/Layout/headerComponent";
 import FooterComponent from "@/components/Layout/footerComponent";
 import Providers from "@/providers";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   weight: ["400", "500", "600", "700", "800"],
@@ -54,9 +55,8 @@ export default function RootLayout({
         style={{ fontFamily: "var(--font-dm-sans)" }}
       >
         <Providers>
-          <div className=" mb-16">
-            <HeaderComponent/>
-          </div>
+          <Toaster />
+          <HeaderComponent />
           {children}
           <FooterComponent />
         </Providers>
