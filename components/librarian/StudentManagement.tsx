@@ -11,9 +11,12 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, User, Phone, Mail, Calendar } from "lucide-react";
+import { Search, User, Phone, Mail, Calendar, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DetailedSeat } from "@/state/api";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface StudentManagementProps {
     seats: DetailedSeat[];
@@ -32,6 +35,8 @@ interface StudentInfo {
 }
 
 export default function StudentManagement({ seats }: StudentManagementProps) {
+    const { id } = useParams();
+    const libraryId = Array.isArray(id) ? id[0] : id;
     const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState("ALL");
 
@@ -105,14 +110,22 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                        placeholder="Search by name, phone or email..."
-                        className="pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                            placeholder="Search by name, phone or email..."
+                            className="pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Button asChild className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-100">
+                        <Link href={`/librarian/libraries/${libraryId}/add-student`}>
+                            <UserPlus className="h-4 w-4 mr-2" />
+                            Add Student
+                        </Link>
+                    </Button>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">

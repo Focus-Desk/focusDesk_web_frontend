@@ -1,6 +1,5 @@
 import { createNewUserInDatabase, withToast } from "@/lib/utils";
 import {
-  Student,
   Mentor,
   Librarian,
   Library,
@@ -260,6 +259,53 @@ type UpdatePackageRuleArgs = {
 type UpdateOfferArgs = {
   id: string;
   data: Partial<Offer>;
+};
+
+export type CreateStudentArgs = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  gender?: string;
+  age?: string;
+  dob?: string;
+  aadhaarNumber?: string;
+  state?: string;
+  area?: string;
+  address?: string;
+  about?: string;
+  interests?: string[];
+};
+
+export interface Student {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  gender?: string;
+  age?: string;
+  dob?: string;
+  aadhaarNumber?: string;
+  state?: string;
+  area?: string;
+  address?: string;
+  about?: string;
+  interests?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+type CreateBookingArgs = {
+  libraryId: string;
+  studentId: string;
+  planId: string;
+  seatId?: string;
+  lockerId?: string;
+  validFrom: string;
+  validTo: string;
+  totalAmount: number;
+  paymentStatus?: "PENDING" | "COMPLETED" | "FAILED";
 };
 
 export const api = createApi({
@@ -1111,6 +1157,41 @@ export const api = createApi({
         { type: "Libraries", id: "DETAILED_SEATS" },
       ],
     }),
+
+    searchStudentByMobile: build.query<Student, string>({
+      query: (phoneNumber) => `students/search?phoneNumber=${phoneNumber}`,
+      providesTags: (result) => [{ type: "Students", id: result?.id }],
+    }),
+
+    createStudent: build.mutation<Student, CreateStudentArgs>({
+      query: (body) => ({
+        url: "students",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Students"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Student created successfully!",
+          error: "Failed to create student.",
+        });
+      },
+    }),
+
+    createBooking: build.mutation<any, CreateBookingArgs>({
+      query: (body) => ({
+        url: "bookings",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Students", "Seats", "Libraries"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Plan assigned successfully!",
+          error: "Failed to assign plan.",
+        });
+      },
+    }),
   }),
 });
 
@@ -1168,4 +1249,8 @@ export const {
   useAddSlotsToConfigMutation,
   useGetSlotConfigsByLibraryIdQuery,
   useGetDetailedLibrarySeatsQuery,
+  useSearchStudentByMobileQuery,
+  useLazySearchStudentByMobileQuery,
+  useCreateStudentMutation,
+  useCreateBookingMutation,
 } = api;
