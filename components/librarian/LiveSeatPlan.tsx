@@ -16,9 +16,10 @@ import { motion, AnimatePresence } from "framer-motion";
 interface LiveSeatPlanProps {
     seats: DetailedSeat[];
     libraryName: string;
+    libraryId: string;
 }
 
-export default function LiveSeatPlan({ seats, libraryName }: LiveSeatPlanProps) {
+export default function LiveSeatPlan({ seats, libraryName, libraryId }: LiveSeatPlanProps) {
     const [selectedSeat, setSelectedSeat] = useState<DetailedSeat | null>(null);
 
     const stats = {

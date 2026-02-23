@@ -202,6 +202,7 @@ export type DetailedSeat = {
   seatNumber: number;
   status: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE" | "RESERVED";
   isActive: boolean;
+  mode: "FIXED" | "FLOAT" | "FLEX";
   libraryId: string;
   currentAvailability: "AVAILABLE" | "OCCUPIED" | "RESERVED" | "MAINTENANCE";
   isCurrentlyOccupied: boolean;

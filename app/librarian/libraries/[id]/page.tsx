@@ -66,7 +66,7 @@ export default function LibraryManagementPage() {
             {/* Main Content Area - Toggled by Sidebar */}
             <div className="mt-8 transition-all duration-300">
                 {activeTab === "seats" ? (
-                    <LiveSeatPlan seats={seats} libraryName={library.libraryName} />
+                    <LiveSeatPlan seats={seats} libraryName={library.libraryName} libraryId={libraryId} />
                 ) : (
                     <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
                         <div className="flex items-center gap-3 mb-8 pb-4 border-b">
