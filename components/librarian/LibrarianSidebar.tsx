@@ -9,7 +9,8 @@ import {
     Library as LibraryIcon,
     ChevronRight,
     LogOut,
-    Settings
+    Settings,
+    MessageSquareText
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -134,11 +135,11 @@ export function LibrarianSidebar() {
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
-                                    isActive={isLibraryRoute && searchParams.get("tab") !== "students"}
+                                    isActive={isLibraryRoute && !searchParams.get("tab")}
                                     tooltip="Live Seat Map"
                                     className={cn(
                                         "h-11 px-4 rounded-xl transition-all cursor-pointer",
-                                        (isLibraryRoute && searchParams.get("tab") !== "students")
+                                        (isLibraryRoute && !searchParams.get("tab"))
                                             ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
                                             : "text-gray-600 hover:bg-gray-50",
                                         !libraryId && "opacity-50 grayscale"
@@ -180,6 +181,32 @@ export function LibrarianSidebar() {
                                     >
                                         <Users className="h-5 w-5" />
                                         <span>Student Manager</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isLibraryRoute && searchParams.get("tab") === "queries"}
+                                    tooltip="Queries"
+                                    className={cn(
+                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
+                                        (isLibraryRoute && searchParams.get("tab") === "queries")
+                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
+                                            : "text-gray-600 hover:bg-gray-50",
+                                        !libraryId && "opacity-50 grayscale"
+                                    )}
+                                >
+                                    <Link
+                                        href={libraryId ? `/librarian/libraries/${libraryId}?tab=queries` : "/librarian/dashboard"}
+                                        onClick={(e) => {
+                                            if (!libraryId) {
+                                                toast.info("Please select a library first");
+                                            }
+                                        }}
+                                    >
+                                        <MessageSquareText className="h-5 w-5" />
+                                        <span>Queries</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
