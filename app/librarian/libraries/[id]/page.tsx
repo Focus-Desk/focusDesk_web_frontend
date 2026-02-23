@@ -6,10 +6,11 @@ import { useGetDetailedLibrarySeatsQuery } from "@/state/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LayoutGrid, Users, Info, Settings, MapPin, UserPlus } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Users, Info, Settings, MapPin, UserPlus, MessageSquareText } from "lucide-react";
 import LiveSeatPlan from "@/components/librarian/LiveSeatPlan";
 import StudentManagement from "@/components/librarian/StudentManagement";
 import StudentOnboardingFlow from "@/components/librarian/StudentOnboardingFlow";
+import LibraryQueries from "@/components/librarian/LibraryQueries";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "next/navigation";
@@ -94,6 +95,8 @@ export default function LibraryManagementPage() {
                         </div>
                         <StudentOnboardingFlow libraryId={libraryId} />
                     </div>
+                ) : activeTab === "queries" ? (
+                    <LibraryQueries libraryId={libraryId} />
                 ) : (
                     <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
                         <div className="flex items-center gap-3 mb-8 pb-4 border-b">
