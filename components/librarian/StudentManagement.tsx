@@ -14,9 +14,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, User, Phone, Mail, Calendar, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DetailedSeat } from "@/state/api";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+// import StudentOnboardingWizard from "./StudentOnboardingWizard";
 
 interface StudentManagementProps {
     seats: DetailedSeat[];
@@ -36,9 +36,11 @@ interface StudentInfo {
 
 export default function StudentManagement({ seats }: StudentManagementProps) {
     const { id } = useParams();
+    const router = useRouter();
     const libraryId = Array.isArray(id) ? id[0] : id;
     const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState("ALL");
+    // const [isWizardOpen, setIsWizardOpen] = useState(false);
 
     const students = useMemo(() => {
         const studentMap = new Map<string, StudentInfo>();
@@ -120,11 +122,12 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button asChild className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-100">
-                        <Link href={`/librarian/libraries/${libraryId}/add-student`}>
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Add Student
-                        </Link>
+                    <Button
+                        onClick={() => router.push(`?tab=onboarding`)}
+                        className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-100 font-bold"
+                    >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add Student
                     </Button>
                 </div>
 
@@ -210,6 +213,12 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* <StudentOnboardingWizard
+                isOpen={isWizardOpen}
+                onClose={() => setIsWizardOpen(false)}
+                libraryId={libraryId}
+            /> */}
         </div>
     );
 }
