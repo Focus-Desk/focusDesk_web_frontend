@@ -1285,6 +1285,14 @@ export const api = createApi({
         body,
       }),
     }),
+
+    getStudentBookings: build.query<any, { studentId: string; status?: string }>({
+      query: ({ studentId, status }) => {
+        let url = `bookings/getStudentBookings/${studentId}`;
+        if (status) url += `?status=${status}`;
+        return url;
+      },
+    }),
   }),
 });
 
@@ -1353,4 +1361,6 @@ export const {
   useGetStudentByEmailQuery,
   useUploadAadhaarMutation,
   useCalculatePricingMutation,
+  useGetStudentBookingsQuery,
+  useLazyGetStudentBookingsQuery,
 } = api;

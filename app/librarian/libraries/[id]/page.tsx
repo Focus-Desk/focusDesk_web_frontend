@@ -98,13 +98,7 @@ export default function LibraryManagementPage() {
                 ) : activeTab === "queries" ? (
                     <LibraryQueries libraryId={libraryId} />
                 ) : (
-                    <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
-                        <div className="flex items-center gap-3 mb-8 pb-4 border-b">
-                            <Users className="h-6 w-6 text-blue-600" />
-                            <h2 className="text-2xl font-bold text-gray-800">Student Directory</h2>
-                        </div>
-                        <StudentManagement seats={seats} />
-                    </div>
+                    <StudentManagement seats={seats} />
                 )}
             </div>
         </div>
