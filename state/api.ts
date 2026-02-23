@@ -309,6 +309,30 @@ type CreateBookingArgs = {
   paymentStatus?: "PENDING" | "COMPLETED" | "FAILED";
 };
 
+export type AdminCreateBookingArgs = {
+  librarianId: string;
+  pin: string;
+  libraryId: string;
+  planId: string;
+  studentId?: string;
+  studentData?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    gender?: string;
+    dob?: string;
+    aadhaarNumber?: string;
+    aadhaarUrl?: string;
+  };
+  timeSlotId?: string;
+  seatId?: string;
+  monthsRequested?: number;
+  lockerId?: string;
+  offerCode?: string;
+  date?: string;
+};
+
 export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -336,6 +360,7 @@ export const api = createApi({
     "Offers",
     "Seats",
     "SlotConfigs",
+    "Bookings",
   ],
   endpoints: (build) => ({
     getAuthUser: build.query<
@@ -666,18 +691,34 @@ export const api = createApi({
       },
     }),
 
-    getTimeSlotsByLibraryId: build.query<TimeSlot[], string>({
+    getTimeSlotsByLibraryId: build.query<{ success: boolean; data: TimeSlot[] }, string>({
       query: (libraryId) => `timeslots/libraryId/${libraryId}`,
       providesTags: (result) =>
-        result
+        result?.data
           ? [
-            ...result.map(({ id }) => ({ type: "TimeSlots" as const, id })),
+            ...result.data.map(({ id }) => ({ type: "TimeSlots" as const, id })),
             { type: "TimeSlots" },
           ]
           : [{ type: "TimeSlots" }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
           error: "Failed to load time slots.",
+        });
+      },
+    }),
+
+    getLibrariansByLibraryId: build.query<{ success: boolean; data: Librarian[] }, string>({
+      query: (libraryId) => `library/${libraryId}/librarians`,
+      providesTags: (result) =>
+        result?.data
+          ? [
+            ...result.data.map(({ id }) => ({ type: "Librarians" as const, id })),
+            { type: "Librarians" },
+          ]
+          : [{ type: "Librarians" }],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          error: "Failed to load librarians.",
         });
       },
     }),
@@ -1151,8 +1192,14 @@ export const api = createApi({
           : [{ type: "Libraries", id: "LIST" }],
     }),
 
-    getDetailedLibrarySeats: build.query<DetailedLibrarySeatsResponse, string>({
-      query: (libraryId) => `library/libraries/${libraryId}`,
+    getDetailedLibrarySeats: build.query<DetailedLibrarySeatsResponse, { id: string; slotId?: string }>({
+      query: ({ id, slotId }) => {
+        let url = `library/libraries/${id}`;
+        if (slotId && slotId !== "all") {
+          url += `?slotId=${slotId}`;
+        }
+        return url;
+      },
       providesTags: (result) => [
         { type: "Libraries", id: result?.data.library.id },
         { type: "Libraries", id: "DETAILED_SEATS" },
@@ -1192,6 +1239,51 @@ export const api = createApi({
           error: "Failed to assign plan.",
         });
       },
+    }),
+    searchStudentByPhoneNumber: build.query<{ success: boolean; data: any; message?: string }, string>({
+      query: (phoneNumber) => `/students/search/phone?phoneNumber=${phoneNumber}`,
+    }),
+
+    adminCreateBooking: build.mutation<{ success: boolean; data: any; message?: string }, AdminCreateBookingArgs>({
+      query: (body) => ({
+        url: "bookings/admin-create",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Bookings", "Seats", "TimeSlots"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Booking created successfully!",
+          error: "Failed to create booking.",
+        });
+      },
+    }),
+
+    getSeatsForPlan: build.query<{ success: boolean; data: any; message?: string }, { planId: string; date: string }>({
+      query: ({ planId, date }) => `bookings/plan-seats/${planId}?date=${date}`,
+    }),
+
+    getStudentByEmail: build.query<any, string>({
+      query: (email) => `students/studentData/${email}`,
+    }),
+
+    uploadAadhaar: build.mutation<{ success: boolean; url: string; message: string }, FormData>({
+      query: (body) => ({
+        url: "librarian/upload-aadhaar",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    calculatePricing: build.mutation<
+      { success: boolean; data: { monthlyFee: number; monthsRequested: number; lockerPrice: number; packageDiscountPct: number; packageDiscountAmt: number; offerApplied: any; taxes: number; alreadyPaid: number; total: number } },
+      { planId: string; monthsRequested?: number; lockerId?: string; offerCode?: string }
+    >({
+      query: (body) => ({
+        url: "pricing/calculate",
+        method: "POST",
+        body,
+      }),
     }),
   }),
 });
@@ -1254,4 +1346,11 @@ export const {
   useLazySearchStudentByMobileQuery,
   useCreateStudentMutation,
   useCreateBookingMutation,
+  useSearchStudentByPhoneNumberQuery,
+  useAdminCreateBookingMutation,
+  useGetLibrariansByLibraryIdQuery,
+  useGetSeatsForPlanQuery,
+  useGetStudentByEmailQuery,
+  useUploadAadhaarMutation,
+  useCalculatePricingMutation,
 } = api;

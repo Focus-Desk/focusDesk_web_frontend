@@ -6,9 +6,10 @@ import { useGetDetailedLibrarySeatsQuery } from "@/state/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LayoutGrid, Users, Info, Settings, MapPin } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Users, Info, Settings, MapPin, UserPlus } from "lucide-react";
 import LiveSeatPlan from "@/components/librarian/LiveSeatPlan";
 import StudentManagement from "@/components/librarian/StudentManagement";
+import StudentOnboardingFlow from "@/components/librarian/StudentOnboardingFlow";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "next/navigation";
@@ -20,9 +21,12 @@ export default function LibraryManagementPage() {
     const activeTab = searchParams.get("tab") || "seats";
     const libraryId = Array.isArray(id) ? id[0] : id;
 
-    const { data, isLoading, error } = useGetDetailedLibrarySeatsQuery(libraryId, {
-        skip: !libraryId,
-    });
+    const [selectedSlotId, setSelectedSlotId] = React.useState<string>("all");
+
+    const { data, isLoading, error } = useGetDetailedLibrarySeatsQuery(
+        { id: libraryId, slotId: selectedSlotId },
+        { skip: !libraryId }
+    );
 
     if (isLoading) {
         return <LibraryManagementSkeleton />;
@@ -66,7 +70,30 @@ export default function LibraryManagementPage() {
             {/* Main Content Area - Toggled by Sidebar */}
             <div className="mt-8 transition-all duration-300">
                 {activeTab === "seats" ? (
-                    <LiveSeatPlan seats={seats} libraryName={library.libraryName} libraryId={libraryId} />
+                    <LiveSeatPlan
+                        seats={seats}
+                        libraryName={library.libraryName}
+                        libraryId={libraryId}
+                        selectedSlotId={selectedSlotId}
+                        onSlotChange={setSelectedSlotId}
+                    />
+                ) : activeTab === "onboarding" ? (
+                    <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
+                        <div className="flex items-center justify-between mb-8 pb-4 border-b">
+                            <div className="flex items-center gap-3">
+                                <UserPlus className="h-6 w-6 text-blue-600" />
+                                <h2 className="text-2xl font-bold text-gray-800">Student Onboarding</h2>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                onClick={() => router.push(`?tab=students`)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Directory
+                            </Button>
+                        </div>
+                        <StudentOnboardingFlow libraryId={libraryId} />
+                    </div>
                 ) : (
                     <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
                         <div className="flex items-center gap-3 mb-8 pb-4 border-b">
