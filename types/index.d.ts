@@ -145,11 +145,11 @@ declare global {
     interestedInListing: boolean;
   }
   type TimeSlot = { id: number; name: string; startTime: string; endTime: string; hours: string; slotPools: string[]; };
-  type Plan = { id: number; hours: string; planType: 'Fixed' | 'Float'; timeSlotId: string; slotPools: string[]; monthlyFee: string; description: string; };
+  type Plan = { id: string; planName: string; planType: 'Fixed' | 'Float'; price: number; days: number; months: number; hours: number; description: string; isActive: boolean; slots: any[]; formattedTiming: string; };
   type SeatConfiguration = { id: number; seatNumbers: string; seatType: 'Float' | 'Fixed' | 'Special'; attachLocker: boolean; lockerTypeId: string; applicablePlanIds: string[]; };
   type Locker = { id: number; lockerType: string; numberOfLockers: string; charge: string; description: string; };
   type PackageRule = { id: number; planId: string; duration: number; discount: string; };
   type Offer = { id: number; title: string; couponCode: string; discountType: '%' | 'Flat'; discountValue: string; maxDiscount: string; validFrom: string; validTo: string; slotPools: string[]; planIds: string[]; isForNewUsers: boolean; isOncePerUser: boolean; };
 }
 
-export {};
+export { };
