@@ -361,6 +361,9 @@ export const api = createApi({
     "Seats",
     "SlotConfigs",
     "Bookings",
+    "Complaints",
+    "Reviews",
+    "PauseRequests",
   ],
   endpoints: (build) => ({
     getAuthUser: build.query<

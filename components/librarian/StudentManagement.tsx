@@ -81,6 +81,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     const [removeReason, setRemoveReason] = useState("");
     const [bookingHistory, setBookingHistory] = useState<any[]>([]);
     const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+    const [modalView, setModalView] = useState<"MAIN" | "PLAN_HISTORY" | "TRANSACTIONS">("MAIN");
 
     const [triggerGetBookings] = useLazyGetStudentBookingsQuery();
 
@@ -158,6 +159,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
 
     const handleViewDetails = async (student: StudentInfo) => {
         setSelectedStudent(student);
+        setModalView("MAIN");
         setIsLoadingBookings(true);
         try {
             const result = await triggerGetBookings({ studentId: student.id }).unwrap();
@@ -315,11 +317,12 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                             onClick={(e) => e.stopPropagation()}
                             className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto"
                         >
-                            {/* Header with close */}
+                            {/* Header with Title and Close */}
                             <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50 rounded-t-2xl">
-                                <p className="text-xs text-gray-400 font-medium">
-                                    Booking Id: {selectedStudent.id.slice(0, 16)}
-                                </p>
+                                <h3 className="text-lg font-extrabold text-gray-900">
+                                    {modalView === "MAIN" ? "Student Details" :
+                                        modalView === "PLAN_HISTORY" ? "Plan History" : "Transactions"}
+                                </h3>
                                 <button
                                     onClick={() => setSelectedStudent(null)}
                                     className="h-8 w-8 rounded-full hover:bg-gray-200 flex items-center justify-center transition-colors"
@@ -328,133 +331,275 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                 </button>
                             </div>
 
-                            {/* Student Info Header */}
-                            <div className="px-6 py-6 flex gap-6">
-                                {/* Photo */}
-                                <div className="flex-shrink-0">
-                                    {selectedStudent.profilePhoto ? (
-                                        <img
-                                            src={selectedStudent.profilePhoto}
-                                            alt={selectedStudent.firstName}
-                                            className="h-36 w-28 rounded-xl object-cover border shadow-sm"
-                                        />
+                            {modalView === "MAIN" && (
+                                <>
+                                    {/* Student Info Header (Image 2 style) */}
+                                    <div className="px-6 py-6 border-b">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <p className="text-xs text-gray-400 font-medium">
+                                                Booking Id: {selectedStudent.id.slice(0, 16)}
+                                            </p>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-blue-600 font-bold hover:bg-blue-50"
+                                                onClick={() => {/* Edit Profile logic here */ }}
+                                            >
+                                                Edit Profile
+                                            </Button>
+                                        </div>
+                                        <div className="flex gap-6">
+                                            {/* Photo */}
+                                            <div className="flex-shrink-0">
+                                                {selectedStudent.profilePhoto ? (
+                                                    <img
+                                                        src={selectedStudent.profilePhoto}
+                                                        alt={selectedStudent.firstName}
+                                                        className="h-36 w-28 rounded-xl object-cover border shadow-sm"
+                                                    />
+                                                ) : (
+                                                    <div className="h-36 w-28 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center border">
+                                                        <User className="h-12 w-12 text-blue-400" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Info List */}
+                                            <div className="flex-1 space-y-1.5 text-sm">
+                                                <InfoRow label="Name" value={`${selectedStudent.firstName} ${selectedStudent.lastName}`} />
+                                                {selectedStudent.dob && (
+                                                    <InfoRow label="Age" value={`${calculateAge(selectedStudent.dob)}`} />
+                                                )}
+                                                <InfoRow label="Gender" value={selectedStudent.gender || "N/A"} />
+                                                <InfoRow label="Email" value={selectedStudent.email} />
+                                                {selectedStudent.aadhaarNumber && (
+                                                    <InfoRow label="Aadhaar Number" value={`XXXX-XXXX-${selectedStudent.aadhaarNumber.slice(-4)}`} />
+                                                )}
+                                                {selectedStudent.targetExam && (
+                                                    <InfoRow label="Target Exam" value={selectedStudent.targetExam} />
+                                                )}
+                                                {selectedStudent.address && (
+                                                    <InfoRow label="Area/Address" value={selectedStudent.address} />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Current Plan Section (Image 1 style) */}
+                                    <div className="px-6 py-6 border-b bg-blue-50/30">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="text-sm font-bold text-gray-700">Current Plan:</h4>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="rounded-xl font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                                                onClick={() => router.push(`?tab=onboarding`)}
+                                            >
+                                                Upgrade Plan
+                                            </Button>
+                                        </div>
+
+                                        {selectedStudent.currentPlan && selectedStudent.currentPlan !== "—" ? (
+                                            <div className="relative overflow-hidden bg-white/60 backdrop-blur-sm border border-blue-100 rounded-2xl p-5 shadow-sm group">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-blue-400" />
+                                                <div className="flex items-end justify-between">
+                                                    <div>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-2xl font-black text-gray-900 leading-none">Rs. 600</span>
+                                                            <span className="text-sm font-bold text-gray-400">/ month</span>
+                                                        </div>
+                                                        <div className="mt-2 flex items-center gap-2">
+                                                            <Badge variant="outline" className="bg-orange-100 text-orange-700 border-none font-black text-[10px] px-2 py-0.5 rounded-md">
+                                                                6 hrs/ day
+                                                            </Badge>
+                                                            <span className="italic text-[10px] font-bold text-gray-800">
+                                                                Flexible Seat
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="px-4 py-1 border border-blue-400 rounded-lg text-blue-600 font-bold text-sm bg-white">
+                                                        Morning
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-6 text-gray-400 italic text-sm border-2 border-dashed border-gray-100 rounded-2xl">
+                                                No active plan found for this student.
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Navigation Buttons (Bottom Image 2) */}
+                                    <div className="px-6 py-6 grid grid-cols-2 gap-4">
+                                        <Button
+                                            variant="outline"
+                                            className="rounded-xl font-extrabold h-12 bg-blue-500 text-white hover:bg-blue-600 border-none shadow-md"
+                                            onClick={() => setModalView("PLAN_HISTORY")}
+                                        >
+                                            View Plan History
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="rounded-xl font-extrabold h-12 bg-gray-100 text-gray-800 hover:bg-gray-200 border-none"
+                                            onClick={() => setModalView("TRANSACTIONS")}
+                                        >
+                                            Transactions
+                                        </Button>
+                                    </div>
+
+                                    {/* Final Footer Actions */}
+                                    <div className="px-6 pb-6 pt-2 flex items-center gap-4">
+                                        <Button variant="outline" className="rounded-xl font-bold px-6 h-10 border-gray-200">
+                                            <FileText className="h-4 w-4 mr-2" /> View Form
+                                        </Button>
+                                        <Button variant="outline" className="rounded-xl font-bold px-6 h-10 border-gray-200">
+                                            <Upload className="h-4 w-4 mr-2" /> Upload Form
+                                        </Button>
+                                        <div className="ml-auto">
+                                            <Button
+                                                variant="outline"
+                                                className="rounded-xl font-bold px-6 h-10 text-red-600 border-red-100 hover:bg-red-50"
+                                                onClick={() => setShowRemoveConfirm(true)}
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-2" /> Remove
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {modalView === "PLAN_HISTORY" && (
+                                <div className="px-6 py-6 pb-8">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 rounded-full p-0"
+                                            onClick={() => setModalView("MAIN")}
+                                        >
+                                            <ChevronUp className="h-5 w-5 -rotate-90" />
+                                        </Button>
+                                        <h3 className="text-xl font-extrabold text-gray-900">Plan History</h3>
+                                    </div>
+
+                                    {isLoadingBookings ? (
+                                        <div className="flex items-center justify-center py-20 text-gray-400 gap-2">
+                                            <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+                                        </div>
+                                    ) : bookingHistory.length > 0 ? (
+                                        <div className="border rounded-2xl overflow-hidden shadow-sm">
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="bg-gray-50 border-b">
+                                                        <th className="text-left px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Period</th>
+                                                        <th className="text-left px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Plan Name</th>
+                                                        <th className="text-left px-5 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {bookingHistory.map((booking: any, i: number) => {
+                                                        const isActive = booking.bookingDetails?.status === "ACTIVE";
+                                                        const validFrom = new Date(booking.bookingDetails?.validFrom);
+                                                        const seatInfo = booking.seat ? ` – Seat ${booking.seat.seatNumber}` : "";
+                                                        const slotInfo = booking.timeSlot?.name ? ` (${booking.timeSlot.name})` : "";
+
+                                                        return (
+                                                            <tr
+                                                                key={booking.id || i}
+                                                                className={cn(
+                                                                    "border-b last:border-b-0 transition-colors",
+                                                                    isActive && "bg-green-50/40"
+                                                                )}
+                                                            >
+                                                                <td className="px-5 py-4 text-gray-500 font-bold">
+                                                                    {isActive
+                                                                        ? "Current"
+                                                                        : validFrom.toLocaleDateString("en-IN", {
+                                                                            month: "short",
+                                                                            year: "numeric",
+                                                                        })}
+                                                                </td>
+                                                                <td className="px-5 py-4 font-extrabold text-gray-800">
+                                                                    {booking.plan?.planName || "Standard"}{slotInfo}{seatInfo}
+                                                                </td>
+                                                                <td className="px-5 py-4">
+                                                                    <span className={cn(
+                                                                        "text-[10px] font-black px-3 py-1 rounded-md",
+                                                                        isActive
+                                                                            ? "text-green-600"
+                                                                            : "text-gray-400"
+                                                                    )}>
+                                                                        {isActive ? "Active" : booking.bookingDetails?.status || "Completed"}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     ) : (
-                                        <div className="h-36 w-28 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center border">
-                                            <User className="h-12 w-12 text-blue-400" />
+                                        <div className="text-center py-16 text-gray-300 font-bold italic border-2 border-dashed rounded-3xl">
+                                            No plan history found.
                                         </div>
                                     )}
                                 </div>
+                            )}
 
-                                {/* Info */}
-                                <div className="flex-1 space-y-1.5 text-sm">
-                                    <InfoRow label="Name" value={`${selectedStudent.firstName} ${selectedStudent.lastName}`} />
-                                    {selectedStudent.dob && (
-                                        <InfoRow label="Age" value={`${calculateAge(selectedStudent.dob)}`} />
-                                    )}
-                                    <InfoRow label="Gender" value={selectedStudent.gender || "N/A"} />
-                                    <InfoRow label="Email" value={selectedStudent.email} />
-                                    {selectedStudent.aadhaarNumber && (
-                                        <InfoRow label="Aadhaar Number" value={selectedStudent.aadhaarNumber} />
-                                    )}
-                                    {selectedStudent.targetExam && (
-                                        <InfoRow label="Target Exam" value={selectedStudent.targetExam} />
-                                    )}
-                                    {selectedStudent.address && (
-                                        <InfoRow label="Area/Address" value={selectedStudent.address} />
-                                    )}
+                            {modalView === "TRANSACTIONS" && (
+                                <div className="px-6 py-6 flex flex-col h-full overflow-hidden">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 rounded-full p-0"
+                                            onClick={() => setModalView("MAIN")}
+                                        >
+                                            <ChevronUp className="h-5 w-5 -rotate-90" />
+                                        </Button>
+                                        <div className="flex items-center gap-4">
+                                            {selectedStudent.profilePhoto ? (
+                                                <img src={selectedStudent.profilePhoto} className="h-10 w-10 rounded-lg object-cover" />
+                                            ) : (
+                                                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center"><User className="h-6 w-6 text-blue-400" /></div>
+                                            )}
+                                            <div>
+                                                <h3 className="text-sm font-black text-gray-900">{selectedStudent.firstName} {selectedStudent.lastName}</h3>
+                                                <p className="text-[10px] font-bold text-gray-400">Phone no: +91 {selectedStudent.phoneNumber}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 overflow-y-auto pr-1 flex-1 min-h-[300px]">
+                                        {bookingHistory.length > 0 ? (
+                                            bookingHistory.map((booking: any, i: number) => (
+                                                <div key={booking.id || i} className="bg-gray-50/80 border border-gray-100 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Transaction ID: {booking.id?.slice(0, 12).toUpperCase() || "FDX-TRX-102"}</span>
+                                                        <Badge className="bg-blue-800 text-white font-black text-[9px] px-4 py-0.5 rounded-full">Completed</Badge>
+                                                    </div>
+                                                    <div className="pb-3 mb-3 border-b flex justify-between items-center">
+                                                        <h4 className="font-extrabold text-gray-900 text-sm">
+                                                            {booking.plan?.planName || "Standard Plan"} (Morning Shift - Seat {booking.seat?.seatNumber || "B04"})
+                                                        </h4>
+                                                        <span className="text-[10px] font-bold text-gray-400">
+                                                            Dec 1, 2025 - Jan 1, 2026 (1 month)
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-xs font-bold text-gray-400">Rs. 600/ Month</span>
+                                                        <Badge className="bg-green-700 text-white font-black text-[9px] px-6 py-0.5 rounded-md">Paid</Badge>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-16 text-gray-300 font-bold italic border-2 border-dashed rounded-3xl">
+                                                No transactions found.
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-
-                            {/* Plan History Section */}
-                            <div className="px-6 pb-6">
-                                <h3 className="text-lg font-extrabold text-gray-900 mb-4">Plan History</h3>
-
-                                {isLoadingBookings ? (
-                                    <div className="flex items-center justify-center py-10 text-gray-400 gap-2">
-                                        <Loader2 className="h-5 w-5 animate-spin" />
-                                        <span className="font-medium">Loading bookings...</span>
-                                    </div>
-                                ) : bookingHistory.length > 0 ? (
-                                    <div className="border rounded-xl overflow-hidden">
-                                        <table className="w-full text-sm">
-                                            <thead>
-                                                <tr className="bg-gray-50 border-b">
-                                                    <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase">Period</th>
-                                                    <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase">Plan Name</th>
-                                                    <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {bookingHistory.map((booking: any, i: number) => {
-                                                    const isActive = booking.bookingDetails?.status === "ACTIVE";
-                                                    const validFrom = new Date(booking.bookingDetails?.validFrom);
-                                                    const seatInfo = booking.seat ? ` – Seat ${booking.seat.seatNumber}` : "";
-                                                    const slotInfo = booking.timeSlot?.name ? ` (${booking.timeSlot.name})` : "";
-
-                                                    return (
-                                                        <tr
-                                                            key={booking.id || i}
-                                                            className={cn(
-                                                                "border-b last:border-b-0 transition-colors",
-                                                                isActive && "bg-green-50/40"
-                                                            )}
-                                                        >
-                                                            <td className="px-4 py-3 text-gray-600 font-medium">
-                                                                {isActive
-                                                                    ? "Current"
-                                                                    : validFrom.toLocaleDateString("en-IN", {
-                                                                        month: "short",
-                                                                        year: "numeric",
-                                                                    })}
-                                                            </td>
-                                                            <td className="px-4 py-3 font-semibold text-gray-800">
-                                                                {booking.plan?.planName || "Standard"}{slotInfo}{seatInfo}
-                                                            </td>
-                                                            <td className="px-4 py-3">
-                                                                <span className={cn(
-                                                                    "text-xs font-bold px-3 py-1 rounded-full",
-                                                                    isActive
-                                                                        ? "bg-green-100 text-green-700"
-                                                                        : booking.bookingDetails?.status === "COMPLETED"
-                                                                            ? "bg-gray-100 text-gray-600"
-                                                                            : booking.bookingDetails?.status === "EXPIRED"
-                                                                                ? "bg-amber-100 text-amber-600"
-                                                                                : "bg-red-100 text-red-600"
-                                                                )}>
-                                                                    {isActive ? "Active" : booking.bookingDetails?.status || "Completed"}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-8 text-gray-400 text-sm">
-                                        No booking history available.
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="px-6 pb-6 flex items-center gap-4">
-                                <Button variant="outline" className="rounded-xl font-bold px-6 h-10">
-                                    <FileText className="h-4 w-4 mr-2" /> View Form
-                                </Button>
-                                <Button variant="outline" className="rounded-xl font-bold px-6 h-10">
-                                    <Upload className="h-4 w-4 mr-2" /> Upload Form
-                                </Button>
-                                <div className="ml-auto">
-                                    <Button
-                                        variant="outline"
-                                        className="rounded-xl font-bold px-6 h-10 text-red-600 border-red-200 hover:bg-red-50"
-                                        onClick={() => setShowRemoveConfirm(true)}
-                                    >
-                                        <Trash2 className="h-4 w-4 mr-2" /> Remove Student
-                                    </Button>
-                                </div>
-                            </div>
+                            )}
                         </motion.div>
                     </motion.div>
                 )}
