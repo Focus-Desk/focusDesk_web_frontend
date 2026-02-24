@@ -10,7 +10,8 @@ import {
     ChevronRight,
     LogOut,
     Settings,
-    MessageSquareText
+    MessageSquareText,
+    ClipboardList
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -207,6 +208,32 @@ export function LibrarianSidebar() {
                                     >
                                         <MessageSquareText className="h-5 w-5" />
                                         <span>Queries</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isLibraryRoute && searchParams.get("tab") === "bookings"}
+                                    tooltip="Bookings"
+                                    className={cn(
+                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
+                                        (isLibraryRoute && searchParams.get("tab") === "bookings")
+                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
+                                            : "text-gray-600 hover:bg-gray-50",
+                                        !libraryId && "opacity-50 grayscale"
+                                    )}
+                                >
+                                    <Link
+                                        href={libraryId ? `/librarian/libraries/${libraryId}?tab=bookings` : "/librarian/dashboard"}
+                                        onClick={(e) => {
+                                            if (!libraryId) {
+                                                toast.info("Please select a library first");
+                                            }
+                                        }}
+                                    >
+                                        <ClipboardList className="h-5 w-5" />
+                                        <span>Bookings</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

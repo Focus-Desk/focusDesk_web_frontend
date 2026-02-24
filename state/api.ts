@@ -1285,6 +1285,98 @@ export const api = createApi({
         body,
       }),
     }),
+
+    getStudentBookings: build.query<any, { studentId: string; status?: string }>({
+      query: ({ studentId, status }) => {
+        let url = `bookings/getStudentBookings/${studentId}`;
+        if (status) url += `?status=${status}`;
+        return url;
+      },
+      providesTags: ["Bookings"],
+    }),
+
+    getLibraryBookings: build.query<any, { libraryId: string; filter?: string }>({
+      query: ({ libraryId, filter }) => ({
+        url: `bookings/library/list/${libraryId}`,
+        params: { filter },
+      }),
+      providesTags: ["Bookings"],
+    }),
+
+    approveBooking: build.mutation<any, string>({
+      query: (id) => ({
+        url: `bookings/approve/${id}`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Bookings", "LibrarySeats"],
+    }),
+
+    rejectBooking: build.mutation<any, string>({
+      query: (id) => ({
+        url: `bookings/reject/${id}`,
+        method: "POST",
+      }),
+      invalidatesTags: ["Bookings", "LibrarySeats"],
+    }),
+
+    getComplaintsByLibrary: build.query<any, string>({
+      query: (libraryId) => `complaints/library/${libraryId}`,
+      providesTags: ["Complaints"],
+    }),
+
+    updateComplaintStatus: build.mutation<any, {
+      id: string;
+      status: string;
+      resolution?: string;
+      allottedTo?: string;
+      resolutionDays?: number;
+      reportReason?: string;
+      reportDetails?: string;
+    }>({
+      query: ({ id, ...body }) => ({
+        url: `complaints/${id}/status`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Complaints"],
+    }),
+
+    getLibraryReviewsForLibrarian: build.query<any, string>({
+      query: (libraryId) => `reviews/librarian/${libraryId}`,
+      providesTags: ["Reviews"],
+    }),
+
+    updateReviewStatus: build.mutation<any, { id: string; status?: string; isRead?: boolean }>({
+      query: ({ id, ...body }) => ({
+        url: `reviews/${id}/status`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Reviews"],
+    }),
+
+    replyToReview: build.mutation<any, { id: string; reply: string }>({
+      query: ({ id, ...body }) => ({
+        url: `reviews/${id}/reply`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Reviews"],
+    }),
+
+    getPauseRequestsByLibrary: build.query<any, string>({
+      query: (libraryId) => `plan-requests/library/${libraryId}`,
+      providesTags: ["PauseRequests"],
+    }),
+
+    updatePauseRequestStatus: build.mutation<any, { id: string; status: string; rejectionReason?: string }>({
+      query: ({ id, ...body }) => ({
+        url: `plan-requests/${id}/status`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["PauseRequests"],
+    }),
   }),
 });
 
@@ -1353,4 +1445,16 @@ export const {
   useGetStudentByEmailQuery,
   useUploadAadhaarMutation,
   useCalculatePricingMutation,
+  useGetStudentBookingsQuery,
+  useLazyGetStudentBookingsQuery,
+  useGetComplaintsByLibraryQuery,
+  useUpdateComplaintStatusMutation,
+  useGetLibraryReviewsForLibrarianQuery,
+  useUpdateReviewStatusMutation,
+  useReplyToReviewMutation,
+  useGetPauseRequestsByLibraryQuery,
+  useUpdatePauseRequestStatusMutation,
+  useGetLibraryBookingsQuery,
+  useApproveBookingMutation,
+  useRejectBookingMutation,
 } = api;
