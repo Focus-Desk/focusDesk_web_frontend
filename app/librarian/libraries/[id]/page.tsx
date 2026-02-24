@@ -11,6 +11,7 @@ import LiveSeatPlan from "@/components/librarian/LiveSeatPlan";
 import StudentManagement from "@/components/librarian/StudentManagement";
 import StudentOnboardingFlow from "@/components/librarian/StudentOnboardingFlow";
 import LibraryQueries from "@/components/librarian/LibraryQueries";
+import LibraryBookings from "@/components/librarian/LibraryBookings";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "next/navigation";
@@ -97,6 +98,8 @@ export default function LibraryManagementPage() {
                     </div>
                 ) : activeTab === "queries" ? (
                     <LibraryQueries libraryId={libraryId} />
+                ) : activeTab === "bookings" ? (
+                    <LibraryBookings libraryId={libraryId} />
                 ) : (
                     <StudentManagement seats={seats} />
                 )}
