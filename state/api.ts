@@ -665,6 +665,7 @@ export const api = createApi({
 
     getPlans: build.query<Plan[], string>({
       query: (libraryId) => `plans/${libraryId}`,
+      transformResponse: (response: { success: boolean; data: Plan[] }) => response.data,
       providesTags: (result) =>
         result
           ? [

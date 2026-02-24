@@ -11,7 +11,8 @@ import {
     LogOut,
     Settings,
     MessageSquareText,
-    ClipboardList
+    ClipboardList,
+    Tag
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -234,6 +235,32 @@ export function LibrarianSidebar() {
                                     >
                                         <ClipboardList className="h-5 w-5" />
                                         <span>Bookings</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isLibraryRoute && searchParams.get("tab") === "plans"}
+                                    tooltip="Plans"
+                                    className={cn(
+                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
+                                        (isLibraryRoute && searchParams.get("tab") === "plans")
+                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
+                                            : "text-gray-600 hover:bg-gray-50",
+                                        !libraryId && "opacity-50 grayscale"
+                                    )}
+                                >
+                                    <Link
+                                        href={libraryId ? `/librarian/libraries/${libraryId}?tab=plans` : "/librarian/dashboard"}
+                                        onClick={(e) => {
+                                            if (!libraryId) {
+                                                toast.info("Please select a library first");
+                                            }
+                                        }}
+                                    >
+                                        <Tag className="h-5 w-5" />
+                                        <span>Plans</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
