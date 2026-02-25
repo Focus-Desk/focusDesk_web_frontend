@@ -35,6 +35,7 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import UpgradePlanModal from "./UpgradePlanModal";
 import { toast } from "sonner";
 
 interface StudentManagementProps {
@@ -79,6 +80,11 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     const [selectedStudent, setSelectedStudent] = useState<StudentInfo | null>(null);
     const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
     const [removeReason, setRemoveReason] = useState("");
+
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [studentToUpgrade, setStudentToUpgrade] = useState<StudentInfo | null>(null);
+    const [activeBookingForUpgrade, setActiveBookingForUpgrade] = useState<any>(null);
+    const [activeBooking, setActiveBooking] = useState<any>(null);
     const [bookingHistory, setBookingHistory] = useState<any[]>([]);
     const [isLoadingBookings, setIsLoadingBookings] = useState(false);
     const [modalView, setModalView] = useState<"MAIN" | "PLAN_HISTORY" | "TRANSACTIONS">("MAIN");
@@ -164,13 +170,38 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
         try {
             const result = await triggerGetBookings({ studentId: student.id }).unwrap();
             if (result.success) {
-                setBookingHistory(result.data.bookings || []);
+                const bookings = result.data.bookings || [];
+                setBookingHistory(bookings);
+                const active = bookings.find((b: any) => b.bookingDetails?.status === "ACTIVE");
+                setActiveBooking(active);
             }
         } catch {
             setBookingHistory([]);
         } finally {
             setIsLoadingBookings(false);
         }
+    };
+
+    const handleOpenUpgradeModal = async (student: StudentInfo) => {
+        setStudentToUpgrade(student);
+        setIsLoadingBookings(true);
+        try {
+            const result = await triggerGetBookings({ studentId: student.id }).unwrap();
+            const active = result.data.bookings?.find((b: any) => b.bookingDetails?.status === "ACTIVE");
+            setActiveBookingForUpgrade(active);
+            setIsUpgradeModalOpen(true);
+        } catch {
+            toast.error("Failed to fetch student bookings");
+        } finally {
+            setIsLoadingBookings(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        setSelectedStudent(null);
+        setActiveBooking(null);
+        setBookingHistory([]);
+        setModalView("MAIN");
     };
 
     const handleRemoveStudent = () => {
@@ -278,7 +309,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                     size="sm"
                                                     variant="outline"
                                                     className="rounded-lg font-bold text-xs px-5 h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
-                                                    onClick={() => router.push(`?tab=onboarding`)}
+                                                    onClick={() => handleOpenUpgradeModal(student)}
                                                 >
                                                     Upgrade Plan
                                                 </Button>
@@ -308,7 +339,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-                        onClick={() => setSelectedStudent(null)}
+                        onClick={handleCloseModal}
                     >
                         <motion.div
                             initial={{ scale: 0.95, y: 20 }}
@@ -324,7 +355,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                         modalView === "PLAN_HISTORY" ? "Plan History" : "Transactions"}
                                 </h3>
                                 <button
-                                    onClick={() => setSelectedStudent(null)}
+                                    onClick={handleCloseModal}
                                     className="h-8 w-8 rounded-full hover:bg-gray-200 flex items-center justify-center transition-colors"
                                 >
                                     <X className="h-4 w-4" />
@@ -393,32 +424,37 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                 variant="outline"
                                                 size="sm"
                                                 className="rounded-xl font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
-                                                onClick={() => router.push(`?tab=onboarding`)}
+                                                onClick={() => handleOpenUpgradeModal(selectedStudent)}
                                             >
                                                 Upgrade Plan
                                             </Button>
                                         </div>
 
-                                        {selectedStudent.currentPlan && selectedStudent.currentPlan !== "—" ? (
+                                        {activeBooking ? (
                                             <div className="relative overflow-hidden bg-white/60 backdrop-blur-sm border border-blue-100 rounded-2xl p-5 shadow-sm group">
                                                 <div className="absolute top-0 left-0 w-1 h-full bg-blue-400" />
                                                 <div className="flex items-end justify-between">
                                                     <div>
                                                         <div className="flex items-baseline gap-1">
-                                                            <span className="text-2xl font-black text-gray-900 leading-none">Rs. 600</span>
+                                                            <span className="text-2xl font-black text-gray-900 leading-none">
+                                                                Rs. {activeBooking.bookingDetails?.totalAmount || activeBooking.plan?.price}
+                                                            </span>
                                                             <span className="text-sm font-bold text-gray-400">/ month</span>
                                                         </div>
                                                         <div className="mt-2 flex items-center gap-2">
                                                             <Badge variant="outline" className="bg-orange-100 text-orange-700 border-none font-black text-[10px] px-2 py-0.5 rounded-md">
-                                                                6 hrs/ day
+                                                                {activeBooking.plan?.hours} hrs/ day
                                                             </Badge>
-                                                            <span className="italic text-[10px] font-bold text-gray-800">
-                                                                Flexible Seat
+                                                            <span className="italic text-[10px] font-bold text-gray-800 uppercase">
+                                                                {activeBooking.bookingDetails?.seatMode || activeBooking.plan?.planType} Seat
                                                             </span>
                                                         </div>
+                                                        <div className="mt-1 text-[10px] font-bold text-blue-600">
+                                                            Valid till: {new Date(activeBooking.bookingDetails?.validTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </div>
                                                     </div>
-                                                    <div className="px-4 py-1 border border-blue-400 rounded-lg text-blue-600 font-bold text-sm bg-white">
-                                                        Morning
+                                                    <div className="px-4 py-1 border border-blue-400 rounded-lg text-blue-600 font-bold text-sm bg-white uppercase">
+                                                        {activeBooking.plan?.planName}
                                                     </div>
                                                 </div>
                                             </div>
@@ -602,6 +638,24 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                             )}
                         </motion.div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {isUpgradeModalOpen && studentToUpgrade && (
+                    <UpgradePlanModal
+                        student={studentToUpgrade}
+                        libraryId={libraryId as string}
+                        activeBooking={activeBookingForUpgrade}
+                        onClose={() => {
+                            setIsUpgradeModalOpen(false);
+                            setStudentToUpgrade(null);
+                            setActiveBookingForUpgrade(null);
+                        }}
+                        onSuccess={() => {
+                            // Optionally refresh student list or show global success
+                        }}
+                    />
                 )}
             </AnimatePresence>
 
