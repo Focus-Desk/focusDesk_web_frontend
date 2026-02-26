@@ -54,12 +54,6 @@ export default function LibrarianDashboard() {
   const [deleteLibrary, { isLoading: deleting }] = useDeleteLibraryMutation();
   const router = useRouter();
 
-  useEffect(() => {
-    if (libraries && libraries.length === 1) {
-      router.replace(`/librarian/libraries/${libraries[0].id}`);
-    }
-  }, [libraries, router]);
-
   const reviewedCount = libraries?.filter((lib) => lib.reviewStatus !== "PENDING")
     .length || 0;
   const pendingCount = libraries?.length

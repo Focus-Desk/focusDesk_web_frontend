@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays, isAfter, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
-
+import { useRouter } from "next/navigation";
 interface LibraryHomeProps {
     libraryId: string;
 }
@@ -84,51 +84,67 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
         </div>
     );
 
-    // Section 2: Library Bookings (Style: Image 3)
+    // Section 2: Library Bookings
     const BookingsList = () => {
-        const displayBookings = activeBookings.slice(0, 5);
+        const displayBookings = activeBookings.slice(0, 3);
+        const router = useRouter();
 
         return (
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col h-full overflow-hidden">
                 <div className="bg-blue-50/50 p-6 border-b border-gray-100">
                     <div className="flex justify-between items-center">
-                        <h3 className="font-black text-blue-900 text-lg uppercase tracking-tight">Library Bookings</h3>
-                        <Button variant="ghost" size="sm" className="text-blue-600 font-black text-[10px] uppercase">View All</Button>
+                        <h3 className="font-black text-blue-900 text-lg uppercase tracking-tight">Active Bookings</h3>
+                        <Badge variant="outline" className="bg-blue-100/50 text-blue-700 border-blue-200">Live</Badge>
                     </div>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {isLoadingBookings ? (
                         Array(3).fill(0).map((_, i) => (
-                            <div key={i} className="p-6 border-b border-gray-50 space-y-2">
-                                <Skeleton className="h-5 w-32" />
-                                <Skeleton className="h-3 w-20" />
+                            <div key={i} className="flex gap-4 items-center">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div className="space-y-2 flex-1">
+                                    <Skeleton className="h-4 w-1/2" />
+                                    <Skeleton className="h-3 w-1/3" />
+                                </div>
                             </div>
                         ))
                     ) : displayBookings.length > 0 ? (
-                        displayBookings.map((booking: any, index: number) => {
-                            const daysLeft = differenceInDays(new Date(booking.bookingDetails?.validTo), new Date());
-                            return (
-                                <div key={booking.id} className={cn(
-                                    "p-6 flex justify-between items-center border-b border-gray-50 hover:bg-gray-50/50 transition-colors",
-                                    index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
-                                )}>
-                                    <div>
-                                        <div className="font-black text-gray-800 text-base">{booking.student?.firstName} {booking.student?.lastName}</div>
-                                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Student ID: {booking.student?.id?.slice(0, 6)}</div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-black text-gray-800 text-sm">{format(new Date(booking.validFrom), "do MMM, yyyy")}</div>
-                                        <div className="text-[10px] font-black">
-                                            Days Left: <span className={cn(daysLeft <= 3 ? "text-red-500" : "text-green-500")}>{daysLeft}</span>
+                        <>
+                            {displayBookings.map((booking: any) => (
+                                <div key={booking.id} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-sm border border-blue-100">
+                                            {booking.student?.firstName?.[0]}
+                                        </div>
+                                        <div>
+                                            <div className="font-black text-gray-800 text-sm truncate max-w-[120px]">
+                                                {booking.student?.firstName} {booking.student?.lastName}
+                                            </div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                                Seat {booking.seat?.seatNumber} • {booking.slot?.name}
+                                            </div>
                                         </div>
                                     </div>
+                                    <Badge className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5">
+                                        {booking.status}
+                                    </Badge>
                                 </div>
-                            );
-                        })
+                            ))}
+                            {activeBookings.length > 3 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full mt-2 text-blue-600 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-50"
+                                    onClick={() => router.push(`/librarian/libraries/${libraryId}?tab=bookings`)}
+                                >
+                                    View All <ChevronRight className="ml-1 h-3 w-3" />
+                                </Button>
+                            )}
+                        </>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center p-8 text-gray-400">
-                            <Calendar className="h-12 w-12 mb-3 opacity-20" />
-                            <p className="font-black text-sm uppercase">No active bookings</p>
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 py-8">
+                            <Calendar className="h-10 w-10 mb-2 opacity-20" />
+                            <p className="font-black text-[10px] uppercase tracking-widest">No active bookings</p>
                         </div>
                     )}
                 </div>
@@ -136,55 +152,73 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
         );
     };
 
-    // Section 3: Queries List (Style: Image 4)
+    // Section 3: Queries List
     const QueriesList = () => {
-        // Combine and prioritize pending items
+        const router = useRouter();
         const combined = [
             ...complaints.map((c: any) => ({ ...c, type: 'complaint' })),
             ...reviews.map((r: any) => ({ ...r, type: 'review' }))
-        ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+        ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        const displayQueries = combined.slice(0, 3);
 
         return (
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col h-full overflow-hidden">
-                <div className="bg-blue-50/50 p-6 border-b border-gray-100">
-                    <h3 className="font-black text-blue-900 text-lg uppercase tracking-tight">Queries</h3>
+                <div className="bg-orange-50/50 p-6 border-b border-gray-100">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-black text-blue-900 text-lg uppercase tracking-tight">Recent Queries</h3>
+                        <Badge variant="outline" className="bg-orange-100/50 text-orange-700 border-orange-200">Alert</Badge>
+                    </div>
                 </div>
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {isLoadingComplaints || isLoadingReviews ? (
                         Array(3).fill(0).map((_, i) => (
-                            <div key={i} className="p-6 border-b border-gray-50 flex justify-between">
-                                <Skeleton className="h-5 w-32" />
-                                <Skeleton className="h-8 w-24 rounded-lg" />
+                            <div key={i} className="space-y-2">
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-3 w-1/2" />
                             </div>
                         ))
-                    ) : combined.length > 0 ? (
-                        combined.map((item: any, index: number) => (
-                            <div key={item.id} className={cn(
-                                "p-6 flex justify-between items-center border-b border-gray-50 group hover:bg-gray-50/50 transition-colors",
-                                index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
-                            )}>
-                                <div>
-                                    <div className="font-black text-gray-800 text-base">
-                                        {item.type === 'complaint' ? (item.student?.firstName + " " + item.student?.lastName) : (item.student?.firstName || "Anonymous")}
+                    ) : displayQueries.length > 0 ? (
+                        <>
+                            {displayQueries.map((item: any) => (
+                                <div key={item.id} className="space-y-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0 group">
+                                    <div className="flex justify-between items-start">
+                                        <div className={cn(
+                                            "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
+                                            item.type === 'complaint' ? "bg-red-50 text-red-600" : "bg-purple-50 text-purple-600"
+                                        )}>
+                                            {item.type}
+                                        </div>
+                                        <span className="text-[9px] font-bold text-gray-300">{format(new Date(item.createdAt), "MMM dd")}</span>
                                     </div>
-                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Student ID: {item.studentId?.slice(0, 6)}</div>
+                                    <p className="text-xs font-bold text-gray-600 line-clamp-1">
+                                        {item.type === 'complaint' ? item.description : item.reviewText}
+                                    </p>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
+                                            #{item.studentId?.slice(-4)}
+                                        </span>
+                                        <Button variant="link" className="h-auto p-0 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:no-underline">
+                                            Resolve
+                                        </Button>
+                                    </div>
                                 </div>
+                            ))}
+                            {combined.length > 3 && (
                                 <Button
-                                    className={cn(
-                                        "rounded-xl h-10 px-5 font-black text-[10px] uppercase shadow-sm transition-all hover:scale-105",
-                                        item.type === 'complaint'
-                                            ? "bg-blue-900 text-white hover:bg-blue-800"
-                                            : "bg-orange-400 text-white hover:bg-orange-500"
-                                    )}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full mt-2 text-blue-600 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-50"
+                                    onClick={() => router.push(`/librarian/libraries/${libraryId}?tab=queries`)}
                                 >
-                                    {item.type === 'complaint' ? "View Complaint" : "View Review"}
+                                    View All <ChevronRight className="ml-1 h-3 w-3" />
                                 </Button>
-                            </div>
-                        ))
+                            )}
+                        </>
                     ) : (
-                        <div className="h-full flex flex-col items-center justify-center p-8 text-gray-400">
-                            <MessageCircle className="h-12 w-12 mb-3 opacity-20" />
-                            <p className="font-black text-sm uppercase">All clear! No queries.</p>
+                        <div className="h-full flex flex-col items-center justify-center text-gray-400 py-8">
+                            <MessageCircle className="h-10 w-10 mb-2 opacity-20" />
+                            <p className="font-black text-[10px] uppercase tracking-widest">All caught up</p>
                         </div>
                     )}
                 </div>

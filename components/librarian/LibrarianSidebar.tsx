@@ -68,8 +68,8 @@ export function LibrarianSidebar() {
 
     return (
         <Sidebar collapsible="icon" className="border-r bg-white shadow-xl">
-            <SidebarHeader className="h-20 flex items-center px-6 border-b">
-                <div className="flex items-center gap-3 overflow-hidden">
+            <SidebarHeader className="h-20 flex items-center justify-center p-2 border-b">
+                <div className="flex items-center gap-3 overflow-hidden w-full group-data-[collapsible=icon]:justify-center px-4 group-data-[collapsible=icon]:px-0">
                     <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
                         <LibraryIcon className="h-6 w-6 text-white" />
                     </div>
@@ -81,14 +81,17 @@ export function LibrarianSidebar() {
                 </div>
             </SidebarHeader>
 
-            <SidebarContent className="px-3 py-6">
+            <SidebarContent className="p-0 py-6 group-data-[collapsible=icon]:py-4">
                 {/* Main Navigation */}
-                <SidebarGroup>
-                    <SidebarGroupLabel className="px-4 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-4 px-6">
+                <SidebarGroup className="p-0 group-data-[collapsible=icon]:items-center">
+                    <SidebarGroupLabel className={cn(
+                        "text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 px-6 transition-all duration-300",
+                        state === "collapsed" ? "opacity-0 invisible h-0 m-0 p-0" : "opacity-100 visible h-auto mb-4"
+                    )}>
                         {isLibrarySelected ? "Library Control" : "Main Menu"}
                     </SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu className="gap-1.5 px-3">
+                    <SidebarGroupContent className="p-0 w-full">
+                        <SidebarMenu className="gap-1.5 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:items-center">
                             {isLibrarySelected ? (
                                 <>
                                     <SidebarMenuItem>
@@ -96,16 +99,17 @@ export function LibrarianSidebar() {
                                             asChild
                                             isActive={searchParams.get("tab") === "home" || !searchParams.get("tab")}
                                             tooltip="Overview"
+                                            size="lg"
                                             className={cn(
-                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                "rounded-2xl transition-all duration-300 group flex items-center justify-center",
                                                 (searchParams.get("tab") === "home" || !searchParams.get("tab"))
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href={`/librarian/libraries/${libraryId}?tab=home`}>
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=home`} className="flex items-center justify-center w-full">
                                                 <Home className="h-5 w-5" />
-                                                <span>Library Home</span>
+                                                {state === "expanded" && <span className="ml-3">Library Home</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -114,16 +118,17 @@ export function LibrarianSidebar() {
                                             asChild
                                             isActive={searchParams.get("tab") === "seats"}
                                             tooltip="Seat Plan"
+                                            size="lg"
                                             className={cn(
-                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                "rounded-2xl transition-all duration-300 group flex items-center justify-center",
                                                 searchParams.get("tab") === "seats"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href={`/librarian/libraries/${libraryId}?tab=seats`}>
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=seats`} className="flex items-center justify-center w-full">
                                                 <LayoutGrid className="h-5 w-5" />
-                                                <span>Live Seat Map</span>
+                                                {state === "expanded" && <span className="ml-3">Live Seat Map</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -132,16 +137,17 @@ export function LibrarianSidebar() {
                                             asChild
                                             isActive={searchParams.get("tab") === "students"}
                                             tooltip="Students"
+                                            size="lg"
                                             className={cn(
-                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                "rounded-2xl transition-all duration-300 group flex items-center justify-center",
                                                 searchParams.get("tab") === "students"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href={`/librarian/libraries/${libraryId}?tab=students`}>
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=students`} className="flex items-center justify-center w-full">
                                                 <Users className="h-5 w-5" />
-                                                <span>Student Manager</span>
+                                                {state === "expanded" && <span className="ml-3">Student Manager</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -150,16 +156,17 @@ export function LibrarianSidebar() {
                                             asChild
                                             isActive={searchParams.get("tab") === "queries"}
                                             tooltip="Queries"
+                                            size="lg"
                                             className={cn(
-                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                "rounded-2xl transition-all duration-300 group flex items-center justify-center",
                                                 searchParams.get("tab") === "queries"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href={`/librarian/libraries/${libraryId}?tab=queries`}>
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=queries`} className="flex items-center justify-center w-full">
                                                 <MessageSquareText className="h-5 w-5" />
-                                                <span>Queries</span>
+                                                {state === "expanded" && <span className="ml-3">Queries</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -168,16 +175,17 @@ export function LibrarianSidebar() {
                                             asChild
                                             isActive={searchParams.get("tab") === "bookings"}
                                             tooltip="Bookings"
+                                            size="lg"
                                             className={cn(
-                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                "rounded-2xl transition-all duration-300 group flex items-center justify-center",
                                                 searchParams.get("tab") === "bookings"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href={`/librarian/libraries/${libraryId}?tab=bookings`}>
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=bookings`} className="flex items-center justify-center w-full">
                                                 <ClipboardList className="h-5 w-5" />
-                                                <span>Bookings</span>
+                                                {state === "expanded" && <span className="ml-3">Bookings</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -186,16 +194,17 @@ export function LibrarianSidebar() {
                                             asChild
                                             isActive={searchParams.get("tab") === "plans"}
                                             tooltip="Plans"
+                                            size="lg"
                                             className={cn(
-                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                "rounded-2xl transition-all duration-300 group flex items-center justify-center",
                                                 searchParams.get("tab") === "plans"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href={`/librarian/libraries/${libraryId}?tab=plans`}>
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=plans`} className="flex items-center justify-center w-full">
                                                 <Tag className="h-5 w-5" />
-                                                <span>Plans</span>
+                                                {state === "expanded" && <span className="ml-3">Plans</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -207,16 +216,17 @@ export function LibrarianSidebar() {
                                             asChild
                                             isActive={isActive("/librarian/dashboard")}
                                             tooltip="Overview"
+                                            size="lg"
                                             className={cn(
-                                                "h-12 px-5 rounded-2xl transition-all",
+                                                "rounded-2xl transition-all flex items-center justify-center",
                                                 isActive("/librarian/dashboard")
                                                     ? "bg-blue-600 text-white font-bold shadow-lg shadow-blue-100"
                                                     : "text-gray-500 hover:bg-gray-50"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard">
+                                            <Link href="/librarian/dashboard" className="flex items-center justify-center w-full">
                                                 <LayoutDashboard className="h-5 w-5" />
-                                                <span>Overview</span>
+                                                {state === "expanded" && <span className="ml-3">Overview</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -225,16 +235,17 @@ export function LibrarianSidebar() {
                                             asChild
                                             isActive={isActive("/librarian/libraries")}
                                             tooltip="My Libraries"
+                                            size="lg"
                                             className={cn(
-                                                "h-12 px-5 rounded-2xl transition-all",
+                                                "rounded-2xl transition-all flex items-center justify-center",
                                                 isActive("/librarian/libraries")
                                                     ? "bg-blue-600 text-white font-bold shadow-lg shadow-blue-100"
                                                     : "text-gray-500 hover:bg-gray-50"
                                             )}
                                         >
-                                            <Link href="/librarian/libraries">
+                                            <Link href="/librarian/libraries" className="flex items-center justify-center w-full">
                                                 <LibraryIcon className="h-5 w-5" />
-                                                <span>My Libraries</span>
+                                                {state === "expanded" && <span className="ml-3">My Libraries</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -245,39 +256,41 @@ export function LibrarianSidebar() {
                 </SidebarGroup>
 
                 {/* Secondary Actions */}
-                <SidebarGroup className="mt-auto border-t border-gray-100/50 pt-6">
-                    <SidebarGroupContent>
-                        <SidebarMenu className="px-3 gap-1">
+                <SidebarGroup className="mt-auto border-t border-gray-100/50 p-0 py-6 group-data-[collapsible=icon]:py-4">
+                    <SidebarGroupContent className="p-0">
+                        <SidebarMenu className="px-3 group-data-[collapsible=icon]:px-0 gap-1.5 group-data-[collapsible=icon]:items-center">
                             {isLibrarySelected && (
-                                <SidebarMenuItem>
+                                <SidebarMenuItem className="w-full flex justify-center">
                                     <SidebarMenuButton
                                         asChild
                                         tooltip="Change Library"
-                                        className="h-10 px-4 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all font-medium text-xs"
+                                        size="lg"
+                                        className="rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all font-medium text-xs flex items-center justify-center"
                                     >
-                                        <Link href="/librarian/dashboard">
+                                        <Link href="/librarian/dashboard" className="flex items-center justify-center w-full">
                                             <ArrowLeft className="h-4 w-4" />
-                                            <span>Back to Dashboard</span>
+                                            {state === "expanded" && <span className="ml-2">Back to Dashboard</span>}
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             )}
                             {(!libraries || libraries.length === 0) && (
-                                <SidebarMenuItem>
+                                <SidebarMenuItem className="w-full flex justify-center">
                                     <SidebarMenuButton
                                         asChild
                                         isActive={isActive("/librarian/add-library")}
                                         tooltip="Add Library"
+                                        size="lg"
                                         className={cn(
-                                            "h-10 px-4 rounded-xl transition-all text-xs font-medium",
+                                            "rounded-xl transition-all text-xs font-medium flex items-center justify-center",
                                             isActive("/librarian/add-library")
                                                 ? "bg-blue-50 text-blue-600 shadow-sm"
                                                 : "text-gray-500 hover:bg-gray-50"
                                         )}
                                     >
-                                        <Link href="/librarian/add-library">
+                                        <Link href="/librarian/add-library" className="flex items-center justify-center w-full">
                                             <PlusCircle className="h-4 w-4" />
-                                            <span>Add Library</span>
+                                            {state === "expanded" && <span className="ml-2">Add Library</span>}
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
@@ -287,17 +300,21 @@ export function LibrarianSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="p-4 border-t">
-                <SidebarMenu>
-                    <SidebarMenuItem>
+            <SidebarFooter className="p-2 border-t group-data-[collapsible=icon]:px-0">
+                <SidebarMenu className="group-data-[collapsible=icon]:items-center">
+                    <SidebarMenuItem className="w-full flex justify-center">
                         <SidebarMenuButton
-                            className="h-14 px-2 rounded-xl hover:bg-gray-50 transition-all flex items-center justify-between"
+                            size="lg"
+                            className="rounded-xl hover:bg-gray-50 transition-all flex items-center justify-between group-data-[collapsible=icon]:justify-center"
                             tooltip="Profile Settings"
                         >
-                            <div className="flex items-center gap-3 overflow-hidden">
-                                <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-1 ring-gray-100 italic font-bold">
+                            <div className="flex items-center gap-3 overflow-hidden group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center">
+                                <Avatar className={cn(
+                                    "border-2 border-white shadow-sm ring-1 ring-gray-100 italic font-bold transition-all",
+                                    state === "collapsed" ? "h-7 w-7" : "h-10 w-10"
+                                )}>
                                     <AvatarImage src={librarian?.profilePhoto} />
-                                    <AvatarFallback className="bg-blue-100 text-blue-600">
+                                    <AvatarFallback className="bg-blue-100 text-blue-600 text-[10px]">
                                         {librarian?.username?.[0]?.toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
@@ -315,14 +332,15 @@ export function LibrarianSidebar() {
                             {state === "expanded" && <ChevronRight className="h-4 w-4 text-gray-400 mr-1" />}
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                    <SidebarMenuItem>
+                    <SidebarMenuItem className="w-full flex justify-center">
                         <SidebarMenuButton
                             onClick={handleSignOut}
                             tooltip="Log Out"
-                            className="h-11 px-4 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all font-medium"
+                            size="lg"
+                            className="rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all font-medium flex items-center justify-center"
                         >
                             <LogOut className="h-5 w-5" />
-                            <span>Sign Out</span>
+                            {state === "expanded" && <span className="ml-3">Sign Out</span>}
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>

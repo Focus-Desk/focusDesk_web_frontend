@@ -60,77 +60,43 @@ export default function LibraryManagementPage() {
     ];
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700">
-            {/* Horizontal Sub-Navigation (Modern Floating Style) */}
-            <div className="sticky top-0 z-30 pt-2 -mt-2">
-                <div className="bg-white/70 backdrop-blur-xl p-1.5 rounded-2xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.06)] flex items-center gap-1 overflow-x-auto scrollbar-hide">
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon;
-                        const isActive = activeTab === tab.id;
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => router.push(`/librarian/libraries/${libraryId}?tab=${tab.id}`)}
-                                className={cn(
-                                    "flex items-center gap-2.5 px-6 py-3 rounded-xl transition-all duration-500 whitespace-nowrap group relative",
-                                    isActive
-                                        ? "bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 scale-[1.02]"
-                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-sm"
-                                )}
-                            >
-                                <Icon className={cn(
-                                    "h-4 w-4 transition-all duration-500 group-hover:scale-110",
-                                    isActive ? "text-white" : "text-gray-400 group-hover:text-blue-500"
-                                )} />
-                                <span className="text-[10px] font-bold uppercase tracking-[0.15em]">{tab.label}</span>
-                                {isActive && (
-                                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full opacity-50" />
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="transition-all duration-700">
-                {activeTab === "home" ? (
-                    <LibraryHome libraryId={libraryId} />
-                ) : activeTab === "seats" ? (
-                    <LiveSeatPlan
-                        seats={seats}
-                        libraryName={library.libraryName}
-                        libraryId={libraryId}
-                        selectedSlotId={selectedSlotId}
-                        onSlotChange={setSelectedSlotId}
-                    />
-                ) : activeTab === "onboarding" ? (
-                    <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
-                        <div className="flex items-center justify-between mb-8 pb-4 border-b">
-                            <div className="flex items-center gap-3">
-                                <UserPlus className="h-6 w-6 text-blue-600" />
-                                <h2 className="text-2xl font-bold text-gray-800">Student Onboarding</h2>
-                            </div>
-                            <Button
-                                variant="ghost"
-                                onClick={() => router.push(`?tab=students`)}
-                                className="text-gray-500 hover:text-gray-700"
-                            >
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Directory
-                            </Button>
+        <div className="transition-all duration-700">
+            {activeTab === "home" ? (
+                <LibraryHome libraryId={libraryId} />
+            ) : activeTab === "seats" ? (
+                <LiveSeatPlan
+                    seats={seats}
+                    libraryName={library.libraryName}
+                    libraryId={libraryId}
+                    selectedSlotId={selectedSlotId}
+                    onSlotChange={setSelectedSlotId}
+                />
+            ) : activeTab === "onboarding" ? (
+                <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
+                    <div className="flex items-center justify-between mb-8 pb-4 border-b">
+                        <div className="flex items-center gap-3">
+                            <UserPlus className="h-6 w-6 text-blue-600" />
+                            <h2 className="text-2xl font-bold text-gray-800">Student Onboarding</h2>
                         </div>
-                        <StudentOnboardingFlow libraryId={libraryId} />
+                        <Button
+                            variant="ghost"
+                            onClick={() => router.push(`?tab=students`)}
+                            className="text-gray-500 hover:text-gray-700"
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Directory
+                        </Button>
                     </div>
-                ) : activeTab === "queries" ? (
-                    <LibraryQueries libraryId={libraryId} />
-                ) : activeTab === "bookings" ? (
-                    <LibraryBookings libraryId={libraryId} />
-                ) : activeTab === "plans" ? (
-                    <LibraryPlans libraryId={libraryId} />
-                ) : (
-                    <StudentManagement seats={seats} />
-                )}
-            </div>
+                    <StudentOnboardingFlow libraryId={libraryId} />
+                </div>
+            ) : activeTab === "queries" ? (
+                <LibraryQueries libraryId={libraryId} />
+            ) : activeTab === "bookings" ? (
+                <LibraryBookings libraryId={libraryId} />
+            ) : activeTab === "plans" ? (
+                <LibraryPlans libraryId={libraryId} />
+            ) : (
+                <StudentManagement seats={seats} />
+            )}
         </div>
     );
 }
