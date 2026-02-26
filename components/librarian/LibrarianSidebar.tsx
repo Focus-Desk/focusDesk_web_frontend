@@ -12,7 +12,9 @@ import {
     Settings,
     MessageSquareText,
     ClipboardList,
-    Tag
+    Tag,
+    Home,
+    ArrowLeft
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -82,227 +84,207 @@ export function LibrarianSidebar() {
             <SidebarContent className="px-3 py-6">
                 {/* Main Navigation */}
                 <SidebarGroup>
-                    <SidebarGroupLabel className="px-4 text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
-                        Main Menu
+                    <SidebarGroupLabel className="px-4 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-4 px-6">
+                        {isLibrarySelected ? "Library Control" : "Main Menu"}
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isActive("/librarian/dashboard")}
-                                    tooltip="Dashboard"
-                                    className={cn(
-                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
-                                        isActive("/librarian/dashboard")
-                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50"
-                                    )}
-                                >
-                                    <Link href="/librarian/dashboard">
-                                        <LayoutDashboard className="h-5 w-5" />
-                                        <span>Dashboard</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isActive("/librarian/add-library")}
-                                    tooltip="Add Library"
-                                    className={cn(
-                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
-                                        isActive("/librarian/add-library")
-                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50"
-                                    )}
-                                >
-                                    <Link href="/librarian/add-library">
-                                        <PlusCircle className="h-5 w-5" />
-                                        <span>Add Library</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarGroup className="mt-6">
-                    <SidebarGroupLabel className="px-4 text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center justify-between">
-                        <span>Management</span>
-                        {!libraryId && <span className="text-[9px] text-amber-500 lowercase font-normal tracking-normal animate-pulse">Select library</span>}
-                    </SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isLibraryRoute && !searchParams.get("tab")}
-                                    tooltip="Live Seat Map"
-                                    className={cn(
-                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
-                                        (isLibraryRoute && !searchParams.get("tab"))
-                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50",
-                                        !libraryId && "opacity-50 grayscale"
-                                    )}
-                                >
-                                    <Link
-                                        href={libraryId ? `/librarian/libraries/${libraryId}` : "/librarian/dashboard"}
-                                        onClick={(e) => {
-                                            if (!libraryId) {
-                                                toast.info("Please select a library first");
-                                            }
-                                        }}
-                                    >
-                                        <LayoutGrid className="h-5 w-5" />
-                                        <span>Live Seat Map</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isLibraryRoute && searchParams.get("tab") === "students"}
-                                    tooltip="Student Manager"
-                                    className={cn(
-                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
-                                        (isLibraryRoute && searchParams.get("tab") === "students")
-                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50",
-                                        !libraryId && "opacity-50 grayscale"
-                                    )}
-                                >
-                                    <Link
-                                        href={libraryId ? `/librarian/libraries/${libraryId}?tab=students` : "/librarian/dashboard"}
-                                        onClick={(e) => {
-                                            if (!libraryId) {
-                                                toast.info("Please select a library first");
-                                            }
-                                        }}
-                                    >
-                                        <Users className="h-5 w-5" />
-                                        <span>Student Manager</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isLibraryRoute && searchParams.get("tab") === "queries"}
-                                    tooltip="Queries"
-                                    className={cn(
-                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
-                                        (isLibraryRoute && searchParams.get("tab") === "queries")
-                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50",
-                                        !libraryId && "opacity-50 grayscale"
-                                    )}
-                                >
-                                    <Link
-                                        href={libraryId ? `/librarian/libraries/${libraryId}?tab=queries` : "/librarian/dashboard"}
-                                        onClick={(e) => {
-                                            if (!libraryId) {
-                                                toast.info("Please select a library first");
-                                            }
-                                        }}
-                                    >
-                                        <MessageSquareText className="h-5 w-5" />
-                                        <span>Queries</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isLibraryRoute && searchParams.get("tab") === "bookings"}
-                                    tooltip="Bookings"
-                                    className={cn(
-                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
-                                        (isLibraryRoute && searchParams.get("tab") === "bookings")
-                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50",
-                                        !libraryId && "opacity-50 grayscale"
-                                    )}
-                                >
-                                    <Link
-                                        href={libraryId ? `/librarian/libraries/${libraryId}?tab=bookings` : "/librarian/dashboard"}
-                                        onClick={(e) => {
-                                            if (!libraryId) {
-                                                toast.info("Please select a library first");
-                                            }
-                                        }}
-                                    >
-                                        <ClipboardList className="h-5 w-5" />
-                                        <span>Bookings</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    asChild
-                                    isActive={isLibraryRoute && searchParams.get("tab") === "plans"}
-                                    tooltip="Plans"
-                                    className={cn(
-                                        "h-11 px-4 rounded-xl transition-all cursor-pointer",
-                                        (isLibraryRoute && searchParams.get("tab") === "plans")
-                                            ? "bg-blue-50 text-blue-600 font-semibold shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50",
-                                        !libraryId && "opacity-50 grayscale"
-                                    )}
-                                >
-                                    <Link
-                                        href={libraryId ? `/librarian/libraries/${libraryId}?tab=plans` : "/librarian/dashboard"}
-                                        onClick={(e) => {
-                                            if (!libraryId) {
-                                                toast.info("Please select a library first");
-                                            }
-                                        }}
-                                    >
-                                        <Tag className="h-5 w-5" />
-                                        <span>Plans</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                {/* Libraries List */}
-                {libraries && libraries.length > 0 && (
-                    <SidebarGroup className="mt-6">
-                        <SidebarGroupLabel className="px-4 text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
-                            Your Libraries
-                        </SidebarGroupLabel>
-                        <SidebarGroupContent>
-                            <SidebarMenu>
-                                {libraries.map((lib) => (
-                                    <SidebarMenuItem key={lib.id}>
+                        <SidebarMenu className="gap-1.5 px-3">
+                            {isLibrarySelected ? (
+                                <>
+                                    <SidebarMenuItem>
                                         <SidebarMenuButton
                                             asChild
-                                            isActive={libraryId === lib.id}
-                                            tooltip={lib.libraryName}
+                                            isActive={searchParams.get("tab") === "home" || !searchParams.get("tab")}
+                                            tooltip="Overview"
                                             className={cn(
-                                                "h-10 px-4 rounded-xl transition-all text-xs font-medium cursor-pointer",
-                                                libraryId === lib.id
-                                                    ? "text-blue-600 bg-blue-50/50"
-                                                    : "text-gray-500 hover:bg-gray-50"
+                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                (searchParams.get("tab") === "home" || !searchParams.get("tab"))
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href={`/librarian/libraries/${lib.id}`}>
-                                                <div className={cn(
-                                                    "h-2 w-2 rounded-full mr-3",
-                                                    lib.reviewStatus === "APPROVED" ? "bg-green-500" : "bg-amber-500"
-                                                )} />
-                                                <span className="truncate">{lib.libraryName}</span>
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=home`}>
+                                                <Home className="h-5 w-5" />
+                                                <span>Library Home</span>
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
-                )}
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "seats"}
+                                            tooltip="Seat Plan"
+                                            className={cn(
+                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                searchParams.get("tab") === "seats"
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=seats`}>
+                                                <LayoutGrid className="h-5 w-5" />
+                                                <span>Live Seat Map</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "students"}
+                                            tooltip="Students"
+                                            className={cn(
+                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                searchParams.get("tab") === "students"
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=students`}>
+                                                <Users className="h-5 w-5" />
+                                                <span>Student Manager</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "queries"}
+                                            tooltip="Queries"
+                                            className={cn(
+                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                searchParams.get("tab") === "queries"
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=queries`}>
+                                                <MessageSquareText className="h-5 w-5" />
+                                                <span>Queries</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "bookings"}
+                                            tooltip="Bookings"
+                                            className={cn(
+                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                searchParams.get("tab") === "bookings"
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=bookings`}>
+                                                <ClipboardList className="h-5 w-5" />
+                                                <span>Bookings</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "plans"}
+                                            tooltip="Plans"
+                                            className={cn(
+                                                "h-12 px-5 rounded-2xl transition-all duration-300 group",
+                                                searchParams.get("tab") === "plans"
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=plans`}>
+                                                <Tag className="h-5 w-5" />
+                                                <span>Plans</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </>
+                            ) : (
+                                <>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={isActive("/librarian/dashboard")}
+                                            tooltip="Overview"
+                                            className={cn(
+                                                "h-12 px-5 rounded-2xl transition-all",
+                                                isActive("/librarian/dashboard")
+                                                    ? "bg-blue-600 text-white font-bold shadow-lg shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-gray-50"
+                                            )}
+                                        >
+                                            <Link href="/librarian/dashboard">
+                                                <LayoutDashboard className="h-5 w-5" />
+                                                <span>Overview</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={isActive("/librarian/libraries")}
+                                            tooltip="My Libraries"
+                                            className={cn(
+                                                "h-12 px-5 rounded-2xl transition-all",
+                                                isActive("/librarian/libraries")
+                                                    ? "bg-blue-600 text-white font-bold shadow-lg shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-gray-50"
+                                            )}
+                                        >
+                                            <Link href="/librarian/libraries">
+                                                <LibraryIcon className="h-5 w-5" />
+                                                <span>My Libraries</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </>
+                            )}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                {/* Secondary Actions */}
+                <SidebarGroup className="mt-auto border-t border-gray-100/50 pt-6">
+                    <SidebarGroupContent>
+                        <SidebarMenu className="px-3 gap-1">
+                            {isLibrarySelected && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        asChild
+                                        tooltip="Change Library"
+                                        className="h-10 px-4 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all font-medium text-xs"
+                                    >
+                                        <Link href="/librarian/dashboard">
+                                            <ArrowLeft className="h-4 w-4" />
+                                            <span>Back to Dashboard</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
+                            {(!libraries || libraries.length === 0) && (
+                                <SidebarMenuItem>
+                                    <SidebarMenuButton
+                                        asChild
+                                        isActive={isActive("/librarian/add-library")}
+                                        tooltip="Add Library"
+                                        className={cn(
+                                            "h-10 px-4 rounded-xl transition-all text-xs font-medium",
+                                            isActive("/librarian/add-library")
+                                                ? "bg-blue-50 text-blue-600 shadow-sm"
+                                                : "text-gray-500 hover:bg-gray-50"
+                                        )}
+                                    >
+                                        <Link href="/librarian/add-library">
+                                            <PlusCircle className="h-4 w-4" />
+                                            <span>Add Library</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
             </SidebarContent>
 
             <SidebarFooter className="p-4 border-t">
@@ -345,6 +327,6 @@ export function LibrarianSidebar() {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarFooter>
-        </Sidebar>
+        </Sidebar >
     );
 }

@@ -65,13 +65,15 @@ export default function UpgradePlanModal({
     const [couponCode, setCouponCode] = useState("");
 
     // API Hooks
-    const { data: plans, isLoading: isLoadingPlans } = useGetPlansQuery(libraryId);
-    const { data: lockers, isLoading: isLoadingLockers } = useGetLockersQuery(libraryId);
-    const { data: librarians, isLoading: isLoadingLibrarians } = useGetLibrariansByLibraryIdQuery(libraryId);
+    const { data: plans, isLoading: isLoadingPlans } = useGetPlansQuery(libraryId, { skip: !libraryId });
+    const { data: lockers, isLoading: isLoadingLockers } = useGetLockersQuery(libraryId, { skip: !libraryId });
+    const { data: librarians, isLoading: isLoadingLibrarians } = useGetLibrariansByLibraryIdQuery(libraryId, { skip: !libraryId });
 
     const startDate = useMemo(() => {
-        if (activeBooking?.validTo) {
-            const date = new Date(activeBooking.validTo);
+        const validTo = activeBooking?.bookingDetails?.validTo || activeBooking?.validTo;
+        if (validTo) {
+            const date = new Date(validTo);
+            // Ensure we are working with the next day
             date.setDate(date.getDate() + 1);
             return date;
         }
@@ -90,6 +92,33 @@ export default function UpgradePlanModal({
     const [calculatePricing, { isLoading: isCalculating }] = useCalculatePricingMutation();
 
     const [pricingData, setPricingData] = useState<any>(null);
+
+    const sortedPlans = useMemo(() => {
+        if (!plans) return [];
+        const currentPlanId = activeBooking?.planId || activeBooking?.plan?.id;
+        const list = [...plans];
+        if (currentPlanId) {
+            const index = list.findIndex(p => p.id === currentPlanId);
+            if (index > -1) {
+                const [current] = list.splice(index, 1);
+                return [{ ...current, isCurrent: true }, ...list];
+            }
+        }
+        return list;
+    }, [plans, activeBooking]);
+
+    useEffect(() => {
+        const currentPlanId = activeBooking?.planId || activeBooking?.plan?.id;
+        if (currentPlanId && !selectedPlanId) {
+            setSelectedPlanId(currentPlanId);
+        }
+    }, [activeBooking, selectedPlanId]);
+
+    useEffect(() => {
+        if (librarians?.data?.length === 1 && !selectedLibrarianId) {
+            setSelectedLibrarianId(librarians.data[0].id);
+        }
+    }, [librarians, selectedLibrarianId]);
 
     const selectedPlan = useMemo(() => plans?.find((p: any) => p.id === selectedPlanId), [plans, selectedPlanId]);
 
@@ -242,10 +271,12 @@ export default function UpgradePlanModal({
                                         <Calendar className="h-7 w-7" />
                                     </div>
                                     <div>
-                                        <h3 className="font-extrabold text-lg">New Plan Timeline</h3>
-                                        <p className="text-blue-100 font-bold">
+                                        <h3 className="font-extrabold text-lg italic">
+                                            Plan will start on {startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </h3>
+                                        <p className="text-blue-100 font-bold text-sm">
                                             {activeBooking
-                                                ? `Upgrade scheduled for ${startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                                                ? "Automatically scheduled after current plan expires"
                                                 : "Starting from today"
                                             }
                                         </p>
@@ -261,7 +292,7 @@ export default function UpgradePlanModal({
                                                 <Loader2 className="h-10 w-10 animate-spin mb-4" />
                                                 <p className="font-bold">Loading available plans...</p>
                                             </div>
-                                        ) : plans?.map((plan: any) => (
+                                        ) : sortedPlans?.map((plan: any) => (
                                             <div
                                                 key={plan.id}
                                                 onClick={() => {
@@ -275,6 +306,11 @@ export default function UpgradePlanModal({
                                                         : "bg-white/50 border-white hover:border-blue-200"
                                                 )}
                                             >
+                                                {plan.isCurrent && (
+                                                    <div className="absolute -left-10 top-3 -rotate-45 bg-blue-600 text-white text-[8px] font-black px-10 py-1 shadow-sm">
+                                                        CURRENT
+                                                    </div>
+                                                )}
                                                 <div className="flex flex-col gap-3">
                                                     <div className="flex justify-between items-start">
                                                         <div>
@@ -292,9 +328,11 @@ export default function UpgradePlanModal({
                                                         <span className="bg-orange-100 text-orange-700 text-[10px] px-2 py-0.5 rounded-md font-black uppercase">
                                                             {plan.hours} HRS
                                                         </span>
-                                                        <span className="text-[10px] font-bold text-gray-400">
-                                                            {plan.formattedTiming || "Standard shifts"}
-                                                        </span>
+                                                        {plan.planType !== "Float" && plan.planType !== "Flexi" && (
+                                                            <span className="text-[10px] font-bold text-gray-400">
+                                                                {plan.formattedTiming || "Standard shifts"}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 {selectedPlanId === plan.id && (
@@ -480,7 +518,9 @@ export default function UpgradePlanModal({
                                                         )}
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {librarians?.data?.map((lib: any) => (
+                                                        {librarians?.data?.length === 0 ? (
+                                                            <div className="p-2 text-sm text-gray-500 text-center font-bold">No authorizers found</div>
+                                                        ) : librarians?.data?.map((lib: any) => (
                                                             <SelectItem key={lib.id} value={lib.id}>{lib.firstName} {lib.lastName}</SelectItem>
                                                         ))}
                                                     </SelectContent>
