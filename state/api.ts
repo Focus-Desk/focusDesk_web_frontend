@@ -364,6 +364,7 @@ export const api = createApi({
     "Complaints",
     "Reviews",
     "PauseRequests",
+    "LibrarySeats",
   ],
   endpoints: (build) => ({
     getAuthUser: build.query<
@@ -1381,6 +1382,20 @@ export const api = createApi({
       }),
       invalidatesTags: ["PauseRequests"],
     }),
+    updateStudent: build.mutation<Student, { id: string; data: Partial<CreateStudentArgs> }>({
+      query: ({ id, data }) => ({
+        url: `students/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Students"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Student updated successfully!",
+          error: "Failed to update student.",
+        });
+      },
+    }),
   }),
 });
 
@@ -1443,6 +1458,7 @@ export const {
   useCreateStudentMutation,
   useCreateBookingMutation,
   useSearchStudentByPhoneNumberQuery,
+  useUpdateStudentMutation,
   useAdminCreateBookingMutation,
   useGetLibrariansByLibraryIdQuery,
   useGetSeatsForPlanQuery,

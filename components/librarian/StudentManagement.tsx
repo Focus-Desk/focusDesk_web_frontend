@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import {
     DetailedSeat,
     useLazyGetStudentBookingsQuery,
+    useUpdateStudentMutation,
 } from "@/state/api";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,9 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     const [bookingHistory, setBookingHistory] = useState<any[]>([]);
     const [isLoadingBookings, setIsLoadingBookings] = useState(false);
     const [modalView, setModalView] = useState<"MAIN" | "PLAN_HISTORY" | "TRANSACTIONS">("MAIN");
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedData, setEditedData] = useState<Partial<StudentInfo>>({});
+    const [updateStudent, { isLoading: isUpdating }] = useUpdateStudentMutation();
 
     const [triggerGetBookings] = useLazyGetStudentBookingsQuery();
 
@@ -165,6 +169,8 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
 
     const handleViewDetails = async (student: StudentInfo) => {
         setSelectedStudent(student);
+        setEditedData(student);
+        setIsEditing(false);
         setModalView("MAIN");
         setIsLoadingBookings(true);
         try {
@@ -179,6 +185,20 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
             setBookingHistory([]);
         } finally {
             setIsLoadingBookings(false);
+        }
+    };
+
+    const handleUpdateStudent = async () => {
+        if (!selectedStudent) return;
+        try {
+            await updateStudent({
+                id: selectedStudent.id,
+                data: editedData as any
+            }).unwrap();
+            setSelectedStudent({ ...selectedStudent, ...editedData });
+            setIsEditing(false);
+        } catch (err) {
+            // Error toast handled by withToast in api.ts
         }
     };
 
@@ -373,10 +393,17 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-blue-600 font-bold hover:bg-blue-50"
-                                                onClick={() => {/* Edit Profile logic here */ }}
+                                                className={cn("font-bold hover:bg-blue-50", isEditing ? "text-red-600" : "text-blue-600")}
+                                                onClick={() => {
+                                                    if (isEditing) {
+                                                        setEditedData(selectedStudent);
+                                                        setIsEditing(false);
+                                                    } else {
+                                                        setIsEditing(true);
+                                                    }
+                                                }}
                                             >
-                                                Edit Profile
+                                                {isEditing ? "Cancel Edit" : "Edit Profile"}
                                             </Button>
                                         </div>
                                         <div className="flex gap-6">
@@ -397,20 +424,71 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
 
                                             {/* Info List */}
                                             <div className="flex-1 space-y-1.5 text-sm">
-                                                <InfoRow label="Name" value={`${selectedStudent.firstName} ${selectedStudent.lastName}`} />
-                                                {selectedStudent.dob && (
-                                                    <InfoRow label="Age" value={`${calculateAge(selectedStudent.dob)}`} />
-                                                )}
-                                                <InfoRow label="Gender" value={selectedStudent.gender || "N/A"} />
-                                                <InfoRow label="Email" value={selectedStudent.email} />
-                                                {selectedStudent.aadhaarNumber && (
-                                                    <InfoRow label="Aadhaar Number" value={`XXXX-XXXX-${selectedStudent.aadhaarNumber.slice(-4)}`} />
-                                                )}
-                                                {selectedStudent.targetExam && (
-                                                    <InfoRow label="Target Exam" value={selectedStudent.targetExam} />
-                                                )}
-                                                {selectedStudent.address && (
-                                                    <InfoRow label="Area/Address" value={selectedStudent.address} />
+                                                {isEditing ? (
+                                                    <div className="space-y-3">
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] font-bold uppercase text-gray-400">First Name</Label>
+                                                                <Input value={editedData.firstName} onChange={e => setEditedData({ ...editedData, firstName: e.target.value })} className="h-9 px-3 text-sm" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] font-bold uppercase text-gray-400">Last Name</Label>
+                                                                <Input value={editedData.lastName} onChange={e => setEditedData({ ...editedData, lastName: e.target.value })} className="h-9 px-3 text-sm" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Mobile Number</Label>
+                                                            <Input value={editedData.phoneNumber} onChange={e => setEditedData({ ...editedData, phoneNumber: e.target.value })} className="h-9 px-3 text-sm" />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Gender</Label>
+                                                            <select
+                                                                className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                                                                value={editedData.gender}
+                                                                onChange={e => setEditedData({ ...editedData, gender: e.target.value })}
+                                                            >
+                                                                <option value="Male">Male</option>
+                                                                <option value="Female">Female</option>
+                                                                <option value="Other">Other</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Interests</Label>
+                                                            <Input
+                                                                placeholder="e.g. UPSC, SPSC, SSC"
+                                                                value={Array.isArray(editedData.interests) ? editedData.interests.join(", ") : (editedData as any).interests || ""}
+                                                                onChange={e => setEditedData({ ...editedData, interests: e.target.value.split(",").map(i => i.trim()) })}
+                                                                className="h-9 px-3 text-sm"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">About / Target Exam</Label>
+                                                            <Input value={editedData.targetExam} onChange={e => setEditedData({ ...editedData, targetExam: e.target.value })} className="h-9 px-3 text-sm" />
+                                                        </div>
+                                                        <Button onClick={handleUpdateStudent} disabled={isUpdating} className="w-full bg-blue-600 hover:bg-blue-700 h-10 font-bold mt-2">
+                                                            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-1.5">
+                                                        <InfoRow label="Name" value={`${selectedStudent.firstName} ${selectedStudent.lastName}`} />
+                                                        <InfoRow label="Mobile" value={selectedStudent.phoneNumber || "N/A"} />
+                                                        {selectedStudent.dob && (
+                                                            <InfoRow label="Age" value={`${calculateAge(selectedStudent.dob)}`} />
+                                                        )}
+                                                        <InfoRow label="Gender" value={selectedStudent.gender || "N/A"} />
+                                                        <InfoRow label="Email" value={selectedStudent.email} />
+                                                        <InfoRow label="Interests" value={Array.isArray(selectedStudent.interests) ? selectedStudent.interests.join(", ") : (selectedStudent as any).interests || "N/A"} />
+                                                        {selectedStudent.aadhaarNumber && (
+                                                            <InfoRow label="Aadhaar Number" value={`XXXX-XXXX-${selectedStudent.aadhaarNumber.slice(-4)}`} />
+                                                        )}
+                                                        {selectedStudent.targetExam && (
+                                                            <InfoRow label="Target Exam" value={selectedStudent.targetExam} />
+                                                        )}
+                                                        {selectedStudent.address && (
+                                                            <InfoRow label="Area/Address" value={selectedStudent.address} />
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>

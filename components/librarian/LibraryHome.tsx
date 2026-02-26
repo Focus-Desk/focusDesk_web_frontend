@@ -126,7 +126,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                                         </div>
                                     </div>
                                     <Badge className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5">
-                                        {booking.status}
+                                        {booking.bookingDetails?.status || booking.status}
                                     </Badge>
                                 </div>
                             ))}
@@ -192,7 +192,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                                         <span className="text-[9px] font-bold text-gray-300">{format(new Date(item.createdAt), "MMM dd")}</span>
                                     </div>
                                     <p className="text-xs font-bold text-gray-600 line-clamp-1">
-                                        {item.type === 'complaint' ? item.description : item.reviewText}
+                                        {item.type === 'complaint' ? item.complaint : item.comment}
                                     </p>
                                     <div className="flex justify-between items-center">
                                         <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
