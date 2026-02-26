@@ -70,8 +70,8 @@ export function LibrarianSidebar() {
         <Sidebar collapsible="icon" className="border-r bg-white shadow-xl">
             <SidebarHeader className="h-20 flex items-center justify-center p-2 border-b">
                 <div className="flex items-center gap-3 overflow-hidden w-full group-data-[collapsible=icon]:justify-center px-4 group-data-[collapsible=icon]:px-0">
-                    <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
-                        <LibraryIcon className="h-6 w-6 text-white" />
+                    <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
+                        <LibraryIcon className="h-8 w-8 text-white" />
                     </div>
                     {state === "expanded" && (
                         <span className="font-bold text-xl text-gray-800 tracking-tight whitespace-nowrap">
@@ -94,7 +94,7 @@ export function LibrarianSidebar() {
                         <SidebarMenu className="gap-1.5 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:items-center">
                             {isLibrarySelected ? (
                                 <>
-                                    <SidebarMenuItem>
+                                    <SidebarMenuItem className="group-data-[collapsible=icon]:mt-8">
                                         <SidebarMenuButton
                                             asChild
                                             isActive={searchParams.get("tab") === "home" || !searchParams.get("tab")}
@@ -108,7 +108,7 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href={`/librarian/libraries/${libraryId}?tab=home`} className="flex items-center justify-center w-full">
-                                                <Home className="h-5 w-5" />
+                                                <Home className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">Library Home</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -127,7 +127,7 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href={`/librarian/libraries/${libraryId}?tab=seats`} className="flex items-center justify-center w-full">
-                                                <LayoutGrid className="h-5 w-5" />
+                                                <LayoutGrid className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">Live Seat Map</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -146,7 +146,7 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href={`/librarian/libraries/${libraryId}?tab=students`} className="flex items-center justify-center w-full">
-                                                <Users className="h-5 w-5" />
+                                                <Users className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">Student Manager</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -165,7 +165,7 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href={`/librarian/libraries/${libraryId}?tab=queries`} className="flex items-center justify-center w-full">
-                                                <MessageSquareText className="h-5 w-5" />
+                                                <MessageSquareText className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">Queries</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -184,7 +184,7 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href={`/librarian/libraries/${libraryId}?tab=bookings`} className="flex items-center justify-center w-full">
-                                                <ClipboardList className="h-5 w-5" />
+                                                <ClipboardList className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">Bookings</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -203,7 +203,7 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href={`/librarian/libraries/${libraryId}?tab=plans`} className="flex items-center justify-center w-full">
-                                                <Tag className="h-5 w-5" />
+                                                <Tag className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">Plans</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -211,7 +211,7 @@ export function LibrarianSidebar() {
                                 </>
                             ) : (
                                 <>
-                                    <SidebarMenuItem>
+                                    <SidebarMenuItem className="group-data-[collapsible=icon]:mt-8">
                                         <SidebarMenuButton
                                             asChild
                                             isActive={isActive("/librarian/dashboard")}
@@ -225,7 +225,7 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href="/librarian/dashboard" className="flex items-center justify-center w-full">
-                                                <LayoutDashboard className="h-5 w-5" />
+                                                <LayoutDashboard className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">Overview</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -244,7 +244,7 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href="/librarian/libraries" className="flex items-center justify-center w-full">
-                                                <LibraryIcon className="h-5 w-5" />
+                                                <LibraryIcon className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">My Libraries</span>}
                                             </Link>
                                         </SidebarMenuButton>
@@ -259,7 +259,7 @@ export function LibrarianSidebar() {
                 <SidebarGroup className="mt-auto border-t border-gray-100/50 p-0 py-6 group-data-[collapsible=icon]:py-4">
                     <SidebarGroupContent className="p-0">
                         <SidebarMenu className="px-3 group-data-[collapsible=icon]:px-0 gap-1.5 group-data-[collapsible=icon]:items-center">
-                            {isLibrarySelected && (
+                            {/* {isLibrarySelected && (
                                 <SidebarMenuItem className="w-full flex justify-center">
                                     <SidebarMenuButton
                                         asChild
@@ -273,7 +273,7 @@ export function LibrarianSidebar() {
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
-                            )}
+                            )} */}
                             {(!libraries || libraries.length === 0) && (
                                 <SidebarMenuItem className="w-full flex justify-center">
                                     <SidebarMenuButton
@@ -307,11 +307,12 @@ export function LibrarianSidebar() {
                             size="lg"
                             className="rounded-xl hover:bg-gray-50 transition-all flex items-center justify-between group-data-[collapsible=icon]:justify-center"
                             tooltip="Profile Settings"
+                            onClick={() => router.push("/librarian/dashboard")}
                         >
                             <div className="flex items-center gap-3 overflow-hidden group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center">
                                 <Avatar className={cn(
                                     "border-2 border-white shadow-sm ring-1 ring-gray-100 italic font-bold transition-all",
-                                    state === "collapsed" ? "h-7 w-7" : "h-10 w-10"
+                                    state === "collapsed" ? "h-10 w-10" : "h-10 w-10"
                                 )}>
                                     <AvatarImage src={librarian?.profilePhoto} />
                                     <AvatarFallback className="bg-blue-100 text-blue-600 text-[10px]">
@@ -337,9 +338,9 @@ export function LibrarianSidebar() {
                             onClick={handleSignOut}
                             tooltip="Log Out"
                             size="lg"
-                            className="rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all font-medium flex items-center justify-center"
+                            className="h-12 w-12 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all font-medium flex items-center justify-center"
                         >
-                            <LogOut className="h-5 w-5" />
+                            <LogOut className="h-7 w-7" />
                             {state === "expanded" && <span className="ml-3">Sign Out</span>}
                         </SidebarMenuButton>
                     </SidebarMenuItem>
