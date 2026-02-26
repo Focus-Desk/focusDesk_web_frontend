@@ -233,7 +233,7 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
       {/* <div className="block w-full md:w-2/5 bg-blue-100 py-3 md:py-5 px-2.5 md:text-center rounded-none">
         <h1 className="md:top-2/4 text-2xl md:text-4xl font-extrabold sticky">Focus Desk</h1>
       </div> */}
-      <div className="w-full py-3 md:py-5 bg-blue-50 rounded-none">
+      <div className="w-full bg-blue-50 rounded-none">
         <ThemeProvider theme={customTheme}>
           <Authenticator
             initialState={pathname.includes("signup") ? "signUp" : "signIn"}

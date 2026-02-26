@@ -6,22 +6,24 @@ import { useGetDetailedLibrarySeatsQuery } from "@/state/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LayoutGrid, Users, Info, Settings, MapPin, UserPlus, MessageSquareText } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Users, Info, Settings, MapPin, UserPlus, MessageSquareText, Home, ClipboardList, Tag } from "lucide-react";
 import LiveSeatPlan from "@/components/librarian/LiveSeatPlan";
 import StudentManagement from "@/components/librarian/StudentManagement";
 import StudentOnboardingFlow from "@/components/librarian/StudentOnboardingFlow";
 import LibraryQueries from "@/components/librarian/LibraryQueries";
 import LibraryBookings from "@/components/librarian/LibraryBookings";
 import LibraryPlans from "@/components/librarian/LibraryPlans";
+import LibraryHome from "@/components/librarian/LibraryHome";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function LibraryManagementPage() {
     const { id } = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const activeTab = searchParams.get("tab") || "seats";
+    const activeTab = searchParams.get("tab") || "home";
     const libraryId = Array.isArray(id) ? id[0] : id;
 
     const [selectedSlotId, setSelectedSlotId] = React.useState<string>("all");
@@ -48,31 +50,53 @@ export default function LibraryManagementPage() {
 
     const { library, seats } = data.data;
 
-    return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            {/* Library Header Card */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-2xl border shadow-sm">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{library.libraryName}</h1>
-                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-2 font-medium">
-                        <MapPin className="h-3.5 w-3.5 text-blue-500" />
-                        {library.address}
-                    </p>
-                </div>
+    const tabs = [
+        { id: "home", label: "Overview", icon: Home },
+        { id: "seats", label: "Seat Plan", icon: LayoutGrid },
+        { id: "students", label: "Students", icon: Users },
+        { id: "queries", label: "Queries", icon: MessageSquareText },
+        { id: "bookings", label: "Bookings", icon: ClipboardList },
+        { id: "plans", label: "Plans", icon: Tag },
+    ];
 
-                <div className="flex gap-3">
-                    <Button variant="outline" className="rounded-lg h-10 px-4 border-gray-200 hover:bg-gray-50 text-sm font-semibold transition-all">
-                        <Settings className="mr-2 h-4 w-4 text-gray-400" /> Configure
-                    </Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700 rounded-lg h-10 px-4 text-sm font-semibold shadow-md shadow-blue-100 transition-all">
-                        <Info className="mr-2 h-4 w-4" /> Details
-                    </Button>
+    return (
+        <div className="space-y-8 animate-in fade-in duration-700">
+            {/* Horizontal Sub-Navigation (Modern Floating Style) */}
+            <div className="sticky top-0 z-30 pt-2 -mt-2">
+                <div className="bg-white/70 backdrop-blur-xl p-1.5 rounded-2xl border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.06)] flex items-center gap-1 overflow-x-auto scrollbar-hide">
+                    {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => router.push(`/librarian/libraries/${libraryId}?tab=${tab.id}`)}
+                                className={cn(
+                                    "flex items-center gap-2.5 px-6 py-3 rounded-xl transition-all duration-500 whitespace-nowrap group relative",
+                                    isActive
+                                        ? "bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 scale-[1.02]"
+                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-sm"
+                                )}
+                            >
+                                <Icon className={cn(
+                                    "h-4 w-4 transition-all duration-500 group-hover:scale-110",
+                                    isActive ? "text-white" : "text-gray-400 group-hover:text-blue-500"
+                                )} />
+                                <span className="text-[10px] font-bold uppercase tracking-[0.15em]">{tab.label}</span>
+                                {isActive && (
+                                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full opacity-50" />
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Main Content Area - Toggled by Sidebar */}
-            <div className="mt-8 transition-all duration-300">
-                {activeTab === "seats" ? (
+            {/* Main Content Area */}
+            <div className="transition-all duration-700">
+                {activeTab === "home" ? (
+                    <LibraryHome libraryId={libraryId} />
+                ) : activeTab === "seats" ? (
                     <LiveSeatPlan
                         seats={seats}
                         libraryName={library.libraryName}
