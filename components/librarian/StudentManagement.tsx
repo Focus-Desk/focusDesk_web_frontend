@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { format } from "date-fns";
 import {
     Table,
     TableBody,
@@ -25,12 +26,15 @@ import {
     AlertTriangle,
     ChevronUp,
     Loader2,
+    Clock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DetailedSeat,
     useLazyGetStudentBookingsQuery,
+    useLazyGetStudentQuery,
+    useLazyGetStudentByEmailQuery,
     useUpdateStudentMutation,
 } from "@/state/api";
 import { useParams, useRouter } from "next/navigation";
@@ -60,16 +64,17 @@ interface StudentInfo {
     targetExam?: string;
     address?: string;
     dob?: string;
+    interests?: string[];
 }
 
-type TabId = "ALL" | "ACTIVE" | "INACTIVE" | "OLD" | "DUES";
+type TabId = "ALL" | "ACTIVE" | "INACTIVE" | "OLD" | "EXPIRING";
 
 const TABS: { id: TabId; label: string }[] = [
     { id: "ALL", label: "All Students" },
     { id: "ACTIVE", label: "Active Students" },
     { id: "INACTIVE", label: "Inactive Students" },
     { id: "OLD", label: "Old Students" },
-    { id: "DUES", label: "Dues" },
+    { id: "EXPIRING", label: "Recently Expiring Plans" },
 ];
 
 export default function StudentManagement({ seats }: StudentManagementProps) {
@@ -94,6 +99,8 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     const [updateStudent, { isLoading: isUpdating }] = useUpdateStudentMutation();
 
     const [triggerGetBookings] = useLazyGetStudentBookingsQuery();
+    const [triggerGetStudent] = useLazyGetStudentQuery();
+    const [triggerGetStudentByEmail] = useLazyGetStudentByEmailQuery();
 
     // Derive students from seats data
     const students = useMemo(() => {
@@ -118,16 +125,17 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                         lastName: student.lastName || "",
                         email: student.email,
                         phoneNumber: student.phoneNumber,
-                        gender: (student as any).gender || "N/A",
+                        gender: student.gender || "N/A",
                         status: isActive ? "ACTIVE" : "OLD",
                         lastBookingDate: booking.createdAt,
                         currentSeat: isActive ? seat.seatNumber : undefined,
                         currentPlan: (booking as any).plan?.planName || "—",
-                        profilePhoto: (student as any).profilePhoto,
-                        aadhaarNumber: (student as any).aadhaarNumber,
-                        dob: (student as any).dob,
-                        targetExam: (student as any).targetExam,
-                        address: (student as any).address,
+                        profilePhoto: student.profilePhoto,
+                        aadhaarNumber: student.aadhaarNumber,
+                        dob: student.dob,
+                        targetExam: (student as any).targetExam || (student as any).about,
+                        address: student.address,
+                        interests: student.interests,
                     });
                 } else {
                     if (isActive) {
@@ -137,6 +145,14 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                     }
                     if (new Date(booking.createdAt) > new Date(existing.lastBookingDate!)) {
                         existing.lastBookingDate = booking.createdAt;
+                        // Use the most recent booking's student data to populate profile fields if missing from previous check
+                        existing.gender = student.gender || existing.gender;
+                        existing.profilePhoto = student.profilePhoto || existing.profilePhoto;
+                        existing.aadhaarNumber = student.aadhaarNumber || existing.aadhaarNumber;
+                        existing.dob = student.dob || existing.dob;
+                        existing.targetExam = (student as any).targetExam || (student as any).about || existing.targetExam;
+                        existing.address = student.address || existing.address;
+                        existing.interests = student.interests || existing.interests;
                     }
                 }
             });
@@ -144,6 +160,29 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
 
         return Array.from(studentMap.values());
     }, [seats]);
+
+    // Helper to calculate days remaining/past for expiry
+    const getExpiringInfo = (studentId: string) => {
+        const studentBookings = seats.flatMap(s => s.bookings.filter(b => b.student?.id === studentId));
+        const activeBooking = studentBookings.find(b => {
+            const now = new Date();
+            const validFrom = new Date(b.validFrom);
+            const validTo = new Date(b.validTo);
+            return b.status === "ACTIVE" && validFrom <= now && validTo >= now;
+        });
+
+        if (!activeBooking) return null;
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const validTo = new Date(activeBooking.validTo);
+        validTo.setHours(0, 0, 0, 0);
+
+        const diffTime = validTo.getTime() - now.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays;
+    };
 
     const filteredStudents = useMemo(() => {
         return students.filter((student) => {
@@ -154,18 +193,27 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                 student.phoneNumber?.includes(searchTerm) ||
                 student.email.toLowerCase().includes(searchTerm.toLowerCase());
 
+            if (activeTab === "EXPIRING") {
+                const diffDays = getExpiringInfo(student.id);
+                const matchesExpiry = diffDays !== null && Math.abs(diffDays) <= 3;
+                return matchesSearch && matchesExpiry;
+            }
+
             const matchesTab = activeTab === "ALL" || student.status === activeTab;
             return matchesSearch && matchesTab;
         });
-    }, [students, searchTerm, activeTab]);
+    }, [students, searchTerm, activeTab, seats]);
 
     const stats: Record<TabId, number> = useMemo(() => ({
         ALL: students.length,
         ACTIVE: students.filter((s) => s.status === "ACTIVE").length,
         INACTIVE: students.filter((s) => s.status === "INACTIVE").length,
         OLD: students.filter((s) => s.status === "OLD").length,
-        DUES: students.filter((s) => s.status === "DUES").length,
-    }), [students]);
+        EXPIRING: students.filter((s) => {
+            const diffDays = getExpiringInfo(s.id);
+            return diffDays !== null && Math.abs(diffDays) <= 3;
+        }).length,
+    }), [students, seats]);
 
     const handleViewDetails = async (student: StudentInfo) => {
         setSelectedStudent(student);
@@ -174,12 +222,41 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
         setModalView("MAIN");
         setIsLoadingBookings(true);
         try {
+            // Try fetching full details. The backend now handles both Prisma IDs and Cognito IDs.
+            const studentResult = await triggerGetStudent(student.id).unwrap();
+
+            if (studentResult) {
+                const fullStudent: StudentInfo = {
+                    ...student,
+                    id: studentResult.cognitoId || studentResult.id || student.id, // Prefer cognitoId for future updates
+                    firstName: studentResult.firstName || student.firstName,
+                    lastName: studentResult.lastName || student.lastName,
+                    email: studentResult.email || student.email,
+                    phoneNumber: studentResult.phoneNumber || student.phoneNumber,
+                    gender: studentResult.gender || student.gender,
+                    profilePhoto: studentResult.profilePhoto || student.profilePhoto,
+                    aadhaarNumber: studentResult.aadhaarNumber || student.aadhaarNumber,
+                    dob: studentResult.dob || student.dob,
+                    targetExam: studentResult.about || studentResult.exam || student.targetExam,
+                    address: studentResult.address || student.address,
+                    interests: studentResult.interests || student.interests,
+                };
+                setSelectedStudent(fullStudent);
+                setEditedData(fullStudent);
+            }
+
             const result = await triggerGetBookings({ studentId: student.id }).unwrap();
             if (result.success) {
                 const bookings = result.data.bookings || [];
                 setBookingHistory(bookings);
-                const active = bookings.find((b: any) => b.bookingDetails?.status === "ACTIVE");
-                setActiveBooking(active);
+                const now = new Date();
+                const active = bookings.find((b: any) => {
+                    const validFrom = new Date(b.bookingDetails?.validFrom);
+                    const validTo = new Date(b.bookingDetails?.validTo);
+                    return b.bookingDetails?.status === "ACTIVE" && validFrom <= now && validTo >= now;
+                });
+                // Fallback to the first active booking if no strict current one is found
+                setActiveBooking(active || bookings.find((b: any) => b.bookingDetails?.status === "ACTIVE"));
             }
         } catch {
             setBookingHistory([]);
@@ -191,14 +268,29 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     const handleUpdateStudent = async () => {
         if (!selectedStudent) return;
         try {
+            // Map common fields and ensure interests is an array
+            const submissionData = {
+                firstName: editedData.firstName,
+                lastName: editedData.lastName,
+                phoneNumber: editedData.phoneNumber,
+                gender: editedData.gender,
+                dob: editedData.dob,
+                interests: Array.isArray(editedData.interests) ? editedData.interests : [],
+                about: editedData.targetExam, // Map targetExam to 'about' for backend
+                exam: editedData.targetExam,  // Also send as 'exam' for compatibility
+                address: editedData.address,
+                aadhaarNumber: editedData.aadhaarNumber,
+            };
+
             await updateStudent({
-                id: selectedStudent.id,
-                data: editedData as any
+                id: editedData.id!,
+                data: submissionData as any
             }).unwrap();
             setSelectedStudent({ ...selectedStudent, ...editedData });
             setIsEditing(false);
+            toast.success("Student profile updated successfully!");
         } catch (err) {
-            // Error toast handled by withToast in api.ts
+            toast.error("Failed to update student profile.");
         }
     };
 
@@ -287,56 +379,81 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                 <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Mobile No</th>
                                 <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Gender</th>
                                 <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Current Plan</th>
+                                {activeTab === "EXPIRING" && <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Plan expiring in</th>}
                                 <th className="text-right px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredStudents.length > 0 ? (
-                                filteredStudents.map((student, index) => (
-                                    <tr
-                                        key={student.id}
-                                        className={cn(
-                                            "border-b transition-colors hover:bg-blue-50/30",
-                                            student.status === "DUES" && "bg-red-50/40"
-                                        )}
-                                    >
-                                        <td className="px-6 py-4 text-sm font-bold text-gray-400">{index + 1}.</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <span className="font-semibold text-gray-900">
-                                                    {student.firstName} {student.lastName}
-                                                </span>
-                                                <StatusBadge status={student.status} />
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 font-medium">
-                                            {student.phoneNumber ? `+91 ${student.phoneNumber}` : "N/A"}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{student.gender || "N/A"}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="font-semibold text-gray-800">{student.currentPlan || "—"}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3 justify-end">
-                                                <Button
-                                                    size="sm"
-                                                    className="bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-xs px-5 h-8 shadow-sm"
-                                                    onClick={() => handleViewDetails(student)}
-                                                >
-                                                    View Details
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="rounded-lg font-bold text-xs px-5 h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
-                                                    onClick={() => handleOpenUpgradeModal(student)}
-                                                >
-                                                    Upgrade Plan
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                filteredStudents.map((student, index) => {
+                                    const diffDays = getExpiringInfo(student.id);
+                                    const isRecentlyExpired = diffDays !== null && diffDays < 0;
+
+                                    return (
+                                        <tr
+                                            key={student.id}
+                                            className={cn(
+                                                "border-b transition-colors hover:bg-blue-50/30",
+                                                (student as any).status === "DUES" || (activeTab === "EXPIRING" && isRecentlyExpired) ? "bg-red-50/40" : ""
+                                            )}
+                                        >
+                                            <td className="px-6 py-4 text-sm font-bold text-gray-400">{index + 1}.</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="font-semibold text-gray-900">
+                                                        {student.firstName} {student.lastName}
+                                                    </span>
+                                                    {activeTab === "EXPIRING" && isRecentlyExpired && (
+                                                        <Badge variant="outline" className="bg-red-100 text-red-700 border-none font-black text-[9px] px-2 py-0.5 rounded-md">
+                                                            Payment Due
+                                                        </Badge>
+                                                    )}
+                                                    {activeTab !== "EXPIRING" && <StatusBadge status={student.status} />}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                                                {student.phoneNumber ? `${student.phoneNumber}` : "N/A"}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">{student.gender || "N/A"}</td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-semibold text-gray-800">{student.currentPlan || "—"}</span>
+                                            </td>
+                                            {activeTab === "EXPIRING" && (
+                                                <td className="px-6 py-4">
+                                                    <span className={cn(
+                                                        "font-black text-sm",
+                                                        isRecentlyExpired ? "text-red-600" : "text-orange-600"
+                                                    )}>
+                                                        {diffDays === 0 ? "Today" :
+                                                            diffDays === 1 ? "1 Day" :
+                                                                diffDays! > 1 ? `${diffDays} Days` :
+                                                                    Math.abs(diffDays!) === 1 ? "1 Day Ago" :
+                                                                        `${Math.abs(diffDays!)} Days Ago`}
+                                                    </span>
+                                                </td>
+                                            )}
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3 justify-end">
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-xs px-5 h-8 shadow-sm"
+                                                        onClick={() => handleViewDetails(student)}
+                                                    >
+                                                        View Details
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="rounded-lg font-bold text-xs px-5 h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
+                                                        onClick={() => handleOpenUpgradeModal(student)}
+                                                    >
+                                                        Upgrade Plan
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr>
                                     <td colSpan={6} className="text-center py-16 text-gray-400">
@@ -429,24 +546,25 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                         <div className="grid grid-cols-2 gap-3">
                                                             <div className="space-y-1">
                                                                 <Label className="text-[10px] font-bold uppercase text-gray-400">First Name</Label>
-                                                                <Input value={editedData.firstName} onChange={e => setEditedData({ ...editedData, firstName: e.target.value })} className="h-9 px-3 text-sm" />
+                                                                <Input value={editedData.firstName || ""} onChange={e => setEditedData({ ...editedData, firstName: e.target.value })} className="h-9 px-3 text-sm" />
                                                             </div>
                                                             <div className="space-y-1">
                                                                 <Label className="text-[10px] font-bold uppercase text-gray-400">Last Name</Label>
-                                                                <Input value={editedData.lastName} onChange={e => setEditedData({ ...editedData, lastName: e.target.value })} className="h-9 px-3 text-sm" />
+                                                                <Input value={editedData.lastName || ""} onChange={e => setEditedData({ ...editedData, lastName: e.target.value })} className="h-9 px-3 text-sm" />
                                                             </div>
                                                         </div>
                                                         <div className="space-y-1">
                                                             <Label className="text-[10px] font-bold uppercase text-gray-400">Mobile Number</Label>
-                                                            <Input value={editedData.phoneNumber} onChange={e => setEditedData({ ...editedData, phoneNumber: e.target.value })} className="h-9 px-3 text-sm" />
+                                                            <Input value={editedData.phoneNumber || ""} onChange={e => setEditedData({ ...editedData, phoneNumber: e.target.value })} className="h-9 px-3 text-sm" />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <Label className="text-[10px] font-bold uppercase text-gray-400">Gender</Label>
                                                             <select
                                                                 className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                                                                value={editedData.gender}
+                                                                value={editedData.gender || ""}
                                                                 onChange={e => setEditedData({ ...editedData, gender: e.target.value })}
                                                             >
+                                                                <option value="">Select Gender</option>
                                                                 <option value="Male">Male</option>
                                                                 <option value="Female">Female</option>
                                                                 <option value="Other">Other</option>
@@ -463,7 +581,15 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                         </div>
                                                         <div className="space-y-1">
                                                             <Label className="text-[10px] font-bold uppercase text-gray-400">About / Target Exam</Label>
-                                                            <Input value={editedData.targetExam} onChange={e => setEditedData({ ...editedData, targetExam: e.target.value })} className="h-9 px-3 text-sm" />
+                                                            <Input value={editedData.targetExam || ""} onChange={e => setEditedData({ ...editedData, targetExam: e.target.value })} className="h-9 px-3 text-sm" />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Address</Label>
+                                                            <Input value={editedData.address || ""} onChange={e => setEditedData({ ...editedData, address: e.target.value })} className="h-9 px-3 text-sm" />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Aadhaar Number</Label>
+                                                            <Input value={editedData.aadhaarNumber || ""} onChange={e => setEditedData({ ...editedData, aadhaarNumber: e.target.value })} className="h-9 px-3 text-sm" />
                                                         </div>
                                                         <Button onClick={handleUpdateStudent} disabled={isUpdating} className="w-full bg-blue-600 hover:bg-blue-700 h-10 font-bold mt-2">
                                                             {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
@@ -478,7 +604,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                         )}
                                                         <InfoRow label="Gender" value={selectedStudent.gender || "N/A"} />
                                                         <InfoRow label="Email" value={selectedStudent.email} />
-                                                        <InfoRow label="Interests" value={Array.isArray(selectedStudent.interests) ? selectedStudent.interests.join(", ") : (selectedStudent as any).interests || "N/A"} />
+                                                        <InfoRow label="Interests" value={Array.isArray(selectedStudent.interests) ? selectedStudent.interests.join(", ") : typeof selectedStudent.interests === 'string' ? selectedStudent.interests : "N/A"} />
                                                         {selectedStudent.aadhaarNumber && (
                                                             <InfoRow label="Aadhaar Number" value={`XXXX-XXXX-${selectedStudent.aadhaarNumber.slice(-4)}`} />
                                                         )}
@@ -528,7 +654,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                             </span>
                                                         </div>
                                                         <div className="mt-1 text-[10px] font-bold text-blue-600">
-                                                            Valid till: {new Date(activeBooking.bookingDetails?.validTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                            Valid till: {format(new Date(activeBooking.bookingDetails?.validTo), "dd MMM, yyyy")}
                                                         </div>
                                                     </div>
                                                     <div className="px-4 py-1 border border-blue-400 rounded-lg text-blue-600 font-bold text-sm bg-white uppercase">
@@ -542,6 +668,66 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Next Plans Section */}
+                                    {bookingHistory.filter((b: any) => {
+                                        const isFuture = new Date(b.bookingDetails?.validFrom) > new Date();
+                                        const isNotActiveDisplayed = b.id !== activeBooking?.id;
+                                        return isFuture && isNotActiveDisplayed && (b.bookingDetails?.status === "PENDING" || b.bookingDetails?.status === "ACTIVE");
+                                    }).length > 0 && (
+                                            <div className="px-6 py-6 border-b bg-green-50/20">
+                                                <h4 className="text-sm font-bold text-gray-700 mb-4">Next Plans:</h4>
+                                                <div className="space-y-4">
+                                                    {bookingHistory
+                                                        .filter((b: any) => {
+                                                            const isFuture = new Date(b.bookingDetails?.validFrom) > new Date();
+                                                            const isNotActiveDisplayed = b.id !== activeBooking?.id;
+                                                            return isFuture && isNotActiveDisplayed && (b.bookingDetails?.status === "PENDING" || b.bookingDetails?.status === "ACTIVE");
+                                                        })
+                                                        .map((plan: any, idx: number) => (
+                                                            <div key={idx} className="relative overflow-hidden bg-white/60 backdrop-blur-sm border border-green-100 rounded-2xl p-5 shadow-sm group">
+                                                                <div className="absolute top-0 left-0 w-1 h-full bg-green-400" />
+                                                                <div className="flex items-end justify-between">
+                                                                    <div className="space-y-2">
+                                                                        <div className="flex items-baseline gap-1">
+                                                                            <span className="text-2xl font-black text-gray-900 leading-none">
+                                                                                Rs. {plan.bookingDetails?.totalAmount || plan.plan?.price}
+                                                                            </span>
+                                                                            <span className="text-sm font-bold text-gray-400">/ month</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Badge variant="outline" className="bg-green-100 text-green-700 border-none font-black text-[10px] px-2 py-0.5 rounded-md">
+                                                                                {plan.plan?.hours} hrs/ day
+                                                                            </Badge>
+                                                                            <span className="italic text-[10px] font-bold text-gray-800 uppercase">
+                                                                                {plan.bookingDetails?.seatMode || plan.plan?.planType} Seat ({plan.seat?.seatNumber || "—"})
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex flex-col gap-1 text-[10px] font-bold text-green-600 uppercase tracking-tight">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <Calendar className="h-3 w-3" />
+                                                                                <span>Starts: {format(new Date(plan.bookingDetails?.validFrom), "dd MMM, yyyy")}</span>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <Clock className="h-3 w-3" />
+                                                                                <span>Ends: {format(new Date(plan.bookingDetails?.validTo), "dd MMM, yyyy")}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex flex-col items-end gap-3">
+                                                                        <Badge className="bg-green-100 text-green-700 border-none font-black text-[9px] px-3 py-0.5 rounded-full">
+                                                                            UPCOMING
+                                                                        </Badge>
+                                                                        <div className="px-4 py-1 border border-green-400 rounded-lg text-green-600 font-bold text-sm bg-white uppercase">
+                                                                            {plan.plan?.planName}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            </div>
+                                        )}
 
                                     {/* Navigation Buttons (Bottom Image 2) */}
                                     <div className="px-6 py-6 grid grid-cols-2 gap-4">
@@ -625,13 +811,8 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                                     isActive && "bg-green-50/40"
                                                                 )}
                                                             >
-                                                                <td className="px-5 py-4 text-gray-500 font-bold">
-                                                                    {isActive
-                                                                        ? "Current"
-                                                                        : validFrom.toLocaleDateString("en-IN", {
-                                                                            month: "short",
-                                                                            year: "numeric",
-                                                                        })}
+                                                                <td className="px-5 py-4 text-gray-500 font-bold whitespace-nowrap">
+                                                                    {format(new Date(booking.bookingDetails?.validFrom), "dd MMM")} - {format(new Date(booking.bookingDetails?.validTo), "dd MMM, yyyy")}
                                                                 </td>
                                                                 <td className="px-5 py-4 font-extrabold text-gray-800">
                                                                     {booking.plan?.planName || "Standard"}{slotInfo}{seatInfo}
@@ -689,19 +870,27 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                             bookingHistory.map((booking: any, i: number) => (
                                                 <div key={booking.id || i} className="bg-gray-50/80 border border-gray-100 rounded-2xl p-4 shadow-sm relative overflow-hidden">
                                                     <div className="flex items-center justify-between mb-3">
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Transaction ID: {booking.id?.slice(0, 12).toUpperCase() || "FDX-TRX-102"}</span>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Transaction ID: {booking.id?.toUpperCase() || "FDX-TRX-102"}</span>
+                                                            <span className="text-[10px] font-bold text-blue-600">Paid on: {booking.bookingDetails?.createdAt ? format(new Date(booking.bookingDetails.createdAt), "dd MMM, yyyy | hh:mm a") : "—"}</span>
+                                                        </div>
                                                         <Badge className="bg-blue-800 text-white font-black text-[9px] px-4 py-0.5 rounded-full">Completed</Badge>
                                                     </div>
                                                     <div className="pb-3 mb-3 border-b flex justify-between items-center">
-                                                        <h4 className="font-extrabold text-gray-900 text-sm">
-                                                            {booking.plan?.planName || "Standard Plan"} (Morning Shift - Seat {booking.seat?.seatNumber || "B04"})
-                                                        </h4>
-                                                        <span className="text-[10px] font-bold text-gray-400">
-                                                            Dec 1, 2025 - Jan 1, 2026 (1 month)
+                                                        <div className="flex flex-col">
+                                                            <h4 className="font-extrabold text-gray-900 text-sm">
+                                                                {booking.plan?.planName || "Standard Plan"}
+                                                            </h4>
+                                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                                                                {booking.bookingDetails?.seatMode || "Custom"} Plan • Seat {booking.seat?.seatNumber || "—"}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold text-right text-gray-400">
+                                                            {format(new Date(booking.bookingDetails?.validFrom), "dd MMM")} - {format(new Date(booking.bookingDetails?.validTo), "dd MMM, yyyy")}
                                                         </span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-xs font-bold text-gray-400">Rs. 600/ Month</span>
+                                                        <span className="text-sm font-black text-gray-900 italic">Rs. {booking.bookingDetails?.totalAmount || booking.plan?.price} Paid</span>
                                                         <Badge className="bg-green-700 text-white font-black text-[9px] px-6 py-0.5 rounded-md">Paid</Badge>
                                                     </div>
                                                 </div>

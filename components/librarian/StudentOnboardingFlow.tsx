@@ -77,6 +77,7 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
     const [selectedLibrarianId, setSelectedLibrarianId] = useState("");
     const [pin, setPin] = useState("");
     const [couponCode, setCouponCode] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState<"CASH" | "UPI">("CASH");
 
     // API Hooks
     const { data: searchResult, isFetching: isSearching } = useSearchStudentByPhoneNumberQuery(
@@ -188,6 +189,7 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                 lockerId: selectedLockerId || undefined,
                 offerCode: couponCode || undefined,
                 date: new Date().toISOString(),
+                paymentMethod,
             }).unwrap();
 
             if (result.success) {
@@ -482,6 +484,7 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                                 </Button>
                             </div>
                         </motion.div>
+
                     )}
 
                     {currentStep === "SELECTION" && (
@@ -621,148 +624,195 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                     {currentStep === "PAYMENT" && (
                         <motion.div
                             key="payment"
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
                             className="space-y-8"
                         >
-                            <div className="p-8 bg-blue-50 rounded-3xl border border-blue-100 space-y-6">
-                                <div className="flex items-center gap-4 border-b border-blue-200 pb-4">
-                                    <div className="h-14 w-14 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-2xl">
-                                        {studentData.firstName?.[0]}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {/* Left: Booking Details */}
+                                <div className="md:col-span-2 space-y-6">
+                                    <div className="p-8 bg-blue-50 rounded-3xl border border-blue-100 space-y-6">
+                                        <div className="flex items-center gap-4 border-b border-blue-200 pb-6">
+                                            <div className="h-14 w-14 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-2xl">
+                                                {studentData.firstName?.[0]}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-black text-gray-900">{studentData.firstName} {studentData.lastName}</h3>
+                                                <p className="text-blue-600 font-bold">{phoneNumber}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-8">
+                                            <div className="space-y-1">
+                                                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Plan Selected</span>
+                                                <div className="font-extrabold text-gray-900 text-lg">{selectedPlan?.planName}</div>
+                                                <div className="text-sm text-gray-500 font-medium">{selectedPlan?.hours} Hours Daily • {selectedPlan?.planType} Seat</div>
+                                            </div>
+                                            {selectedSeatId && (
+                                                <div className="space-y-1">
+                                                    <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Allocated Seat</span>
+                                                    <div className="font-extrabold text-blue-600 text-xl">
+                                                        Seat {seatData?.data?.seats?.find((s: any) => s.id === selectedSeatId)?.seatNumber}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Pricing Breakdown */}
+                                        {isCalculating ? (
+                                            <div className="flex items-center justify-center gap-3 py-6 text-blue-600 font-bold">
+                                                <Loader2 className="h-5 w-5 animate-spin" /> Calculating price...
+                                            </div>
+                                        ) : pricingData ? (
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="text-gray-600 font-medium">Plan Base Price ({pricingData.monthsRequested} month{pricingData.monthsRequested > 1 ? 's' : ''})</span>
+                                                    <span className="font-bold text-gray-800">₹{pricingData.monthlyFee * pricingData.monthsRequested}</span>
+                                                </div>
+                                                {pricingData.packageDiscountAmt > 0 && (
+                                                    <div className="flex justify-between items-center text-sm">
+                                                        <span className="text-green-600 font-medium">Package Discount ({pricingData.packageDiscountPct}%)</span>
+                                                        <span className="font-bold text-green-600">-₹{pricingData.packageDiscountAmt.toFixed(0)}</span>
+                                                    </div>
+                                                )}
+                                                {pricingData.lockerPrice > 0 && (
+                                                    <div className="flex justify-between items-center text-sm">
+                                                        <span className="text-gray-600 font-medium">Locker Add-on</span>
+                                                        <span className="font-bold text-gray-800">₹{pricingData.lockerPrice}</span>
+                                                    </div>
+                                                )}
+                                                {pricingData.offerApplied && (
+                                                    <div className="flex justify-between items-center text-sm">
+                                                        <span className="text-green-600 font-medium">Coupon ({pricingData.offerApplied.code})</span>
+                                                        <span className="font-bold text-green-600">-₹{pricingData.offerApplied.discount.toFixed(0)}</span>
+                                                    </div>
+                                                )}
+                                                <div className="border-t border-blue-200 pt-3 flex justify-between items-center">
+                                                    <span className="font-extrabold text-gray-900 text-lg">Total Amount</span>
+                                                    <span className="text-2xl font-black text-blue-700">₹{pricingData.total.toFixed(0)}</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-white/50 p-4 rounded-2xl flex justify-between items-center">
+                                                <span className="font-extrabold text-gray-900">Total Subscription Amount</span>
+                                                <span className="text-2xl font-black text-blue-700">₹{selectedPlan?.price}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div>
-                                        <h3 className="text-2xl font-black text-gray-900">{studentData.firstName} {studentData.lastName}</h3>
-                                        <p className="text-blue-600 font-bold">{phoneNumber}</p>
+
+                                    <div className="space-y-4">
+                                        <Label className="text-lg font-black text-gray-800 ml-1 uppercase tracking-tighter">1. Select Payment Mode</Label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button
+                                                onClick={() => setPaymentMethod("CASH")}
+                                                className={cn(
+                                                    "p-5 rounded-[2rem] border-2 flex flex-col items-center gap-3 transition-all",
+                                                    paymentMethod === "CASH" ? "border-blue-600 bg-blue-50 text-blue-700 shadow-lg shadow-blue-50" : "bg-white border-gray-100 text-gray-400 grayscale"
+                                                )}
+                                            >
+                                                <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center transition-colors", paymentMethod === "CASH" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400")}>
+                                                    <IndianRupee className="h-8 w-8" />
+                                                </div>
+                                                <span className="font-black uppercase text-[10px] tracking-widest px-2 text-center">Cash on Reception</span>
+                                            </button>
+                                            <button
+                                                onClick={() => setPaymentMethod("UPI")}
+                                                className={cn(
+                                                    "p-5 rounded-[2rem] border-2 flex flex-col items-center gap-3 transition-all",
+                                                    paymentMethod === "UPI" ? "border-blue-600 bg-blue-50 text-blue-700 shadow-lg shadow-blue-50" : "bg-white border-gray-100 text-gray-400 grayscale"
+                                                )}
+                                            >
+                                                <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center transition-colors", paymentMethod === "UPI" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400")}>
+                                                    <QrCode className="h-8 w-8" />
+                                                </div>
+                                                <span className="font-black uppercase text-[10px] tracking-widest px-2 text-center">Transfer / UPI</span>
+                                            </button>
+                                        </div>
+
+                                        {paymentMethod === "UPI" && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                className="flex flex-col items-center p-6 border-2 border-dashed rounded-[2rem] gap-4 bg-gray-50/50"
+                                            >
+                                                {librarians?.data?.find(l => l.id === selectedLibrarianId)?.qrImage ? (
+                                                    <div className="p-3 bg-white rounded-3xl shadow-xl">
+                                                        <img
+                                                            src={librarians.data.find(l => l.id === selectedLibrarianId)?.qrImage!}
+                                                            alt="QR Code"
+                                                            className="h-44 w-44 object-contain"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-44 w-44 bg-white rounded-3xl border-2 border-dashed flex items-center justify-center text-gray-300 italic text-[10px] text-center px-6 font-bold uppercase tracking-tighter">
+                                                        No QR code found for authorizer
+                                                    </div>
+                                                )}
+                                                <p className="text-[10px] font-black text-center text-gray-400 uppercase tracking-widest max-w-[200px]">
+                                                    Show QR to student for instant payment
+                                                </p>
+                                            </motion.div>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div className="space-y-1">
-                                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Plan Selected</span>
-                                        <div className="font-extrabold text-gray-900 text-lg">{selectedPlan?.planName}</div>
-                                        <div className="text-sm text-gray-500 font-medium">{selectedPlan?.hours} Hours Daily • {selectedPlan?.planType} Seat</div>
-                                    </div>
-                                    {selectedSeatId && (
-                                        <div className="space-y-1">
-                                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Allocated Seat</span>
-                                            <div className="font-extrabold text-blue-600 text-xl">
-                                                Seat {seatData?.data?.seats?.find((s: any) => s.id === selectedSeatId)?.seatNumber}
-                                            </div>
+                                {/* Right: Security */}
+                                <div className="space-y-6">
+                                    <div className="p-8 bg-white rounded-[2.5rem] border-2 border-orange-500/20 shadow-xl shadow-orange-500/5 space-y-8 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-4 opacity-5">
+                                            <Lock className="h-24 w-24" />
                                         </div>
-                                    )}
-                                </div>
 
-                                {/* Pricing Breakdown */}
-                                {isCalculating ? (
-                                    <div className="flex items-center justify-center gap-3 py-6 text-blue-600 font-bold">
-                                        <Loader2 className="h-5 w-5 animate-spin" /> Calculating price...
-                                    </div>
-                                ) : pricingData ? (
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600 font-medium">Plan Base Price ({pricingData.monthsRequested} month{pricingData.monthsRequested > 1 ? 's' : ''})</span>
-                                            <span className="font-bold text-gray-800">₹{pricingData.monthlyFee * pricingData.monthsRequested}</span>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600">
+                                                    <User className="h-5 w-5" />
+                                                </div>
+                                                <Label className="text-sm font-black text-gray-700 uppercase tracking-tight">2. Authorizer</Label>
+                                            </div>
+                                            <Select value={selectedLibrarianId} onValueChange={setSelectedLibrarianId}>
+                                                <SelectTrigger className="h-12 rounded-2xl bg-gray-50 border-none font-bold shadow-inner">
+                                                    <SelectValue placeholder="Select yourself" />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-2xl">
+                                                    {librarians?.data?.map(l => (
+                                                        <SelectItem key={l.id} value={l.id}>{l.firstName} {l.lastName}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
-                                        {pricingData.packageDiscountAmt > 0 && (
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="text-green-600 font-medium">Package Discount ({pricingData.packageDiscountPct}%)</span>
-                                                <span className="font-bold text-green-600">-₹{pricingData.packageDiscountAmt.toFixed(0)}</span>
-                                            </div>
-                                        )}
-                                        {pricingData.lockerPrice > 0 && (
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="text-gray-600 font-medium">Locker Add-on</span>
-                                                <span className="font-bold text-gray-800">₹{pricingData.lockerPrice}</span>
-                                            </div>
-                                        )}
-                                        {pricingData.offerApplied && (
-                                            <div className="flex justify-between items-center text-sm">
-                                                <span className="text-green-600 font-medium">Coupon ({pricingData.offerApplied.code})</span>
-                                                <span className="font-bold text-green-600">-₹{pricingData.offerApplied.discount.toFixed(0)}</span>
-                                            </div>
-                                        )}
-                                        <div className="border-t border-blue-200 pt-3 flex justify-between items-center">
-                                            <span className="font-extrabold text-gray-900 text-lg">Total Amount</span>
-                                            <span className="text-2xl font-black text-blue-700">₹{pricingData.total.toFixed(0)}</span>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-white/50 p-4 rounded-2xl flex justify-between items-center">
-                                        <span className="font-extrabold text-gray-900">Total Subscription Amount</span>
-                                        <span className="text-2xl font-black text-blue-700">₹{selectedPlan?.price}</span>
-                                    </div>
-                                )}
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label className="font-bold">Select Librarian (Authorizer)</Label>
-                                    <Select value={selectedLibrarianId} onValueChange={setSelectedLibrarianId}>
-                                        <SelectTrigger className="h-12 rounded-xl">
-                                            <SelectValue placeholder="Select who is processing..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {librarians?.data?.map((lib: any) => (
-                                                <SelectItem key={lib.id} value={lib.id}>
-                                                    {lib.firstName} {lib.lastName}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="font-bold">Authorization PIN</Label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                                        <Input
-                                            type="password"
-                                            placeholder="Enter your 4-6 digit PIN"
-                                            className="pl-10 h-12 rounded-xl"
-                                            value={pin}
-                                            onChange={e => setPin(e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="md:col-span-2 space-y-2">
-                                    <Label className="font-bold">Coupon Code (Optional)</Label>
-                                    <div className="flex gap-3">
-                                        <div className="relative flex-1">
-                                            <Ticket className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                                                    <Lock className="h-5 w-5" />
+                                                </div>
+                                                <Label className="text-sm font-black text-gray-700 uppercase tracking-tight">3. Security PIN</Label>
+                                            </div>
                                             <Input
-                                                placeholder="ENTER OFFER CODE"
-                                                className="pl-10 h-12 rounded-xl uppercase font-black"
-                                                value={couponCode}
-                                                onChange={e => setCouponCode(e.target.value)}
+                                                type="password"
+                                                placeholder="••••"
+                                                className="h-12 rounded-2xl bg-gray-50 border-none font-black text-center text-xl tracking-[0.5em]"
+                                                value={pin}
+                                                onChange={e => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
                                             />
                                         </div>
-                                        <Button
-                                            type="button"
-                                            disabled={!couponCode || isCalculating}
-                                            onClick={async () => {
-                                                try {
-                                                    const result = await calculatePricing({
-                                                        planId: selectedPlanId,
-                                                        monthsRequested: 1,
-                                                        lockerId: selectedLockerId || undefined,
-                                                        offerCode: couponCode || undefined,
-                                                    }).unwrap();
-                                                    if (result.success) {
-                                                        setPricingData(result.data);
-                                                        if (result.data.offerApplied) {
-                                                            toast.success(`Coupon "${result.data.offerApplied.code}" applied!`);
-                                                        } else {
-                                                            toast.error("Invalid or expired coupon code");
-                                                        }
-                                                    }
-                                                } catch (err) {
-                                                    toast.error("Failed to apply coupon");
-                                                }
-                                            }}
-                                            className="h-12 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold"
-                                        >
-                                            {isCalculating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
-                                        </Button>
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+                                                    <Ticket className="h-5 w-5" />
+                                                </div>
+                                                <Label className="text-sm font-black text-gray-700 uppercase tracking-tight">Offer Code</Label>
+                                            </div>
+                                            <Input
+                                                placeholder="CODE"
+                                                className="h-12 rounded-2xl bg-gray-50 border-none font-black uppercase tracking-widest shadow-inner text-center"
+                                                value={couponCode}
+                                                onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -776,7 +826,7 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                                     onClick={handleSubmit}
                                     className="flex-[2] h-14 bg-green-600 hover:bg-green-700 rounded-2xl font-bold shadow-xl shadow-green-100"
                                 >
-                                    {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : "Confirm & Create Booking"}
+                                    {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : "Authorize & Create Booking"}
                                 </Button>
                             </div>
                         </motion.div>

@@ -331,6 +331,8 @@ export type AdminCreateBookingArgs = {
   lockerId?: string;
   offerCode?: string;
   date?: string;
+  paymentMethod?: "CASH" | "UPI" | "CARD" | "WALLET" | "BANK_TRANSFER";
+  razorpayPaymentId?: string;
 };
 
 export const api = createApi({
@@ -1308,10 +1310,11 @@ export const api = createApi({
       providesTags: ["Bookings"],
     }),
 
-    approveBooking: build.mutation<any, string>({
-      query: (id) => ({
+    approveBooking: build.mutation<any, { id: string, librarianId: string, pin: string, paymentMethod: string }>({
+      query: ({ id, ...data }) => ({
         url: `bookings/approve/${id}`,
         method: "POST",
+        body: data,
       }),
       invalidatesTags: ["Bookings", "LibrarySeats"],
     }),
@@ -1463,6 +1466,8 @@ export const {
   useGetLibrariansByLibraryIdQuery,
   useGetSeatsForPlanQuery,
   useGetStudentByEmailQuery,
+  useLazyGetStudentQuery,
+  useLazyGetStudentByEmailQuery,
   useUploadAadhaarMutation,
   useCalculatePricingMutation,
   useGetStudentBookingsQuery,

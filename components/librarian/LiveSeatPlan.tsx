@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DetailedSeat, useGetTimeSlotsByLibraryIdQuery } from "@/state/api";
@@ -10,7 +11,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { User, Shield, Info, Clock, CreditCard, LayoutGrid, Search } from "lucide-react";
+import { User, Shield, Info, Clock, CreditCard, LayoutGrid, Search, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import {
@@ -138,8 +139,12 @@ export default function LiveSeatPlan({
                                                 `}
                                             >
                                                 {seat.seatNumber}
-                                                {seat.currentBooking && (
-                                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-sm" />
+                                                {seat.bookings && seat.bookings.length > 0 && (
+                                                    <div className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 bg-blue-600 rounded-full border-2 border-white shadow-md flex items-center justify-center px-1">
+                                                        <span className="text-[10px] font-black text-white leading-none">
+                                                            {seat.bookings.length}
+                                                        </span>
+                                                    </div>
                                                 )}
                                             </motion.button>
                                         </TooltipTrigger>
@@ -235,38 +240,86 @@ export default function LiveSeatPlan({
                                             </Badge>
                                         </div>
 
-                                        {selectedSeat.currentBooking ? (
-                                            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-5 rounded-3xl text-white shadow-lg shadow-blue-200">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-4">Current Occupant</p>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                                                        <User className="h-6 w-6" />
+                                        {/* Bookings Section */}
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">
+                                                    {selectedSlotId === "all" ? "Daily Schedule" : "Bookings"}
+                                                </h4>
+                                                <Badge className="bg-blue-50 text-blue-600 border-none font-bold text-[10px]">
+                                                    {selectedSeat.bookings?.length || 0} Total
+                                                </Badge>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {/* Current Occupant (if specific slot selected) */}
+                                                {selectedSlotId !== "all" && selectedSeat.currentBooking && (
+                                                    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-5 rounded-3xl text-white shadow-lg shadow-blue-200">
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-4">Current Occupant</p>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                                                <User className="h-6 w-6" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="text-lg font-black leading-none">{selectedSeat.currentBooking.student.firstName}</p>
+                                                                <p className="text-[11px] font-medium text-white/70 mt-1">{selectedSeat.currentBooking.student.email}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center text-[10px] font-bold">
+                                                            <div className="flex items-center gap-2">
+                                                                <CreditCard className="h-3 w-3 opacity-60" />
+                                                                <span>{selectedSeat.currentBooking.plan.planName}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Clock className="h-3 w-3 opacity-60" />
+                                                                <span>Exp: {format(new Date(selectedSeat.currentBooking.validTo), "MMM dd")}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-lg font-black leading-none">{selectedSeat.currentBooking.student.firstName}</p>
-                                                        <p className="text-[11px] font-medium text-white/70 mt-1">{selectedSeat.currentBooking.student.email}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-6 pt-4 border-t border-white/10 flex justify-between items-center">
-                                                    <div className="flex items-center gap-2">
-                                                        <CreditCard className="h-3 w-3 opacity-60" />
-                                                        <span className="text-[10px] font-bold">{selectedSeat.currentBooking.plan.planName}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Clock className="h-3 w-3 opacity-60" />
-                                                        <span className="text-[10px] font-bold">Expires: {new Date(selectedSeat.currentBooking.validTo).toLocaleDateString()}</span>
-                                                    </div>
+                                                )}
+
+                                                {/* Other Bookings List */}
+                                                <div className="space-y-2">
+                                                    {(selectedSlotId === "all" ? selectedSeat.bookings : selectedSeat.bookings?.filter(b => b.id !== selectedSeat.currentBooking?.id)).map((booking, idx) => (
+                                                        <div key={idx} className="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex items-center gap-4 group hover:bg-white hover:shadow-md transition-all">
+                                                            <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-gray-400 border border-gray-100">
+                                                                <User className="h-5 w-5" />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <div className="flex justify-between items-start">
+                                                                    <p className="text-sm font-black text-gray-800 leading-none">
+                                                                        {booking.student?.firstName} {booking.student?.lastName}
+                                                                    </p>
+                                                                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded">
+                                                                        {booking.plan?.planName || "Booking"}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-3 mt-1.5 text-[10px] text-gray-400 font-bold">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Clock className="h-3 w-3" />
+                                                                        {booking.plan?.hours ? `${booking.plan.hours} hrs` : "Slot"}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Calendar className="h-3 w-3" />
+                                                                        {format(new Date(booking.validTo), "MMM dd")}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+
+                                                    {(!selectedSeat.bookings || (selectedSlotId === "all" ? selectedSeat.bookings.length === 0 : !selectedSeat.currentBooking && selectedSeat.bookings.length === 0)) && (
+                                                        <div className="py-12 text-center rounded-3xl border-2 border-dashed border-gray-100 bg-gray-50/50">
+                                                            <div className="h-16 w-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
+                                                                <LayoutGrid className="h-8 w-8 text-gray-200" />
+                                                            </div>
+                                                            <p className="text-sm font-black text-gray-400">Available for Booking</p>
+                                                            <p className="text-[10px] text-gray-300 mt-1">This seat has no active bookings for today</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="py-12 text-center rounded-3xl border-2 border-dashed border-gray-100 bg-gray-50/50">
-                                                <div className="h-16 w-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
-                                                    <LayoutGrid className="h-8 w-8 text-gray-200" />
-                                                </div>
-                                                <p className="text-sm font-black text-gray-400">Available for Booking</p>
-                                                <p className="text-[10px] text-gray-300 mt-1">This seat has no current active booking</p>
-                                            </div>
-                                        )}
+                                        </div>
                                     </div>
 
                                     {/* Stats Overview */}

@@ -5,7 +5,8 @@ import {
     useGetAuthUserQuery,
     useGetLibraryBookingsQuery,
     useGetComplaintsByLibraryQuery,
-    useGetLibraryReviewsForLibrarianQuery
+    useGetLibraryReviewsForLibrarianQuery,
+    useGetPauseRequestsByLibraryQuery
 } from "@/state/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +21,15 @@ import {
     ChevronRight,
     AlertCircle,
     Star,
-    CheckCircle2
+    CheckCircle2,
+    X,
+    AlertTriangle,
+    ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays, isAfter, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 interface LibraryHomeProps {
     libraryId: string;
 }
@@ -37,116 +42,126 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
     const { data: bookingsData, isLoading: isLoadingBookings } = useGetLibraryBookingsQuery({ libraryId });
     const { data: complaintsData, isLoading: isLoadingComplaints } = useGetComplaintsByLibraryQuery(libraryId);
     const { data: reviewsData, isLoading: isLoadingReviews } = useGetLibraryReviewsForLibrarianQuery(libraryId);
+    const { data: pauseRequestsData, isLoading: isLoadingPauseRequests } = useGetPauseRequestsByLibraryQuery(libraryId);
+
+    const [selectedQuery, setSelectedQuery] = React.useState<any>(null);
 
     const bookings = bookingsData?.data || [];
     const activeBookings = bookings.filter((b: any) => b.bookingDetails?.status === "ACTIVE");
-    const complaints = complaintsData?.data || [];
-    const reviews = reviewsData?.data || [];
+    const complaints = Array.isArray(complaintsData) ? complaintsData : complaintsData?.data || [];
+    const pauseRequests = Array.isArray(pauseRequestsData) ? pauseRequestsData : pauseRequestsData?.data || [];
+    const reviews = Array.isArray(reviewsData) ? reviewsData : reviewsData?.data || [];
+
+    const pendingComplaints = complaints.filter((c: any) => c.status === "PENDING").map((c: any) => ({ ...c, qType: "COMPLAINT" }));
+    const pendingPauseRequests = pauseRequests.filter((p: any) => p.status === "PENDING").map((p: any) => ({ ...p, qType: "PLAN_REQUEST" }));
+
+    const allPendingRequests = [...pendingComplaints, ...pendingPauseRequests].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     // Section 1: Welcome Box
-    const WelcomeBox = () => (
-        <div className="relative bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl shadow-blue-50/50 overflow-hidden group">
-            <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/50 to-transparent pointer-events-none" />
-            <div className="relative z-10 space-y-4 max-w-xl">
-                <h1 className="text-4xl font-black text-blue-900 tracking-tight leading-tight">
-                    Hello {librarian?.username || "Librarian"}!<br />
-                    <span className="text-blue-600">Welcome back.</span>
-                </h1>
-                <p className="text-gray-500 font-bold text-lg leading-relaxed">
-                    Everything you need to manage today's library operations is right here.
-                </p>
-                <div className="pt-4 flex gap-4">
-                    <div className="flex flex-col">
-                        <span className="text-3xl font-black text-blue-900">{activeBookings.length}</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">Active Students</span>
-                    </div>
-                    <div className="w-px h-10 bg-gray-100 mx-2 self-center" />
-                    <div className="flex flex-col">
-                        <span className="text-3xl font-black text-orange-500">
-                            {complaints.filter((c: any) => c.status === "PENDING").length || 0}
-                        </span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Pending Queries</span>
-                    </div>
-                </div>
-            </div>
+    const WelcomeBox = () => {
+        const hour = new Date().getHours();
+        const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
 
-            {/* Simple placeholder for the illustration in image 2 */}
-            <div className="absolute right-0 bottom-0 w-80 h-80 opacity-20 lg:opacity-100 pointer-events-none transition-transform group-hover:scale-105 duration-700">
-                <div className="relative w-full h-full flex items-end justify-center">
-                    <div className="w-64 h-64 bg-blue-100 rounded-full blur-[100px] absolute bottom-0 right-0" />
-                    <img
-                        src="https://img.freepik.com/free-vector/modern-working-environment-with-character_23-2148107779.jpg"
-                        alt="Workspace Illustration"
-                        className="w-full h-auto relative bottom-0 filter drop-shadow-2xl"
-                    />
+        return (
+            <div className="relative bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl shadow-blue-50/50 overflow-hidden group">
+                <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/50 to-transparent pointer-events-none" />
+                <div className="relative z-10 space-y-4 max-w-xl">
+                    <h1 className="text-4xl font-black text-blue-900 tracking-tight leading-tight">
+                        {greeting}, {librarian?.username || "Sheetal"}...
+                    </h1>
+                    <p className="text-gray-500 font-medium text-lg italic leading-relaxed">
+                        "A library is not a luxury but one of the necessities of life."
+                        <br />
+                        <span className="text-sm not-italic opacity-60">— Henry Ward Beecher</span>
+                    </p>
+                    <div className="space-y-2 pt-4">
+                        <p className="text-gray-800 font-bold text-lg">Your library, simplified for today.</p>
+                        <p className="text-gray-500 text-sm leading-relaxed max-w-md">
+                            Everything you need to manage today's library operations — thoughtfully organized, effortlessly accessible.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Illustration from image 3 style */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-80 h-80 opacity-20 lg:opacity-100 pointer-events-none">
+                    <div className="relative w-full h-full flex items-center justify-center">
+                        <div className="w-64 h-64 bg-green-100 rounded-full blur-[80px] absolute opacity-50" />
+                        <div className="relative flex gap-1 items-end">
+                            <div className="w-16 h-40 bg-green-500/40 rounded-full rotate-12" />
+                            <div className="w-20 h-48 bg-green-400/60 rounded-full -rotate-6 shadow-xl shadow-green-200" />
+                            <div className="w-14 h-32 bg-green-300/40 rounded-full rotate-6" />
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Section 2: Library Bookings
     const BookingsList = () => {
-        const displayBookings = activeBookings.slice(0, 3);
+        const displayBookings = bookings.slice(0, 4);
         const router = useRouter();
+
+        // Calculate today's total
+        const todayTotal = bookings.reduce((acc: number, b: any) => {
+            const isToday = format(new Date(b.createdAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+            return isToday ? acc + (b.totalAmount || 0) : acc;
+        }, 0);
 
         return (
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col h-full overflow-hidden">
-                <div className="bg-blue-50/50 p-6 border-b border-gray-100">
-                    <div className="flex justify-between items-center">
-                        <h3 className="font-black text-blue-900 text-lg uppercase tracking-tight">Active Bookings</h3>
-                        <Badge variant="outline" className="bg-blue-100/50 text-blue-700 border-blue-200">Live</Badge>
-                    </div>
+                <div className="p-8">
+                    <h3 className="font-bold text-blue-700 text-xl">Library Bookings</h3>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div className="flex-1 overflow-y-auto px-8 space-y-8">
                     {isLoadingBookings ? (
                         Array(3).fill(0).map((_, i) => (
-                            <div key={i} className="flex gap-4 items-center">
-                                <Skeleton className="h-10 w-10 rounded-full" />
-                                <div className="space-y-2 flex-1">
-                                    <Skeleton className="h-4 w-1/2" />
-                                    <Skeleton className="h-3 w-1/3" />
-                                </div>
+                            <div key={i} className="space-y-2">
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-3 w-1/2" />
                             </div>
                         ))
                     ) : displayBookings.length > 0 ? (
                         <>
                             {displayBookings.map((booking: any) => (
-                                <div key={booking.id} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-black text-sm border border-blue-100">
-                                            {booking.student?.firstName?.[0]}
+                                <div key={booking.id} className="flex items-start justify-between border-b border-gray-50 pb-6 last:border-0 last:pb-0">
+                                    <div className="space-y-1">
+                                        <div className="font-bold text-gray-800 text-base">
+                                            {booking.student?.firstName} {booking.student?.lastName}
                                         </div>
-                                        <div>
-                                            <div className="font-black text-gray-800 text-sm truncate max-w-[120px]">
-                                                {booking.student?.firstName} {booking.student?.lastName}
-                                            </div>
-                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
-                                                Seat {booking.seat?.seatNumber} • {booking.slot?.name}
-                                            </div>
+                                        <div className="text-xs font-medium text-gray-400 uppercase tracking-tight">
+                                            STU-{format(new Date(booking.createdAt), "yyyy")}-{booking.studentId?.slice(-4)}
                                         </div>
                                     </div>
-                                    <Badge className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5">
-                                        {booking.bookingDetails?.status || booking.status}
-                                    </Badge>
+                                    <div className="text-right">
+                                        <div className={cn(
+                                            "text-xs font-bold mb-1",
+                                            booking.bookingDetails?.status === "PENDING" ? "text-amber-400" :
+                                                booking.bookingDetails?.status === "REJECTED" ? "text-red-400" : "text-green-400"
+                                        )}>
+                                            {booking.bookingDetails?.status || "Success"}
+                                        </div>
+                                        <div className="font-bold text-blue-900">
+                                            Rs. {booking.totalAmount || 0}
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
-                            {activeBookings.length > 3 && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full mt-2 text-blue-600 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-50"
-                                    onClick={() => router.push(`/librarian/libraries/${libraryId}?tab=bookings`)}
-                                >
-                                    View All <ChevronRight className="ml-1 h-3 w-3" />
-                                </Button>
-                            )}
                         </>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-gray-400 py-8">
                             <Calendar className="h-10 w-10 mb-2 opacity-20" />
-                            <p className="font-black text-[10px] uppercase tracking-widest">No active bookings</p>
+                            <p className="font-bold text-sm uppercase tracking-widest">No bookings found</p>
                         </div>
                     )}
+                </div>
+
+                {/* Footer: Today's Collection */}
+                <div className="bg-blue-50/30 p-8 border-t border-gray-50 flex items-center justify-between">
+                    <span className="text-gray-500 font-bold">Today's Collection</span>
+                    <span className="text-3xl font-black text-blue-900">Rs. {todayTotal}</span>
                 </div>
             </div>
         );
@@ -155,23 +170,18 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
     // Section 3: Queries List
     const QueriesList = () => {
         const router = useRouter();
-        const combined = [
-            ...complaints.map((c: any) => ({ ...c, type: 'complaint' })),
-            ...reviews.map((r: any) => ({ ...r, type: 'review' }))
-        ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-        const displayQueries = combined.slice(0, 3);
+        const displayQueries = allPendingRequests.slice(0, 4);
 
         return (
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col h-full overflow-hidden">
-                <div className="bg-orange-50/50 p-6 border-b border-gray-100">
+                <div className="p-8 border-b border-gray-50">
                     <div className="flex justify-between items-center">
-                        <h3 className="font-black text-blue-900 text-lg uppercase tracking-tight">Recent Queries</h3>
-                        <Badge variant="outline" className="bg-orange-100/50 text-orange-700 border-orange-200">Alert</Badge>
+                        <h3 className="font-bold text-gray-800 text-xl">Requests</h3>
+                        <span className="text-red-400 font-medium text-sm">{allPendingRequests.length} Pending</span>
                     </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    {isLoadingComplaints || isLoadingReviews ? (
+                <div className="flex-1 overflow-y-auto px-8 space-y-8 py-6">
+                    {isLoadingComplaints || isLoadingPauseRequests ? (
                         Array(3).fill(0).map((_, i) => (
                             <div key={i} className="space-y-2">
                                 <Skeleton className="h-4 w-3/4" />
@@ -181,48 +191,133 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                     ) : displayQueries.length > 0 ? (
                         <>
                             {displayQueries.map((item: any) => (
-                                <div key={item.id} className="space-y-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0 group">
-                                    <div className="flex justify-between items-start">
-                                        <div className={cn(
-                                            "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
-                                            item.type === 'complaint' ? "bg-red-50 text-red-600" : "bg-purple-50 text-purple-600"
-                                        )}>
-                                            {item.type}
+                                <div key={item.id} className="flex items-start justify-between border-b border-gray-50 pb-6 last:border-0 last:pb-0 group">
+                                    <div className="space-y-1">
+                                        <div className="font-bold text-gray-800 text-base">
+                                            {item.student?.firstName} {item.student?.lastName}
                                         </div>
-                                        <span className="text-[9px] font-bold text-gray-300">{format(new Date(item.createdAt), "MMM dd")}</span>
+                                        <div className="text-xs font-medium text-gray-400">
+                                            Student ID: {item.studentId?.slice(0, 6).toUpperCase()}
+                                        </div>
+                                        <div className="text-xs font-medium text-gray-400">
+                                            {item.qType === "COMPLAINT" ? "Complaint" : "Plan Pause"}
+                                        </div>
                                     </div>
-                                    <p className="text-xs font-bold text-gray-600 line-clamp-1">
-                                        {item.type === 'complaint' ? item.complaint : item.comment}
-                                    </p>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">
-                                            #{item.studentId?.slice(-4)}
-                                        </span>
-                                        <Button variant="link" className="h-auto p-0 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:no-underline">
-                                            Resolve
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        variant="link"
+                                        className="h-auto p-0 text-sm font-bold text-blue-700 hover:no-underline"
+                                        onClick={() => setSelectedQuery(item)}
+                                    >
+                                        View Request
+                                    </Button>
                                 </div>
                             ))}
-                            {combined.length > 3 && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full mt-2 text-blue-600 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-50"
-                                    onClick={() => router.push(`/librarian/libraries/${libraryId}?tab=queries`)}
-                                >
-                                    View All <ChevronRight className="ml-1 h-3 w-3" />
-                                </Button>
-                            )}
                         </>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-gray-400 py-8">
                             <MessageCircle className="h-10 w-10 mb-2 opacity-20" />
-                            <p className="font-black text-[10px] uppercase tracking-widest">All caught up</p>
+                            <p className="font-bold text-sm uppercase tracking-widest">All caught up</p>
                         </div>
                     )}
                 </div>
             </div>
+        );
+    };
+
+    // Detail Modal
+    const RequestDetailModal = () => {
+        if (!selectedQuery) return null;
+
+        return (
+            <AnimatePresence>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setSelectedQuery(null)}>
+                    <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden relative"
+                    >
+                        <button onClick={() => setSelectedQuery(null)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+                            <X className="h-6 w-6" />
+                        </button>
+
+                        <div className="bg-blue-50 p-8 border-b border-blue-100">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className={cn(
+                                    "h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm",
+                                    selectedQuery.qType === "COMPLAINT" ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"
+                                )}>
+                                    {selectedQuery.qType === "COMPLAINT" ? <AlertTriangle className="h-6 w-6" /> : <ClipboardList className="h-6 w-6" />}
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-blue-900 leading-none">
+                                        {selectedQuery.qType === "COMPLAINT" ? "Complaint Details" : "Plan Pause Request"}
+                                    </h3>
+                                    <p className="text-blue-600/60 font-bold text-[10px] uppercase tracking-widest mt-1">
+                                        Pending Approval
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-blue-100/50">
+                                <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center font-black text-blue-600">
+                                    {selectedQuery.student?.firstName?.[0]}
+                                </div>
+                                <div>
+                                    <div className="font-black text-gray-800">
+                                        {selectedQuery.student?.firstName} {selectedQuery.student?.lastName}
+                                    </div>
+                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                        ID: {selectedQuery.studentId}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Request Details</h4>
+                                <div className="bg-gray-50 rounded-2xl p-5 text-gray-700 font-medium leading-relaxed border border-gray-100">
+                                    {selectedQuery.qType === "COMPLAINT"
+                                        ? selectedQuery.complaint
+                                        : `Requesting a plan pause for ${selectedQuery.requestedDays} days. Reason: ${selectedQuery.reason || "Not specified"}`}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[10px] font-black text-gray-300 uppercase tracking-widest">
+                                <div className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    Submitted {format(new Date(selectedQuery.createdAt), "MMM dd, yyyy • h:mm a")}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <User className="h-3 w-3" />
+                                    STU-{selectedQuery.studentId?.slice(-6).toUpperCase()}
+                                </div>
+                            </div>
+
+                            <div className="pt-4 flex gap-3">
+                                <Button
+                                    className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-black text-xs uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-blue-100"
+                                    onClick={() => {
+                                        router.push(`/librarian/libraries/${libraryId}?tab=queries`);
+                                        setSelectedQuery(null);
+                                    }}
+                                >
+                                    Go to Resolution Center
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="h-14 w-14 rounded-2xl border-gray-100 text-gray-400 hover:text-gray-600"
+                                    onClick={() => setSelectedQuery(null)}
+                                >
+                                    <X className="h-5 w-5" />
+                                </Button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+            </AnimatePresence>
         );
     };
 
@@ -342,6 +437,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                     <BookingsList />
                     <QueriesList />
                 </div>
+                <RequestDetailModal />
             </div>
 
             {/* Right Column: Trends + Recent Activity */}
