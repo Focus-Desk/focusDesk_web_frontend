@@ -161,6 +161,7 @@ export default function StudentOnboardingWizard({
                 lockerId: selectedLockerId || undefined,
                 offerCode: couponCode || undefined,
                 date: new Date().toISOString(),
+                paymentMethod: paymentMethod,
             }).unwrap();
 
             if (result.success) {

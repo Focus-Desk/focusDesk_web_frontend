@@ -28,6 +28,7 @@ import {
 } from "@/state/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import ConfirmBookingModal from "./ConfirmBookingModal";
 
 interface LibraryBookingsProps {
     libraryId: string;
@@ -45,6 +46,8 @@ const TAB_CONFIG = [
 export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
     const [activeTab, setActiveTab] = useState<BookingTab>("ALL");
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedBooking, setSelectedBooking] = useState<any>(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const { data: bookingsData, isLoading } = useGetLibraryBookingsQuery({
         libraryId,
@@ -67,13 +70,9 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
         );
     }, [bookings, searchQuery]);
 
-    const handleApprove = async (id: string) => {
-        try {
-            await approveBooking(id).unwrap();
-            toast.success("Booking approved successfully");
-        } catch (err: any) {
-            toast.error(err.data?.message || "Failed to approve booking");
-        }
+    const handleApprove = async (booking: any) => {
+        setSelectedBooking(booking);
+        setShowConfirmModal(true);
     };
 
     const handleReject = async (id: string) => {
@@ -220,7 +219,7 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Button
                                                         size="sm"
-                                                        onClick={() => handleApprove(booking.id)}
+                                                        onClick={() => handleApprove(booking)}
                                                         disabled={isApproving}
                                                         className="h-9 w-9 p-0 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-md shadow-green-100 transition-all active:scale-95"
                                                     >
@@ -256,6 +255,23 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
                     </table>
                 </div>
             </div>
+
+            <AnimatePresence>
+                {showConfirmModal && selectedBooking && (
+                    <ConfirmBookingModal
+                        booking={selectedBooking}
+                        libraryId={libraryId}
+                        onClose={() => {
+                            setShowConfirmModal(false);
+                            setSelectedBooking(null);
+                        }}
+                        onSuccess={() => {
+                            // The mutation automatically invalidates tags, 
+                            // so the list will refresh
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

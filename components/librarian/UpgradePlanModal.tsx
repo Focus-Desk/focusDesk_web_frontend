@@ -63,6 +63,7 @@ export default function UpgradePlanModal({
     const [selectedLibrarianId, setSelectedLibrarianId] = useState("");
     const [pin, setPin] = useState("");
     const [couponCode, setCouponCode] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState<"CASH" | "UPI">("CASH");
 
     // API Hooks
     const { data: plans, isLoading: isLoadingPlans } = useGetPlansQuery(libraryId, { skip: !libraryId });
@@ -158,6 +159,7 @@ export default function UpgradePlanModal({
                 lockerId: selectedLockerId || undefined,
                 offerCode: couponCode || undefined,
                 date: startDate.toISOString(),
+                paymentMethod,
             }).unwrap();
 
             if (result.success) {
@@ -517,85 +519,58 @@ export default function UpgradePlanModal({
                                                             <SelectValue placeholder="Select yourself" />
                                                         )}
                                                     </SelectTrigger>
-                                                    <SelectContent>
-                                                        {librarians?.data?.length === 0 ? (
-                                                            <div className="p-2 text-sm text-gray-500 text-center font-bold">No authorizers found</div>
-                                                        ) : librarians?.data?.map((lib: any) => (
-                                                            <SelectItem key={lib.id} value={lib.id}>{lib.firstName} {lib.lastName}</SelectItem>
+                                                    <SelectContent className="rounded-2xl">
+                                                        {librarians?.data?.map(l => (
+                                                            <SelectItem key={l.id} value={l.id}>{l.firstName} {l.lastName}</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
 
                                             <div className="space-y-4">
-                                                <Label className="font-black text-sm text-gray-700">Security PIN</Label>
-                                                <div className="relative">
-                                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                                    <Input
-                                                        type="password"
-                                                        placeholder="••••"
-                                                        className="h-12 pl-11 rounded-xl bg-gray-50 border-none font-black text-lg tracking-[0.5em]"
-                                                        value={pin}
-                                                        onChange={e => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                                                    />
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                                                        <Lock className="h-5 w-5" />
+                                                    </div>
+                                                    <Label className="text-sm font-black text-gray-700 uppercase tracking-tight">3. Security PIN</Label>
                                                 </div>
+                                                <Input
+                                                    type="password"
+                                                    placeholder="••••"
+                                                    className="h-12 rounded-2xl bg-gray-50 border-none font-black text-center text-xl tracking-[0.5em]"
+                                                    value={pin}
+                                                    onChange={e => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                                                />
                                             </div>
 
                                             <div className="space-y-4">
-                                                <Label className="font-black text-sm text-gray-700">Coupon Code</Label>
-                                                <div className="flex gap-2">
-                                                    <div className="relative flex-1">
-                                                        <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                                        <Input
-                                                            placeholder="CODE"
-                                                            className="h-12 pl-11 rounded-xl bg-gray-50 border-none font-black uppercase"
-                                                            value={couponCode}
-                                                            onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                                                        />
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+                                                        <Ticket className="h-5 w-5" />
                                                     </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        disabled={!couponCode || isCalculating}
-                                                        onClick={async () => {
-                                                            try {
-                                                                const result = await calculatePricing({
-                                                                    planId: selectedPlanId,
-                                                                    monthsRequested: 1,
-                                                                    lockerId: selectedLockerId || undefined,
-                                                                    offerCode: couponCode || undefined,
-                                                                }).unwrap();
-                                                                if (result.success && result.data.offerApplied) {
-                                                                    setPricingData(result.data);
-                                                                    toast.success("Coupon applied!");
-                                                                } else {
-                                                                    toast.error("Invalid coupon");
-                                                                }
-                                                            } catch {
-                                                                toast.error("Error applying coupon");
-                                                            }
-                                                        }}
-                                                        className="h-12 px-4 rounded-xl text-blue-600 font-bold hover:bg-blue-50"
-                                                    >
-                                                        {isCalculating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
-                                                    </Button>
+                                                    <Label className="text-sm font-black text-gray-700 uppercase tracking-tight">Offer Code</Label>
                                                 </div>
+                                                <Input
+                                                    placeholder="CODE"
+                                                    className="h-12 rounded-2xl bg-gray-50 border-none font-black uppercase tracking-widest shadow-inner text-center"
+                                                    value={couponCode}
+                                                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                                                />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-4 pt-4">
-                                    <Button variant="outline" onClick={() => setCurrentStep("SELECTION")} className="h-14 flex-1 rounded-2xl font-black border-gray-200 text-gray-500">
-                                        <ChevronLeft className="mr-2 h-5 w-5" /> Back to Selection
+                                <div className="flex gap-4 pt-4 border-t border-gray-100">
+                                    <Button variant="outline" onClick={() => setCurrentStep("SELECTION")} className="flex-1 h-14 rounded-2xl font-bold">
+                                        <ChevronLeft className="mr-2 h-5 w-5" /> Back
                                     </Button>
                                     <Button
-                                        disabled={!selectedLibrarianId || !pin || isSubmitting}
+                                        disabled={!selectedLibrarianId || !pin || !paymentMethod || isSubmitting}
                                         onClick={handleSubmit}
-                                        className="h-14 flex-[2] rounded-2xl bg-green-600 hover:bg-green-700 font-black text-lg shadow-xl shadow-green-100"
+                                        className="flex-[2] h-14 bg-green-600 hover:bg-green-700 rounded-2xl font-bold shadow-xl shadow-green-100"
                                     >
-                                        {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : null}
-                                        Confirm & Process Upgrade
+                                        {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : "Authorize Upgrade"}
                                     </Button>
                                 </div>
                             </motion.div>
