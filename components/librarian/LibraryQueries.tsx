@@ -87,9 +87,9 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
     const [updateReviewStatus, { isLoading: isUpdatingReviewStatus }] = useUpdateReviewStatusMutation();
     const [replyToReviewMut, { isLoading: isReplying }] = useReplyToReviewMutation();
 
-    const complaints = complaintsData?.data || [];
-    const reviews = reviewsData?.data || [];
-    const pauseRequests = pauseRequestsData?.data || [];
+    const complaints = Array.isArray(complaintsData) ? complaintsData : complaintsData?.data || [];
+    const reviews = Array.isArray(reviewsData) ? reviewsData : reviewsData?.data || [];
+    const pauseRequests = Array.isArray(pauseRequestsData) ? pauseRequestsData : pauseRequestsData?.data || [];
 
     const allQueries = useMemo(() => {
         const coal: any[] = [

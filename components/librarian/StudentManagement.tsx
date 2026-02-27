@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { format } from "date-fns";
 import {
     Table,
     TableBody,
@@ -25,6 +26,7 @@ import {
     AlertTriangle,
     ChevronUp,
     Loader2,
+    Clock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -178,8 +180,14 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
             if (result.success) {
                 const bookings = result.data.bookings || [];
                 setBookingHistory(bookings);
-                const active = bookings.find((b: any) => b.bookingDetails?.status === "ACTIVE");
-                setActiveBooking(active);
+                const now = new Date();
+                const active = bookings.find((b: any) => {
+                    const validFrom = new Date(b.bookingDetails?.validFrom);
+                    const validTo = new Date(b.bookingDetails?.validTo);
+                    return b.bookingDetails?.status === "ACTIVE" && validFrom <= now && validTo >= now;
+                });
+                // Fallback to the first active booking if no strict current one is found
+                setActiveBooking(active || bookings.find((b: any) => b.bookingDetails?.status === "ACTIVE"));
             }
         } catch {
             setBookingHistory([]);
@@ -528,7 +536,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                             </span>
                                                         </div>
                                                         <div className="mt-1 text-[10px] font-bold text-blue-600">
-                                                            Valid till: {new Date(activeBooking.bookingDetails?.validTo).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                            Valid till: {format(new Date(activeBooking.bookingDetails?.validTo), "dd MMM, yyyy")}
                                                         </div>
                                                     </div>
                                                     <div className="px-4 py-1 border border-blue-400 rounded-lg text-blue-600 font-bold text-sm bg-white uppercase">
@@ -542,6 +550,66 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Next Plans Section */}
+                                    {bookingHistory.filter((b: any) => {
+                                        const isFuture = new Date(b.bookingDetails?.validFrom) > new Date();
+                                        const isNotActiveDisplayed = b.id !== activeBooking?.id;
+                                        return isFuture && isNotActiveDisplayed && (b.bookingDetails?.status === "PENDING" || b.bookingDetails?.status === "ACTIVE");
+                                    }).length > 0 && (
+                                            <div className="px-6 py-6 border-b bg-green-50/20">
+                                                <h4 className="text-sm font-bold text-gray-700 mb-4">Next Plans:</h4>
+                                                <div className="space-y-4">
+                                                    {bookingHistory
+                                                        .filter((b: any) => {
+                                                            const isFuture = new Date(b.bookingDetails?.validFrom) > new Date();
+                                                            const isNotActiveDisplayed = b.id !== activeBooking?.id;
+                                                            return isFuture && isNotActiveDisplayed && (b.bookingDetails?.status === "PENDING" || b.bookingDetails?.status === "ACTIVE");
+                                                        })
+                                                        .map((plan: any, idx: number) => (
+                                                            <div key={idx} className="relative overflow-hidden bg-white/60 backdrop-blur-sm border border-green-100 rounded-2xl p-5 shadow-sm group">
+                                                                <div className="absolute top-0 left-0 w-1 h-full bg-green-400" />
+                                                                <div className="flex items-end justify-between">
+                                                                    <div className="space-y-2">
+                                                                        <div className="flex items-baseline gap-1">
+                                                                            <span className="text-2xl font-black text-gray-900 leading-none">
+                                                                                Rs. {plan.bookingDetails?.totalAmount || plan.plan?.price}
+                                                                            </span>
+                                                                            <span className="text-sm font-bold text-gray-400">/ month</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Badge variant="outline" className="bg-green-100 text-green-700 border-none font-black text-[10px] px-2 py-0.5 rounded-md">
+                                                                                {plan.plan?.hours} hrs/ day
+                                                                            </Badge>
+                                                                            <span className="italic text-[10px] font-bold text-gray-800 uppercase">
+                                                                                {plan.bookingDetails?.seatMode || plan.plan?.planType} Seat ({plan.seat?.seatNumber || "—"})
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex flex-col gap-1 text-[10px] font-bold text-green-600 uppercase tracking-tight">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <Calendar className="h-3 w-3" />
+                                                                                <span>Starts: {format(new Date(plan.bookingDetails?.validFrom), "dd MMM, yyyy")}</span>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <Clock className="h-3 w-3" />
+                                                                                <span>Ends: {format(new Date(plan.bookingDetails?.validTo), "dd MMM, yyyy")}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex flex-col items-end gap-3">
+                                                                        <Badge className="bg-green-100 text-green-700 border-none font-black text-[9px] px-3 py-0.5 rounded-full">
+                                                                            UPCOMING
+                                                                        </Badge>
+                                                                        <div className="px-4 py-1 border border-green-400 rounded-lg text-green-600 font-bold text-sm bg-white uppercase">
+                                                                            {plan.plan?.planName}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            </div>
+                                        )}
 
                                     {/* Navigation Buttons (Bottom Image 2) */}
                                     <div className="px-6 py-6 grid grid-cols-2 gap-4">
@@ -625,13 +693,8 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                                     isActive && "bg-green-50/40"
                                                                 )}
                                                             >
-                                                                <td className="px-5 py-4 text-gray-500 font-bold">
-                                                                    {isActive
-                                                                        ? "Current"
-                                                                        : validFrom.toLocaleDateString("en-IN", {
-                                                                            month: "short",
-                                                                            year: "numeric",
-                                                                        })}
+                                                                <td className="px-5 py-4 text-gray-500 font-bold whitespace-nowrap">
+                                                                    {format(new Date(booking.bookingDetails?.validFrom), "dd MMM")} - {format(new Date(booking.bookingDetails?.validTo), "dd MMM, yyyy")}
                                                                 </td>
                                                                 <td className="px-5 py-4 font-extrabold text-gray-800">
                                                                     {booking.plan?.planName || "Standard"}{slotInfo}{seatInfo}
