@@ -23,7 +23,7 @@ import { useEffect } from "react";
 
 export default function LibrarianDashboard() {
   interface Librarian {
-    id: string;
+    userId: string;
     username: string;
     email: string;
     profilePhoto: string;
@@ -40,15 +40,15 @@ export default function LibrarianDashboard() {
   const { data: authData, isLoading: authLoading, error: authError } =
     useGetAuthUserQuery();
   const librarian =
-    authData?.userRole === "librarian" ? (authData.userInfo as Librarian) : null;
+    authData?.userRole === "librarian" ? (authData.userInfo as any as Librarian) : null;
 
-  // Only call the libraries query if librarian id exists
+  // Only call the libraries query if librarian userId exists
   const {
     data: libraries,
     isLoading: librariesLoading,
     error: librariesError,
-  } = useGetLibrariesByLibrarianQuery(librarian?.id ?? "", {
-    skip: !librarian?.id,
+  } = useGetLibrariesByLibrarianQuery(librarian?.userId ?? "", {
+    skip: !librarian?.userId,
   });
 
   const [deleteLibrary, { isLoading: deleting }] = useDeleteLibraryMutation();

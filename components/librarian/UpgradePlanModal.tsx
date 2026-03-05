@@ -521,7 +521,7 @@ export default function UpgradePlanModal({
                                                     </SelectTrigger>
                                                     <SelectContent className="rounded-2xl">
                                                         {librarians?.data?.map(l => (
-                                                            <SelectItem key={l.id} value={l.id}>{l.firstName} {l.lastName}</SelectItem>
+                                                            <SelectItem key={l.id} value={l.id}>{l.librarian?.firstName} {l.librarian?.lastName}</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>

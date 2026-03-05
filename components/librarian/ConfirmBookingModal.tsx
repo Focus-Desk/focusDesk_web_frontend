@@ -101,7 +101,7 @@ export default function ConfirmBookingModal({
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-gray-900 leading-tight">Confirm Booking</h2>
-                            <p className="text-sm font-bold text-gray-400">Student: {booking?.student?.firstName} {booking?.student?.lastName}</p>
+                            <p className="text-sm font-bold text-gray-400">Student: {booking?.student?.student?.firstName} {booking?.student?.student?.lastName}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="h-10 w-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
@@ -156,10 +156,10 @@ export default function ConfirmBookingModal({
                                         animate={{ opacity: 1, height: "auto" }}
                                         className="flex flex-col items-center p-4 border-2 border-dashed rounded-3xl gap-3 bg-white"
                                     >
-                                        {librarians?.data?.find(l => l.id === selectedLibrarianId)?.qrImage ? (
+                                        {librarians?.data?.find(l => l.id === selectedLibrarianId)?.librarian?.qrImage ? (
                                             <div className="p-2 bg-white rounded-2xl shadow-md">
                                                 <img
-                                                    src={librarians.data.find(l => l.id === selectedLibrarianId)?.qrImage!}
+                                                    src={librarians.data.find(l => l.id === selectedLibrarianId)?.librarian?.qrImage!}
                                                     alt="QR Code"
                                                     className="h-32 w-32 object-contain"
                                                 />
@@ -189,7 +189,7 @@ export default function ConfirmBookingModal({
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
                                         {librarians?.data?.map(l => (
-                                            <SelectItem key={l.id} value={l.id}>{l.firstName} {l.lastName}</SelectItem>
+                                            <SelectItem key={l.id} value={l.id}>{l.librarian?.firstName} {l.librarian?.lastName}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

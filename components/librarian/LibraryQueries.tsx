@@ -286,7 +286,7 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                                                     </div>
                                                     <div>
                                                         <div className="font-extrabold text-gray-900 text-lg">
-                                                            {student.firstName || "Unknown"} {student.lastName || ""}
+                                                            {student.student?.firstName || "Unknown"} {student.student?.lastName || ""}
                                                         </div>
                                                         <div className="text-sm text-gray-500 font-medium flex items-center gap-1.5">
                                                             <User className="h-3.5 w-3.5" />
@@ -640,7 +640,7 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                             className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 space-y-6"
                         >
                             <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-xl font-bold text-gray-900">Replying to {replyingToReview.student?.firstName}'s Review</h4>
+                                <h4 className="text-xl font-bold text-gray-900">Replying to {replyingToReview.student?.student?.firstName}'s Review</h4>
                                 <button onClick={() => setReplyingToReview(null)} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
                             </div>
 

@@ -63,10 +63,9 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
         if (!searchQuery) return bookings;
         const q = searchQuery.toLowerCase();
         return bookings.filter((b: any) =>
-            b.student.firstName?.toLowerCase().includes(q) ||
-            b.student.lastName?.toLowerCase().includes(q) ||
-            b.student.username?.toLowerCase().includes(q) ||
-            b.student.phoneNumber?.includes(q)
+            b.student.student?.firstName?.toLowerCase().includes(q) ||
+            b.student.student?.lastName?.toLowerCase().includes(q) ||
+            b.student.student?.phoneNumber?.includes(q)
         );
     }, [bookings, searchQuery]);
 
@@ -172,14 +171,14 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm ring-1 ring-blue-100">
-                                                    {booking.student.firstName?.[0] || booking.student.username?.[0]?.toUpperCase()}
+                                                    {booking.student.student?.firstName?.[0] || booking.student.email?.[0]?.toUpperCase()}
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-gray-900 text-sm">
-                                                        {booking.student.firstName} {booking.student.lastName}
+                                                        {booking.student.student?.firstName} {booking.student.student?.lastName}
                                                     </span>
                                                     <span className="text-[10px] text-gray-400 font-medium">
-                                                        {booking.student.phoneNumber}
+                                                        {booking.student.student?.phoneNumber}
                                                     </span>
                                                 </div>
                                             </div>

@@ -21,7 +21,6 @@ const CustomLogin = () => {
         try {
             const result = await login({ email, password }).unwrap();
             if (result.success) {
-                localStorage.setItem("token", result.data.token);
                 toast.success("Login successful!");
                 router.push("/librarian/dashboard");
             } else {

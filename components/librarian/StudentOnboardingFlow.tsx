@@ -138,7 +138,7 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                 } else {
                     const student = searchResult?.data;
                     setStudentData({
-                        firstName: student.firstName,
+                        firstName: student.firstName || "",
                         lastName: student.lastName || "",
                         email: student.email,
                         phoneNumber: student.phoneNumber || phoneNumber,
@@ -301,9 +301,9 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                                         {searchResult.data ? (
                                             <div className={cn(
                                                 "p-6 rounded-2xl border transition-all cursor-pointer flex items-center justify-between",
-                                                selectedStudentId === searchResult.data.id ? "bg-blue-50 border-blue-400 ring-1 ring-blue-400" : "bg-gray-50 border-gray-200 hover:bg-white hover:border-blue-200"
+                                                selectedStudentId === searchResult.data.userId ? "bg-blue-50 border-blue-400 ring-1 ring-blue-400" : "bg-gray-50 border-gray-200 hover:bg-white hover:border-blue-200"
                                             )} onClick={() => {
-                                                setSelectedStudentId(searchResult.data.id);
+                                                setSelectedStudentId(searchResult.data.userId);
                                                 setIsNewStudent(false);
                                             }}>
                                                 <div className="flex items-center gap-5">
@@ -319,9 +319,9 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                                                 </div>
                                                 <div className={cn(
                                                     "h-10 px-6 rounded-xl flex items-center justify-center font-bold transition-colors",
-                                                    selectedStudentId === searchResult.data.id ? "bg-blue-600 text-white" : "bg-white border-2 text-gray-600"
+                                                    selectedStudentId === searchResult.data.userId ? "bg-blue-600 text-white" : "bg-white border-2 text-gray-600"
                                                 )}>
-                                                    {selectedStudentId === searchResult.data.id ? "Selected" : "Select"}
+                                                    {selectedStudentId === searchResult.data.userId ? "Selected" : "Select"}
                                                 </div>
                                             </div>
                                         ) : (
@@ -739,7 +739,7 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                                                 {librarians?.data?.find(l => l.id === selectedLibrarianId)?.qrImage ? (
                                                     <div className="p-3 bg-white rounded-3xl shadow-xl">
                                                         <img
-                                                            src={librarians.data.find(l => l.id === selectedLibrarianId)?.qrImage!}
+                                                            src={librarians.data.find(l => l.id === selectedLibrarianId)?.librarian?.qrImage!}
                                                             alt="QR Code"
                                                             className="h-44 w-44 object-contain"
                                                         />
@@ -777,7 +777,7 @@ export default function StudentOnboardingFlow({ libraryId }: StudentOnboardingFl
                                                 </SelectTrigger>
                                                 <SelectContent className="rounded-2xl">
                                                     {librarians?.data?.map(l => (
-                                                        <SelectItem key={l.id} value={l.id}>{l.firstName} {l.lastName}</SelectItem>
+                                                        <SelectItem key={l.id} value={l.id}>{l.librarian?.firstName} {l.librarian?.lastName}</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>

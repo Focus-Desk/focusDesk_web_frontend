@@ -109,33 +109,34 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
 
         seats.forEach((seat) => {
             seat.bookings.forEach((booking) => {
-                const student = booking.student;
-                if (!student) return;
+                const studentUser = booking.student;
+                if (!studentUser) return;
+                const student = studentUser.student;
 
                 const validFrom = new Date(booking.validFrom);
                 const validTo = new Date(booking.validTo);
                 const isActive = booking.status === "ACTIVE" && validFrom <= now && validTo >= now;
 
-                const existing = studentMap.get(student.id);
+                const existing = studentMap.get(studentUser.id);
 
                 if (!existing) {
-                    studentMap.set(student.id, {
-                        id: student.id,
-                        firstName: student.firstName || "",
-                        lastName: student.lastName || "",
-                        email: student.email,
-                        phoneNumber: student.phoneNumber,
-                        gender: student.gender || "N/A",
+                    studentMap.set(studentUser.id, {
+                        id: studentUser.id,
+                        firstName: student?.firstName || "",
+                        lastName: student?.lastName || "",
+                        email: studentUser.email,
+                        phoneNumber: student?.phoneNumber,
+                        gender: student?.gender || "N/A",
                         status: isActive ? "ACTIVE" : "OLD",
                         lastBookingDate: booking.createdAt,
                         currentSeat: isActive ? seat.seatNumber : undefined,
                         currentPlan: (booking as any).plan?.planName || "—",
-                        profilePhoto: student.profilePhoto,
-                        aadhaarNumber: student.aadhaarNumber,
-                        dob: student.dob,
-                        targetExam: (student as any).targetExam || (student as any).about,
-                        address: student.address,
-                        interests: student.interests,
+                        profilePhoto: student?.profilePhoto,
+                        aadhaarNumber: student?.aadhaarNumber,
+                        dob: student?.dob,
+                        targetExam: (student as any)?.targetExam || (student as any)?.about,
+                        address: student?.address,
+                        interests: student?.interests,
                     });
                 } else {
                     if (isActive) {
@@ -146,13 +147,13 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                     if (new Date(booking.createdAt) > new Date(existing.lastBookingDate!)) {
                         existing.lastBookingDate = booking.createdAt;
                         // Use the most recent booking's student data to populate profile fields if missing from previous check
-                        existing.gender = student.gender || existing.gender;
-                        existing.profilePhoto = student.profilePhoto || existing.profilePhoto;
-                        existing.aadhaarNumber = student.aadhaarNumber || existing.aadhaarNumber;
-                        existing.dob = student.dob || existing.dob;
-                        existing.targetExam = (student as any).targetExam || (student as any).about || existing.targetExam;
-                        existing.address = student.address || existing.address;
-                        existing.interests = student.interests || existing.interests;
+                        existing.gender = student?.gender || existing.gender;
+                        existing.profilePhoto = student?.profilePhoto || existing.profilePhoto;
+                        existing.aadhaarNumber = student?.aadhaarNumber || existing.aadhaarNumber;
+                        existing.dob = student?.dob || existing.dob;
+                        existing.targetExam = (student as any)?.targetExam || (student as any)?.about || existing.targetExam;
+                        existing.address = student?.address || existing.address;
+                        existing.interests = student?.interests || existing.interests;
                     }
                 }
             });
@@ -228,7 +229,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
             if (studentResult) {
                 const fullStudent: StudentInfo = {
                     ...student,
-                    id: studentResult.cognitoId || studentResult.id || student.id, // Prefer cognitoId for future updates
+                    id: studentResult.cognitoId || studentResult.id || student.id,
                     firstName: studentResult.firstName || student.firstName,
                     lastName: studentResult.lastName || student.lastName,
                     email: studentResult.email || student.email,
@@ -237,7 +238,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                     profilePhoto: studentResult.profilePhoto || student.profilePhoto,
                     aadhaarNumber: studentResult.aadhaarNumber || student.aadhaarNumber,
                     dob: studentResult.dob || student.dob,
-                    targetExam: studentResult.about || studentResult.exam || student.targetExam,
+                    targetExam: studentResult.about || student.targetExam,
                     address: studentResult.address || student.address,
                     interests: studentResult.interests || student.interests,
                 };
