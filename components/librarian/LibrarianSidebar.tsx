@@ -56,7 +56,12 @@ export function LibrarianSidebar() {
     const { state } = useSidebar();
 
     const handleSignOut = async () => {
-        await signOut();
+        try {
+            await signOut();
+        } catch (error) {
+            console.error("Amplify sign out error:", error);
+        }
+        localStorage.removeItem("token");
         window.location.href = "/";
     };
 

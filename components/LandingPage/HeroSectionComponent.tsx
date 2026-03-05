@@ -176,16 +176,6 @@ const HeroSectionComponent: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
             >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="inline-flex items-center px-4 py-2 rounded-full bg-white border border-gray-100 shadow-sm mb-6 group cursor-default"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-500 mr-2 group-hover:rotate-12 transition-transform" />
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">Premium Focus Ecosystem</span>
-              </motion.div>
-
               <h1 className="text-6xl md:text-7xl lg:text-[5.5rem] font-bold text-gray-900 leading-[0.95] tracking-[-0.04em]">
                 Book Your
                 <br />

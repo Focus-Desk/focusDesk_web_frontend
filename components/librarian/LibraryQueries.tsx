@@ -123,6 +123,12 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
             }).unwrap();
             toast.success("Complaint updated successfully");
             setSelectedComplaint(null);
+            // Reset modal states
+            setAllotment("Manager");
+            setOtherPersonName("");
+            setOtherPersonPhone("");
+            setResolutionDays("");
+            setComplaintStatus("PENDING");
         } catch (err) {
             toast.error("Failed to update complaint");
         }
@@ -294,14 +300,34 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                                             </div>
 
                                             <div className="mx-6 p-5 bg-gray-50 rounded-xl border border-gray-100">
-                                                <p className="text-gray-700 text-sm leading-relaxed font-medium">
-                                                    {query.qType === "REVIEW" ? query.comment : query.qType === "COMPLAINT" ? query.complaint : `Plan Pause Request for ${query.requestedDays || "—"} days`}
-                                                </p>
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-gray-900 font-extrabold text-sm">
+                                                        {query.qType === "REVIEW" ? "Review" : query.qType === "COMPLAINT" ? "Complaint" : `Plan Pause: ${query.requestedDays || "—"} Days`}
+                                                    </p>
+                                                    <p className="text-gray-600 text-sm leading-relaxed font-medium line-clamp-2">
+                                                        {query.qType === "REVIEW" ? query.comment : query.qType === "COMPLAINT" ? query.complaint : query.reason}
+                                                    </p>
+                                                </div>
                                                 {query.qType === "REVIEW" && (
                                                     <div className="flex gap-1 mt-2">
                                                         {[...Array(5)].map((_, i) => (
                                                             <Star key={i} className={cn("h-4 w-4", i < query.stars ? "fill-yellow-400 text-yellow-400" : "text-gray-300")} />
                                                         ))}
+                                                    </div>
+                                                )}
+                                                {query.qType === "COMPLAINT" && query.status === "IN_PROGRESS" && query.resolutionDays && (
+                                                    <div className="mt-3 flex items-center gap-2">
+                                                        <div className="px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border border-amber-200 shadow-sm animate-pulse">
+                                                            <Clock className="h-3 w-3" />
+                                                            {(() => {
+                                                                const created = new Date(query.createdAt).getTime();
+                                                                const deadline = created + (query.resolutionDays * 24 * 60 * 60 * 1000);
+                                                                const now = Date.now();
+                                                                const diff = deadline - now;
+                                                                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                                                                return days > 0 ? `${days} Days Remaining` : "Late";
+                                                            })()}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -317,7 +343,27 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                                                         <Button
                                                             size="sm"
                                                             className="bg-blue-600 hover:bg-blue-700 rounded-xl font-bold text-xs px-5 h-9 shadow-sm"
-                                                            onClick={() => setSelectedComplaint(query)}
+                                                            onClick={() => {
+                                                                setSelectedComplaint(query);
+                                                                setComplaintStatus(query.status === "PENDING" ? "IN_PROGRESS" : query.status);
+                                                                setResolutionDays(query.resolutionDays?.toString() || "");
+                                                                if (query.allottedTo) {
+                                                                    const roles = ["Manager", "Library Owner", "Student"];
+                                                                    if (roles.includes(query.allottedTo)) {
+                                                                        setAllotment(query.allottedTo);
+                                                                    } else {
+                                                                        setAllotment("Others");
+                                                                        // Parse "Name (Phone)" if possible
+                                                                        const match = query.allottedTo.match(/(.+) \((.+)\)/);
+                                                                        if (match) {
+                                                                            setOtherPersonName(match[1]);
+                                                                            setOtherPersonPhone(match[2]);
+                                                                        } else {
+                                                                            setOtherPersonName(query.allottedTo);
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }}
                                                         >
                                                             Take Action
                                                         </Button>
@@ -400,38 +446,47 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                             className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 space-y-8"
                         >
                             <div className="space-y-6">
-                                <section>
-                                    <h4 className="text-lg font-bold text-gray-900 mb-4">Allotment:</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {["Manager", "Library Owner", "Student", "Others"].map((role) => (
-                                            <button
-                                                key={role}
-                                                onClick={() => setAllotment(role)}
-                                                className={cn(
-                                                    "px-6 py-2 rounded-lg text-sm font-bold transition-all",
-                                                    allotment === role ? "bg-blue-800 text-white shadow-md shadow-blue-200" : "bg-white border text-gray-600 hover:bg-gray-50"
-                                                )}
-                                            >
-                                                {role}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    {allotment === "Others" && (
-                                        <div className="mt-4 space-y-2">
-                                            <Input placeholder="Enter Person's Name" value={otherPersonName} onChange={(e) => setOtherPersonName(e.target.value)} />
-                                            <Input placeholder="Enter Phone No." value={otherPersonPhone} onChange={(e) => setOtherPersonPhone(e.target.value)} />
+                                {selectedComplaint.status !== "IN_PROGRESS" && (
+                                    <section>
+                                        <h4 className="text-lg font-bold text-gray-900 mb-4">Allotment:</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {["Manager", "Library Owner", "Student", "Others"].map((role) => (
+                                                <button
+                                                    key={role}
+                                                    onClick={() => setAllotment(role)}
+                                                    className={cn(
+                                                        "px-6 py-2 rounded-lg text-sm font-bold transition-all",
+                                                        allotment === role ? "bg-blue-800 text-white shadow-md shadow-blue-200" : "bg-white border text-gray-600 hover:bg-gray-50"
+                                                    )}
+                                                >
+                                                    {role}
+                                                </button>
+                                            ))}
                                         </div>
-                                    )}
-                                </section>
+                                        {allotment === "Others" && (
+                                            <div className="mt-4 space-y-2">
+                                                <Input placeholder="Enter Person's Name" value={otherPersonName} onChange={(e) => setOtherPersonName(e.target.value)} />
+                                                <Input placeholder="Enter Phone No." value={otherPersonPhone} onChange={(e) => setOtherPersonPhone(e.target.value)} />
+                                            </div>
+                                        )}
+                                    </section>
+                                )}
 
                                 <section>
                                     <h4 className="text-lg font-bold text-gray-900 mb-4">Complaint Status:</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {[
-                                            { id: "RESOLVED", label: "Resolved" },
                                             { id: "IN_PROGRESS", label: "Unresolved" },
-                                            { id: "PENDING", label: "Pending Approval" },
-                                        ].map((s) => (
+                                            { id: "RESOLVED", label: "Resolved" },
+                                        ].filter(s => {
+                                            if (selectedComplaint.status === "PENDING") {
+                                                return s.id === "IN_PROGRESS";
+                                            }
+                                            if (selectedComplaint.status === "IN_PROGRESS") {
+                                                return s.id === "RESOLVED";
+                                            }
+                                            return true;
+                                        }).map((s) => (
                                             <button
                                                 key={s.id}
                                                 onClick={() => setComplaintStatus(s.id)}
@@ -446,11 +501,13 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                                     </div>
                                 </section>
 
-                                <section className="flex items-center gap-3">
-                                    <h4 className="text-lg font-bold text-gray-900">Resolution in:</h4>
-                                    <Input className="w-20 text-center" placeholder="0" value={resolutionDays} onChange={(e) => setResolutionDays(e.target.value)} />
-                                    <span className="font-bold text-gray-900">Days</span>
-                                </section>
+                                {selectedComplaint.status !== "IN_PROGRESS" && (
+                                    <section className="flex items-center gap-3">
+                                        <h4 className="text-lg font-bold text-gray-900">Resolution in:</h4>
+                                        <Input className="w-20 text-center" placeholder="0" value={resolutionDays} onChange={(e) => setResolutionDays(e.target.value)} />
+                                        <span className="font-bold text-gray-900">Days</span>
+                                    </section>
+                                )}
                             </div>
 
                             <div className="flex justify-end">
