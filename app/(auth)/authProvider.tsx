@@ -12,6 +12,12 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
   const isAuthPage = pathname.match(/^\/(signin|signup)$/);
   const isDashboardPage = pathname.startsWith("/librarian");
 
+  const [mounted, setMounted] = React.useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Check for local token for librarians
   const hasLocalToken = typeof window !== "undefined" && !!localStorage.getItem("token");
 
@@ -26,6 +32,11 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
       router.push("/librarian/dashboard");
     }
   }, [hasLocalToken, isAuthPage, router]);
+
+  // Prevent hydration mismatch by waiting for client-side mount
+  if (!mounted) {
+    return null;
+  }
 
   // Handle librarian authentication (this app is librarian-only)
   if (isDashboardPage && !hasLocalToken) {

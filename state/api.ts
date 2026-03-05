@@ -21,7 +21,6 @@ type User = {
 type OnboardLibrarianArgs = {
   cognitoId: string;
   email: string;
-  username: string;
   firstName: string;
   lastName: string;
   profilePhoto?: File;
@@ -176,9 +175,13 @@ type LibraryListItem = {
   reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
   contactPersonName: string;
   librarian: {
-    firstName: string | null;
-    lastName: string | null;
-  };
+    id: string;
+    email: string;
+    librarian: {
+      firstName: string | null;
+      lastName: string | null;
+    } | null;
+  } | null;
   //Other properties from the full response can be added here if needed in the list view.
 };
 
@@ -287,7 +290,10 @@ export interface Student {
   gender?: string;
   age?: string;
   dob?: string;
+  profilePhoto?: string;
   aadhaarNumber?: string;
+  aadhaarUrl?: string;
+  cognitoId?: string;
   state?: string;
   area?: string;
   address?: string;
@@ -742,7 +748,7 @@ export const api = createApi({
       },
     }),
 
-    getLibrariansByLibraryId: build.query<{ success: boolean; data: Librarian[] }, string>({
+    getLibrariansByLibraryId: build.query<{ success: boolean; data: any[] }, string>({
       query: (libraryId) => `library/${libraryId}/librarians`,
       providesTags: (result) =>
         result?.data

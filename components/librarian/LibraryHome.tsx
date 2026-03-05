@@ -8,7 +8,6 @@ import {
     useGetLibraryReviewsForLibrarianQuery,
     useGetPauseRequestsByLibraryQuery
 } from "@/state/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { format, differenceInDays, isAfter, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import router from "next/router";
 interface LibraryHomeProps {
     libraryId: string;
 }
@@ -69,7 +69,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                 <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-50/50 to-transparent pointer-events-none" />
                 <div className="relative z-10 space-y-4 max-w-xl">
                     <h1 className="text-4xl font-black text-blue-900 tracking-tight leading-tight">
-                        {greeting}, {librarian?.username || "Sheetal"}...
+                        {greeting}, {librarian?.firstName || "Sheetal"}...
                     </h1>
                     <p className="text-gray-500 font-medium text-lg italic leading-relaxed">
                         "A library is not a luxury but one of the necessities of life."
@@ -129,7 +129,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                                 <div key={booking.id} className="flex items-start justify-between border-b border-gray-50 pb-6 last:border-0 last:pb-0">
                                     <div className="space-y-1">
                                         <div className="font-bold text-gray-800 text-base">
-                                            {booking.student?.firstName} {booking.student?.lastName}
+                                            {booking.student?.student?.firstName} {booking.student?.student?.lastName}
                                         </div>
                                         <div className="text-xs font-medium text-gray-400 uppercase tracking-tight">
                                             STU-{format(new Date(booking.createdAt), "yyyy")}-{booking.studentId?.slice(-4)}
@@ -194,7 +194,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                                 <div key={item.id} className="flex items-start justify-between border-b border-gray-50 pb-6 last:border-0 last:pb-0 group">
                                     <div className="space-y-1">
                                         <div className="font-bold text-gray-800 text-base">
-                                            {item.student?.firstName} {item.student?.lastName}
+                                            {item.student?.student?.firstName} {item.student?.student?.lastName}
                                         </div>
                                         <div className="text-xs font-medium text-gray-400">
                                             Student ID: {item.studentId?.slice(0, 6).toUpperCase()}
@@ -262,11 +262,11 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
 
                             <div className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-blue-100/50">
                                 <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center font-black text-blue-600">
-                                    {selectedQuery.student?.firstName?.[0]}
+                                    {selectedQuery.student?.student?.firstName?.[0]}
                                 </div>
                                 <div>
                                     <div className="font-black text-gray-800">
-                                        {selectedQuery.student?.firstName} {selectedQuery.student?.lastName}
+                                        {selectedQuery.student?.student?.firstName} {selectedQuery.student?.student?.lastName}
                                     </div>
                                     <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                         ID: {selectedQuery.studentId}
@@ -406,10 +406,10 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
 
                 <div className="bg-gray-50/50 rounded-2xl p-5 flex items-center gap-4">
                     <div className="h-12 w-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center font-black text-blue-600 text-lg shadow-sm">
-                        {lastStudent.student?.firstName?.[0]}
+                        {lastStudent.student?.student?.firstName?.[0]}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="font-black text-gray-800 truncate">{lastStudent.student?.firstName} {lastStudent.student?.lastName}</div>
+                        <div className="font-black text-gray-800 truncate">{lastStudent.student?.student?.firstName} {lastStudent.student?.student?.lastName}</div>
                         <div className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{lastStudent.plan?.planName}</div>
                     </div>
                     <div className="text-right">

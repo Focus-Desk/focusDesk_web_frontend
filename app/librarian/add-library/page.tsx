@@ -10,7 +10,7 @@ import PlansAndPricingForm from '@/components/library/plansAndPricingForm';
 import LibrarianDetailsForm from '@/components/library/librarianDetails';
 import { useGetAuthUserQuery } from '@/state/api';
 // Import the persistent state hook
-import { usePersistedFormState } from '@/lib/hooks/usePersistedFormState'; 
+import { usePersistedFormState } from '@/lib/hooks/usePersistedFormState';
 
 type DetailedData = { [key: string]: any };
 type LibrarianData = { [key: string]: any };
@@ -51,9 +51,8 @@ interface OnboardingData {
     libraryId: string | null;
 
     // Step 4: LibrarianDetailsForm (KYC)
-    kyc_firstName: string; 
+    kyc_firstName: string;
     kyc_lastName: string;
-    username: string;
     dateOfBirth: string;
     alternateContactNumber: string;
     panNumber: string;
@@ -66,7 +65,7 @@ interface OnboardingData {
     gstin: string;
     country: string;
     // Additional storage for complex arrays of Step 3 (optional, but good for persistence)
-    pricingData: any; 
+    pricingData: any;
 }
 
 const initialOnboardingData: OnboardingData = {
@@ -75,7 +74,7 @@ const initialOnboardingData: OnboardingData = {
     libraryAddress: '', city: '', state: '', pincode: '', libraryContactNo: '', googleMapLink: '',
     totalSeats: '', openingTime: '09:00', closingTime: '21:00', managerName: '', managerPhone: '', managerEmail: '',
     libraryId: null,
-    kyc_firstName: '', kyc_lastName: '', username: '', dateOfBirth: '', alternateContactNumber: '',
+    kyc_firstName: '', kyc_lastName: '', dateOfBirth: '', alternateContactNumber: '',
     panNumber: '', aadhaarNumber: '', addressProofType: 'Aadhaar Card', accountHolderName: '',
     bankName: '', bankAccountNumber: '', bankIfsc: '', gstin: '',
     country: '',
@@ -87,10 +86,10 @@ const initialOnboardingData: OnboardingData = {
 export default function AddLibraryPage() {
     const [currentStep, setCurrentStep] = useState(1);
     const [highestCompletedStep, setHighestCompletedStep] = useState<number>(0);
-    
+
     // NEW: Use persistent state for all form data
     const [formData, setFormData] = usePersistedFormState<OnboardingData>(
-        'libraryOnboardingData', 
+        'libraryOnboardingData',
         initialOnboardingData
     );
 
@@ -103,7 +102,7 @@ export default function AddLibraryPage() {
 
     // 1. Initial Load Effect: Load Step/Highest Completed Step from localStorage
     useEffect(() => {
-        if(typeof window !== 'undefined') {
+        if (typeof window !== 'undefined') {
             try {
                 const storedStep = localStorage.getItem('currentStep');
                 if (storedStep) {
@@ -134,10 +133,10 @@ export default function AddLibraryPage() {
             if (!formData.email) updates.email = authUserData.userInfo.email;
             if (!formData.kyc_firstName && authUserData.userInfo.firstName) updates.kyc_firstName = authUserData.userInfo.firstName;
             if (!formData.kyc_lastName && authUserData.userInfo.lastName) updates.kyc_lastName = authUserData.userInfo.lastName;
-            
+
             // Apply updates
             if (Object.keys(updates).length > 0) {
-                 setFormData(prev => ({ ...prev, ...updates }));
+                setFormData(prev => ({ ...prev, ...updates }));
             }
         }
     }, [authUserData]); // Depend on authUserData
@@ -175,7 +174,7 @@ export default function AddLibraryPage() {
 
     const handleLibrarianSuccess = async (_librarianData: LibrarianData) => {
         setHighestCompletedStep(prev => Math.max(prev, 4));
-        
+
         // OPTIONAL: Clear persistence on successful final submission
         if (typeof window !== 'undefined') {
             localStorage.removeItem('libraryOnboardingData');
@@ -195,23 +194,23 @@ export default function AddLibraryPage() {
 
         switch (currentStep) {
             case 1:
-                return <BasicDetailsForm 
+                return <BasicDetailsForm
                     {...sharedProps}
-                    cognitoId={formData.librarianId} 
-                    isReadOnly={highestCompletedStep >= 1} 
+                    cognitoId={formData.librarianId}
+                    isReadOnly={highestCompletedStep >= 1}
                     onSuccess={handleBasicSuccess}
                 />;
             case 2:
-                return <DetailedListingForm 
+                return <DetailedListingForm
                     {...sharedProps}
-                    libraryId={libraryId! } 
-                    isReadOnly={highestCompletedStep >= 2} 
-                    onSuccess={handleDetailedSuccess} 
+                    libraryId={libraryId!}
+                    isReadOnly={highestCompletedStep >= 2}
+                    onSuccess={handleDetailedSuccess}
                 />;
             case 3:
-                return <PlansAndPricingForm 
+                return <PlansAndPricingForm
                     {...sharedProps}
-                    libraryId={libraryId!}  
+                    libraryId={libraryId!}
                     isReadOnly={highestCompletedStep >= 3}
                     onSuccess={handlePricingSuccess}
                 />;
@@ -243,7 +242,7 @@ export default function AddLibraryPage() {
                 <div className="mb-12">
                     <ProgressBar currentStep={currentStep} highestCompletedStep={highestCompletedStep} onStepClick={handleStepClick} />
                 </div>
-                
+
                 <main className="bg-white p-6 sm:p-8 rounded-xl shadow-md">
                     {renderCurrentStep()}
                 </main>

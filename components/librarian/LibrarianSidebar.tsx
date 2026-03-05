@@ -321,13 +321,13 @@ export function LibrarianSidebar() {
                                 )}>
                                     <AvatarImage src={librarian?.profilePhoto} />
                                     <AvatarFallback className="bg-blue-100 text-blue-600 text-[10px]">
-                                        {librarian?.username?.[0]?.toUpperCase()}
+                                        {librarian?.firstName?.[0]?.toUpperCase() || librarian?.email?.[0]?.toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 {state === "expanded" && (
                                     <div className="flex flex-col text-left overflow-hidden">
                                         <span className="text-sm font-bold text-gray-800 truncate">
-                                            {librarian?.username}
+                                            {librarian?.firstName} {librarian?.lastName}
                                         </span>
                                         <span className="text-[10px] text-gray-500 truncate">
                                             Librarian
