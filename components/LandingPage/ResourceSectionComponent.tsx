@@ -181,11 +181,7 @@ export default function ResourcesSectionComponent() {
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="inline-flex items-center px-6 py-3 rounded-full bg-white/60 backdrop-blur-md border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-12 group">
-              <Sparkles className="w-5 h-5 text-blue-500 mr-3 animate-pulse" />
-              <span className="text-[11px] font-[1000] uppercase tracking-[0.4em] text-blue-600/70">Elite Knowledge Base</span>
-            </div>
-
+      
             <h2 className="text-6xl md:text-8xl font-[1000] text-gray-900 tracking-[-0.04em] leading-[0.95] mb-12">
               The Digital <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 italic">Success Library.</span>

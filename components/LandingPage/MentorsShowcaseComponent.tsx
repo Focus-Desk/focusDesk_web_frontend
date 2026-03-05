@@ -217,11 +217,6 @@ export default function MentorsShowcaseComponent() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 mb-6">
-              <Award className="w-4 h-4 text-indigo-600 mr-2" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600/80">Expert Guidance</span>
-            </div>
-
             <h2 className="text-5xl md:text-6xl font-[1000] text-gray-900 leading-tight tracking-tight mb-8">
               Meet Our
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 italic"> Expert Mentors</span>
@@ -284,10 +279,6 @@ export default function MentorsShowcaseComponent() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-blue-50 border border-blue-100/50 mb-8 group cursor-default">
-                <ShieldCheck className="w-4 h-4 text-blue-600 mr-2.5 group-hover:rotate-12 transition-transform duration-500" />
-                <span className="text-[10px] font-[1000] uppercase tracking-[0.4em] text-blue-600/80">The Advantage</span>
-              </div>
               <h3 className="text-5xl md:text-6xl font-[1000] text-gray-900 tracking-[-0.03em] leading-[1.1]">
                 Empowering Your <br className="hidden md:block" />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 bg-[length:200%_auto] animate-gradient-slow italic">Success Story.</span>

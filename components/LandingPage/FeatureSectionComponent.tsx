@@ -28,11 +28,7 @@ export default function LibrariesSectionComponent() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mb-6">
-              <Star className="w-4 h-4 text-blue-600 mr-2 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600/80">Premium Study Hubs</span>
-            </div>
-
+        
             <h2 className="text-5xl md:text-6xl font-[1000] text-gray-900 leading-tight tracking-tight mb-8">
               Featured
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600"> Libraries</span>

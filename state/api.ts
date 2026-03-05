@@ -339,10 +339,22 @@ export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
     prepareHeaders: async (headers) => {
-      const session = await fetchAuthSession();
-      const { idToken } = session.tokens ?? {};
-      if (idToken) {
-        headers.set("Authorization", `Bearer ${idToken}`);
+      // Try local token first
+      const localToken = localStorage.getItem("token");
+      if (localToken) {
+        headers.set("Authorization", `Bearer ${localToken}`);
+        return headers;
+      }
+
+      // Fallback to Amplify session
+      try {
+        const session = await fetchAuthSession();
+        const { idToken } = session.tokens ?? {};
+        if (idToken) {
+          headers.set("Authorization", `Bearer ${idToken}`);
+        }
+      } catch (e) {
+        // No session found
       }
       return headers;
     },
@@ -372,32 +384,35 @@ export const api = createApi({
     getAuthUser: build.query<
       {
         cognitoInfo: User;
-        userInfo: Student | Mentor | Librarian;
+        userInfo: Librarian;
         userRole: string;
       },
       void
     >({
       queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
         try {
+          // Check local token first
+          const localToken = localStorage.getItem("token");
+          if (localToken) {
+            const meResponse = await fetchWithBQ("auth/me");
+            if (!meResponse.error) {
+              const data = meResponse.data as any;
+              return {
+                data: {
+                  cognitoInfo: { userId: data.userId || data.id, username: data.username || data.email },
+                  userInfo: data as Librarian,
+                  userRole: "librarian",
+                }
+              };
+            }
+          }
+
           const session = await fetchAuthSession();
           const { idToken } = session.tokens ?? {};
           const user = await getCurrentUser();
-          let userRole = idToken?.payload["custom:role"] as string;
+          const userRole = "librarian";
 
-          userRole = "librarian"; // TEMPORARY FIX UNTIL ROLES ARE SET IN COGNITO
-          let endpoint = "";
-
-          if (userRole === "mentor") {
-            endpoint = `/mentors/${user.userId}`;
-          } else if (userRole === "student") {
-            endpoint = `/students/${user.userId}`;
-          } else if (userRole === "librarian") {
-            endpoint = `/librarians/${user.userId}`;
-          } else {
-            throw new Error("Invalid user role detected");
-          }
-
-          let userDetailsResponse = await fetchWithBQ(endpoint);
+          let userDetailsResponse = await fetchWithBQ(`/librarians/${user.userId}`);
           if (
             userDetailsResponse.error &&
             userDetailsResponse.error.status === 404
@@ -412,10 +427,7 @@ export const api = createApi({
           return {
             data: {
               cognitoInfo: { ...user },
-              userInfo: userDetailsResponse.data as
-                | Student
-                | Mentor
-                | Librarian,
+              userInfo: userDetailsResponse.data as Librarian,
               userRole,
             },
           };
@@ -424,6 +436,22 @@ export const api = createApi({
         }
       },
     }),
+    login: build.mutation<any, any>({
+      query: (credentials) => ({
+        url: "auth/login",
+        method: "POST",
+        body: credentials,
+      }),
+    }),
+
+    register: build.mutation<any, any>({
+      query: (userData) => ({
+        url: "auth/register",
+        method: "POST",
+        body: userData,
+      }),
+    }),
+
     getLibrarian: build.query<Librarian, string>({
       query: (cognitoId) => `librarians/${cognitoId}`,
       providesTags: (result) => [{ type: "Librarians", id: result?.id }],
@@ -1404,6 +1432,8 @@ export const api = createApi({
 
 export const {
   useGetAuthUserQuery,
+  useLoginMutation,
+  useRegisterMutation,
   useGetLibrarianQuery,
   useOnboardLibrarianMutation,
   useUpdateLibrarianMutation,

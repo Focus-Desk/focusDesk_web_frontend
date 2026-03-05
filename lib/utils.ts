@@ -64,8 +64,6 @@ export const createNewUserInDatabase = async (
 ) => {
   // Map user roles to their respective creation endpoints
   const roleToEndpointMap: Record<string, string> = {
-    student: "/students",
-    mentor: "/mentors",
     librarian: "/librarians",
   };
 
@@ -73,7 +71,7 @@ export const createNewUserInDatabase = async (
 
   const createEndpoint = roleToEndpointMap[lowerRole];
   if (!createEndpoint) {
-    throw new Error(`Invalid user role: ${userRole}`);
+    throw new Error(`Invalid or unsupported user role for this dashboard: ${userRole}`);
   }
 
   const createUserResponse = await fetchWithBQ({
