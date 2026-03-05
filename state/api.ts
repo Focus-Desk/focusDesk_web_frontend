@@ -344,15 +344,12 @@ export type AdminCreateBookingArgs = {
 export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
+    credentials: "include",
     prepareHeaders: async (headers) => {
-      // Try local token first
-      const localToken = localStorage.getItem("token");
-      if (localToken) {
-        headers.set("Authorization", `Bearer ${localToken}`);
-        return headers;
-      }
+      // We no longer manually set Authorization header from localStorage
+      // as cookies are automatically handled by the browser with credentials: 'include'
 
-      // Fallback to Amplify session
+      // Optional: keep Amplify session as second fallback if needed for mobile/other clients
       try {
         const session = await fetchAuthSession();
         const { idToken } = session.tokens ?? {};
@@ -360,7 +357,7 @@ export const api = createApi({
           headers.set("Authorization", `Bearer ${idToken}`);
         }
       } catch (e) {
-        // No session found
+        // No Amplify session found
       }
       return headers;
     },
@@ -397,22 +394,20 @@ export const api = createApi({
     >({
       queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
         try {
-          // Check local token first
-          const localToken = localStorage.getItem("token");
-          if (localToken) {
-            const meResponse = await fetchWithBQ("auth/me");
-            if (!meResponse.error) {
-              const data = meResponse.data as any;
-              return {
-                data: {
-                  cognitoInfo: { userId: data.userId || data.id, username: data.username || data.email },
-                  userInfo: data as Librarian,
-                  userRole: "librarian",
-                }
-              };
-            }
+          // Priority: Check our own secure session cookie first
+          const meResponse = await fetchWithBQ("auth/me");
+          if (!meResponse.error) {
+            const data = (meResponse.data as any).data; // Backend returns { success: true, data: { ... } }
+            return {
+              data: {
+                cognitoInfo: { userId: data.userId || data.id, username: data.username || data.email },
+                userInfo: data as Librarian,
+                userRole: (data.user?.role || data.role || "librarian").toLowerCase(),
+              }
+            };
           }
 
+          // Fallback to Amplify session for legacy support/mobile
           const session = await fetchAuthSession();
           const { idToken } = session.tokens ?? {};
           const user = await getCurrentUser();
