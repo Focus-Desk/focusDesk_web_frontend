@@ -48,7 +48,7 @@ interface OnboardingDataSlice {
 }
 
 type FormProps = {
-    cognitoId: string;
+    userId: string;
     email: string;
     isReadOnly: boolean;
     setCurrentStep: Dispatch<SetStateAction<number>>;
@@ -81,7 +81,7 @@ const validateFile = (file: File, maxSizeMB: number, allowedTypes: string[], nam
 };
 
 
-export default function LibrarianDetailsForm({ cognitoId, email, isReadOnly, setCurrentStep, onSuccess, formData, updateFormData }: FormProps) {
+export default function LibrarianDetailsForm({ userId, email, isReadOnly, setCurrentStep, onSuccess, formData, updateFormData }: FormProps) {
     // REMOVED: Initial formData useState
     const router = useRouter();
 
@@ -305,7 +305,7 @@ export default function LibrarianDetailsForm({ cognitoId, email, isReadOnly, set
 
             // Map form fields to backend-expected structure explicitly
             const payload = {
-                cognitoId,
+                userId,
                 firstName: formData.kyc_firstName,
                 lastName: formData.kyc_lastName,
                 contactNumber: formData.contactNumber,

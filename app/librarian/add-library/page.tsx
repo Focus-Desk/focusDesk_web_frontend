@@ -21,7 +21,7 @@ type LibrarianData = { [key: string]: any };
 interface OnboardingData {
     // Auth/Librarian Data (Shared)
     librarianId: string | null;
-    cognitoId: string;
+    userId: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -69,7 +69,7 @@ interface OnboardingData {
 }
 
 const initialOnboardingData: OnboardingData = {
-    librarianId: null, cognitoId: '', email: '', firstName: '', lastName: '',
+    librarianId: null, userId: '', email: '', firstName: '', lastName: '',
     libraryName: '', address: '', contactNumber: '', personName: '', interestedInListing: false,
     libraryAddress: '', city: '', state: '', pincode: '', libraryContactNo: '', googleMapLink: '',
     totalSeats: '', openingTime: '09:00', closingTime: '21:00', managerName: '', managerPhone: '', managerEmail: '',
@@ -120,7 +120,7 @@ export default function AddLibraryPage() {
     useEffect(() => {
         if (authUserData) {
             const updates: Partial<OnboardingData> = {
-                cognitoId: authUserData.cognitoInfo.userId,
+                userId: authUserData.cognitoInfo.userId,
                 email: authUserData.userInfo.email,
                 librarianId: authUserData.userInfo.id,
                 firstName: authUserData.userInfo.firstName || '',
@@ -196,7 +196,7 @@ export default function AddLibraryPage() {
             case 1:
                 return <BasicDetailsForm
                     {...sharedProps}
-                    cognitoId={formData.librarianId}
+                    userId={formData.librarianId}
                     isReadOnly={highestCompletedStep >= 1}
                     onSuccess={handleBasicSuccess}
                 />;
@@ -217,7 +217,7 @@ export default function AddLibraryPage() {
             case 4:
                 return <LibrarianDetailsForm
                     {...sharedProps}
-                    cognitoId={formData.cognitoId}
+                    userId={formData.userId}
                     email={formData.email}
                     isReadOnly={highestCompletedStep > 4}
                     onSuccess={handleLibrarianSuccess}
