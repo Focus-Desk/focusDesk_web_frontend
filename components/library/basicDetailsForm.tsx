@@ -13,7 +13,7 @@ interface OnboardingDataSlice {
 }
 
 interface BasicDetailsFormProps {
-    cognitoId: string | null;
+    userId: string | null;
     isReadOnly: boolean;
     setCurrentStep: Dispatch<SetStateAction<number>>;
     onSuccess: (data: any, libraryId: string) => void;
@@ -21,7 +21,7 @@ interface BasicDetailsFormProps {
     updateFormData: (data: Partial<OnboardingDataSlice>) => void;
 }
 
-export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep, onSuccess, formData, updateFormData }: BasicDetailsFormProps) {
+export default function BasicDetailsForm({ userId, isReadOnly, setCurrentStep, onSuccess, formData, updateFormData }: BasicDetailsFormProps) {
 
     const [createLibraryStep1, { isLoading }] = useCreateLibraryStep1Mutation();
     const [apiStatus, setApiStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -39,12 +39,12 @@ export default function BasicDetailsForm({ cognitoId, isReadOnly, setCurrentStep
         setErrorMessage('');
 
         try {
-            if (!cognitoId) {
+            if (!userId) {
                 throw new Error("Librarian ID is not available. Cannot create library.");
             }
 
             const payload = {
-                librarianId: cognitoId,
+                librarianId: userId,
                 libraryName: formData.libraryName,
                 address: formData.address,
                 contactNumber: formData.contactNumber,

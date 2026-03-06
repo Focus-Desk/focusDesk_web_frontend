@@ -19,7 +19,7 @@ type User = {
 };
 
 type OnboardLibrarianArgs = {
-  cognitoId: string;
+  userId: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -45,7 +45,7 @@ type OnboardLibrarianArgs = {
 
 // For updating existing librarian (Step 4 KYC form)
 type UpdateLibrarianArgs = {
-  cognitoId: string;
+  userId: string;
   firstName: string;
   lastName: string;
   profilePhoto?: string;
@@ -293,7 +293,6 @@ export interface Student {
   profilePhoto?: string;
   aadhaarNumber?: string;
   aadhaarUrl?: string;
-  cognitoId?: string;
   state?: string;
   area?: string;
   address?: string;
@@ -465,7 +464,7 @@ export const api = createApi({
     }),
 
     getLibrarian: build.query<Librarian, string>({
-      query: (cognitoId) => `librarians/${cognitoId}`,
+      query: (userId) => `librarians/${userId}`,
       providesTags: (result) => [{ type: "Librarians", id: result?.id }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -491,13 +490,13 @@ export const api = createApi({
 
     // Update existing librarian (Step 4 KYC form)
     updateLibrarian: build.mutation<Librarian, UpdateLibrarianArgs>({
-      query: ({ cognitoId, ...body }) => ({
-        url: `librarians/${cognitoId}`,
+      query: ({ userId, ...body }) => ({
+        url: `librarians/${userId}`,
         method: "PUT",
         body,
       }),
-      invalidatesTags: (_result, _error, { cognitoId }) => [
-        { type: "Librarians", id: cognitoId },
+      invalidatesTags: (_result, _error, { userId }) => [
+        { type: "Librarians", id: userId },
       ],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -992,7 +991,7 @@ export const api = createApi({
     }),
 
     getStudent: build.query<Student, string>({
-      query: (cognitoId) => `students/${cognitoId}`,
+      query: (id) => `students/${id}`,
       providesTags: (result) => [{ type: "Students", id: result?.id }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -1002,10 +1001,10 @@ export const api = createApi({
     }),
     updateStudentSettings: build.mutation<
       Student,
-      { cognitoId: string } & Partial<Student>
+      { id: string } & Partial<Student>
     >({
-      query: ({ cognitoId, ...updatedStudent }) => ({
-        url: `students/${cognitoId}`,
+      query: ({ id, ...updatedStudent }) => ({
+        url: `students/${id}`,
         method: "PUT",
         body: updatedStudent,
       }),
@@ -1019,7 +1018,7 @@ export const api = createApi({
     }),
 
     getMentor: build.query<Mentor, string>({
-      query: (cognitoId) => `mentors/${cognitoId}`,
+      query: (id) => `mentors/${id}`,
       providesTags: (result) => [{ type: "Mentors", id: result?.id }],
       async onQueryStarted(_, { queryFulfilled }) {
         await withToast(queryFulfilled, {
@@ -1030,10 +1029,10 @@ export const api = createApi({
 
     updateMentorSettings: build.mutation<
       Mentor,
-      { cognitoId: string } & Partial<Mentor>
+      { id: string } & Partial<Mentor>
     >({
-      query: ({ cognitoId, ...updatedMentor }) => ({
-        url: `mentors/${cognitoId}`,
+      query: ({ id, ...updatedMentor }) => ({
+        url: `mentors/${id}`,
         method: "PUT",
         body: updatedMentor,
       }),

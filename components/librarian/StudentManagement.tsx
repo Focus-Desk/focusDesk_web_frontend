@@ -229,7 +229,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
             if (studentResult) {
                 const fullStudent: StudentInfo = {
                     ...student,
-                    id: studentResult.cognitoId || studentResult.id || student.id,
+                    id: studentResult.id || student.id,
                     firstName: studentResult.firstName || student.firstName,
                     lastName: studentResult.lastName || student.lastName,
                     email: studentResult.email || student.email,
