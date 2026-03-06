@@ -382,6 +382,7 @@ export const api = createApi({
     "Reviews",
     "PauseRequests",
     "LibrarySeats",
+    "AuthUser",
   ],
   endpoints: (build) => ({
     getAuthUser: build.query<
@@ -436,6 +437,7 @@ export const api = createApi({
           return { error: error.message || "Could not fetch user data" };
         }
       },
+      providesTags: ["AuthUser"],
     }),
     login: build.mutation<any, any>({
       query: (credentials) => ({
@@ -443,6 +445,7 @@ export const api = createApi({
         method: "POST",
         body: credentials,
       }),
+      invalidatesTags: ["AuthUser"],
     }),
 
     register: build.mutation<any, any>({
@@ -451,6 +454,14 @@ export const api = createApi({
         method: "POST",
         body: userData,
       }),
+      invalidatesTags: ["AuthUser"],
+    }),
+    logout: build.mutation<void, void>({
+      query: () => ({
+        url: "auth/logout",
+        method: "POST",
+      }),
+      invalidatesTags: ["AuthUser"],
     }),
 
     getLibrarian: build.query<Librarian, string>({
