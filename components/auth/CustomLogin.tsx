@@ -21,6 +21,7 @@ const CustomLogin = () => {
         try {
             const result = await login({ email, password }).unwrap();
             if (result.success) {
+                localStorage.removeItem("token"); // Clear legacy token
                 toast.success("Login successful!");
                 router.push("/librarian/dashboard");
             } else {

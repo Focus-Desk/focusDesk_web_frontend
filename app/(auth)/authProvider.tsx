@@ -18,28 +18,25 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
     setMounted(true);
   }, []);
 
-  // Check for local token for librarians
-  const hasLocalToken = typeof window !== "undefined" && !!localStorage.getItem("token");
-
   // Use getAuthUser to check authentication status
-  const { data: authUser, isLoading: authLoading, isError: authError } = api.useGetAuthUserQuery(undefined, {
-    skip: isAuthPage || !isDashboardPage,
-  });
+  const { data: authData, isLoading: authLoading, isError: authError } = api.useGetAuthUserQuery();
+
+  const isAuthenticated = !!authData && !authError;
 
   // Redirect authenticated users away from auth pages
   useEffect(() => {
-    if (hasLocalToken && isAuthPage) {
+    if (isAuthenticated && isAuthPage) {
       router.push("/librarian/dashboard");
     }
-  }, [hasLocalToken, isAuthPage, router]);
+  }, [isAuthenticated, isAuthPage, router]);
 
   // Prevent hydration mismatch by waiting for client-side mount
-  if (!mounted) {
+  if (!mounted || authLoading) {
     return null;
   }
 
   // Handle librarian authentication (this app is librarian-only)
-  if (isDashboardPage && !hasLocalToken) {
+  if (isDashboardPage && !isAuthenticated) {
     return <CustomLogin />;
   }
 
