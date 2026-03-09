@@ -124,11 +124,17 @@ console.log("Fetched Data:", { libraryData, timeSlotsData, plansData, lockersDat
 
     const isLoading = isLoadingLibrary || isLoadingTimeSlots || isLoadingPlans || isLoadingLockers || isLoadingSeats || isLoadingPackageRules || isLoadingOffers;
 
+const initialTimeSlots = React.useMemo(() => {
+    if (Array.isArray(timeSlotsData)) return timeSlotsData;
+    if (timeSlotsData && 'data' in timeSlotsData && Array.isArray(timeSlotsData.data)) return timeSlotsData.data;
+    return [];
+}, [timeSlotsData]);
+
 useEffect(() => {
-    if (libraryData && timeSlotsData && plansData && lockersData && seatsData && packageRulesData && offersData) {
+    if (libraryData && initialTimeSlots.length > 0 && plansData && lockersData && seatsData && packageRulesData && offersData) {
         setLibrary({
             ...libraryData,
-            timeSlots: timeSlotsData,
+            timeSlots: initialTimeSlots,
             plans: plansData,
             lockers: lockersData,
             seatConfigurations: seatsData,
@@ -137,7 +143,7 @@ useEffect(() => {
             facilities: libraryData.facilities || [],
         });
     }
-}, [libraryData, timeSlotsData, plansData, lockersData, seatsData, packageRulesData, offersData]);
+}, [libraryData, initialTimeSlots, plansData, lockersData, seatsData, packageRulesData, offersData]);
 
 const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (!library) return;
@@ -380,7 +386,7 @@ const handlePlanSelectionChange = (offerId: string, planId: string, isChecked: b
 };
 
     
-            handleCrud(timeSlotsData || [], library.timeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot);
+            handleCrud(initialTimeSlots, library.timeSlots, createTimeSlot, updateTimeSlot, deleteTimeSlot);
             handleCrud(plansData || [], library.plans, createPlan, updatePlan, deletePlan);
             handleCrud(lockersData || [], library.lockers, createLocker, updateLocker, deleteLocker);
             
