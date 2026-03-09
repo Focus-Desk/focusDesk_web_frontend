@@ -342,7 +342,7 @@ export type AdminCreateBookingArgs = {
 
 export const api = createApi({
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL+"/api",
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL+"api",
     credentials: "include",
     prepareHeaders: async (headers) => {
       // We no longer manually set Authorization header from localStorage
