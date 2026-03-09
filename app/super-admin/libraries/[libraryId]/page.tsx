@@ -277,9 +277,17 @@ export default function LibraryDetailPage() {
     isLoadingSeats ||
     isLoadingPackageRules ||
     isLoadingOffers;
+
+  const actualTimeSlots = React.useMemo(() => {
+    const raw: any = timeSlots;
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object' && 'data' in raw && Array.isArray(raw.data)) return raw.data;
+    return [];
+  }, [timeSlots]);
+
   console.log({
     library,
-    timeSlots,
+    timeSlots: actualTimeSlots,
     plans,
     lockers,
     seatConfigurations,
@@ -412,8 +420,8 @@ export default function LibraryDetailPage() {
                 </div>
               </Section>
               <Section title="Time Slots">
-                {timeSlots?.length > 0 ? (
-                  timeSlots.map((ts) => (
+                {actualTimeSlots.length > 0 ? (
+                  actualTimeSlots.map((ts) => (
                     <TimeSlotCard key={ts.id} timeSlot={ts} />
                   ))
                 ) : (
@@ -423,7 +431,7 @@ export default function LibraryDetailPage() {
               <Section title="Plans">
                 {plans?.length > 0 ? (
                   plans.map((p) => (
-                    <PlanCard key={p.id} plan={p} timeSlots={timeSlots || []} />
+                    <PlanCard key={p.id} plan={p} timeSlots={actualTimeSlots} />
                   ))
                 ) : (
                   <EmptyState message="No plans defined." />

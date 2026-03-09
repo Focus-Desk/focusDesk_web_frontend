@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     useLazySearchStudentByMobileQuery,
@@ -25,7 +25,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type Step = "IDENTITY" | "PLAN" | "SEAT" | "LOCKER" | "REVIEW";
 
@@ -61,7 +60,10 @@ export default function AddStudentPage() {
     // API Hooks
     const [triggerSearch, { data: searchedStudent, isFetching: isSearching, isError: searchError }] = useLazySearchStudentByMobileQuery();
     const { data: plans, isLoading: plansLoading } = useGetPlansQuery(libraryId);
-    const { data: libraryData, isLoading: seatsLoading } = useGetDetailedLibrarySeatsQuery(libraryId);
+    const { data: libraryData, isLoading: seatsLoading } = useGetDetailedLibrarySeatsQuery(
+        { id: libraryId || "" },
+        { skip: !libraryId }
+    );
     const { data: lockers, isLoading: lockersLoading } = useGetLockersQuery(libraryId);
 
     const [createStudent, { isLoading: isCreatingStudent }] = useCreateStudentMutation();
