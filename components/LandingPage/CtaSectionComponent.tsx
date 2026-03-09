@@ -64,7 +64,7 @@ const FaqItem = memo(({ faq, isOpen, toggle, index }: { faq: any; isOpen: boolea
         </div>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.5, cubicBezier: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${isOpen ? "border-blue-500/30 bg-blue-500/10 text-blue-400" : "border-white/10 text-white/40"
             }`}
         >
