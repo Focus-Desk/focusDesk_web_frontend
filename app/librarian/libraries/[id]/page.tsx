@@ -70,6 +70,7 @@ export default function LibraryManagementPage() {
                     libraryId={libraryId}
                     selectedSlotId={selectedSlotId}
                     onSlotChange={setSelectedSlotId}
+                    onStudentClick={(studentId) => router.push(`?tab=students&studentId=${studentId}`)}
                 />
             ) : activeTab === "onboarding" ? (
                 <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">

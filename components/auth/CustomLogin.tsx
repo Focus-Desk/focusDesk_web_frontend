@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useLoginMutation } from "@/state/api";
+import { useLoginMutation, useVerifyOTPMutation } from "@/state/api";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,11 @@ import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 const CustomLogin = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [login, { isLoading }] = useLoginMutation();
+    const [otp, setOtp] = useState("");
+    const [step, setStep] = useState<"LOGIN" | "OTP">("LOGIN");
+
+    const [login, { isLoading: isLoginLoading }] = useLoginMutation();
+    const [verifyOTP, { isLoading: isVerifyLoading }] = useVerifyOTPMutation();
     const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -21,14 +25,35 @@ const CustomLogin = () => {
         try {
             const result = await login({ email, password }).unwrap();
             if (result.success) {
-                localStorage.removeItem("token"); // Clear legacy token
-                toast.success("Login successful!");
-                router.push("/librarian/dashboard");
+                if (result.data?.requiresOTP) {
+                    toast.success(result.message || "OTP sent to your email!");
+                    setStep("OTP");
+                } else {
+                    localStorage.removeItem("token");
+                    toast.success("Login successful!");
+                    router.push("/librarian/dashboard");
+                }
             } else {
                 toast.error(result.message || "Login failed");
             }
         } catch (err: any) {
             toast.error(err.data?.message || "Invalid credentials");
+        }
+    };
+
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const result = await verifyOTP({ email, code: otp }).unwrap();
+            if (result.success) {
+                localStorage.removeItem("token"); 
+                toast.success("Login successful!");
+                router.push("/librarian/dashboard");
+            } else {
+                toast.error(result.message || "Verification failed");
+            }
+        } catch (err: any) {
+             toast.error(err.data?.message || "Invalid or expired OTP");
         }
     };
 
@@ -52,63 +77,107 @@ const CustomLogin = () => {
                         </p>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-sm font-semibold text-gray-700 ml-1">
-                                Email Address
-                            </Label>
-                            <div className="relative">
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="name@library.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="pl-11 h-12 bg-gray-50/50 border-gray-200 focus:bg-white transition-all rounded-xl"
-                                    required
-                                />
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between ml-1">
-                                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
-                                    Password
+                    {step === "LOGIN" ? (
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="text-sm font-semibold text-gray-700 ml-1">
+                                    Email Address
                                 </Label>
-                                <button
-                                    type="button"
-                                    className="text-xs font-bold text-blue-600 hover:text-blue-700"
-                                >
-                                    Forgot password?
-                                </button>
+                                <div className="relative">
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="name@library.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="pl-11 h-12 bg-gray-50/50 border-gray-200 focus:bg-white transition-all rounded-xl"
+                                        required
+                                    />
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                </div>
                             </div>
-                            <div className="relative">
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="pl-11 h-12 bg-gray-50/50 border-gray-200 focus:bg-white transition-all rounded-xl"
-                                    required
-                                />
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            </div>
-                        </div>
 
-                        <Button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5"
-                        >
-                            {isLoading ? (
-                                <Loader2 className="w-6 h-6 animate-spin" />
-                            ) : (
-                                "Sign In"
-                            )}
-                        </Button>
-                    </form>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between ml-1">
+                                    <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                                        Password
+                                    </Label>
+                                    <button
+                                        type="button"
+                                        className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                                    >
+                                        Forgot password?
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="pl-11 h-12 bg-gray-50/50 border-gray-200 focus:bg-white transition-all rounded-xl"
+                                        required
+                                    />
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                </div>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                disabled={isLoginLoading}
+                                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5"
+                            >
+                                {isLoginLoading ? (
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                ) : (
+                                    "Sign In"
+                                )}
+                            </Button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleVerify} className="space-y-6">
+                             <div className="space-y-2">
+                                <Label htmlFor="otp" className="text-sm font-semibold text-gray-700 ml-1">
+                                    Verification Code
+                                </Label>
+                                <div className="relative border-gray-200 rounded-xl">
+                                    <Input
+                                        id="otp"
+                                        type="text"
+                                        placeholder="Enter 6-digit OTP"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value)}
+                                        className="text-center tracking-widest text-xl h-14 bg-gray-50/50 focus:bg-white transition-all rounded-xl border-gray-200"
+                                        maxLength={6}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                disabled={isVerifyLoading}
+                                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5"
+                            >
+                                {isVerifyLoading ? (
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                ) : (
+                                    "Verify OTP"
+                                )}
+                            </Button>
+                            
+                            <div className="text-center mt-4">
+                               <button 
+                                 type="button" 
+                                 onClick={() => setStep("LOGIN")}
+                                 className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
+                               >
+                                    Back to Login
+                               </button>
+                            </div>
+                        </form>
+                    )}
 
                     <div className="mt-10 text-center">
                         <p className="text-gray-500 text-sm">

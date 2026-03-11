@@ -28,6 +28,7 @@ interface LiveSeatPlanProps {
     libraryId: string;
     selectedSlotId: string;
     onSlotChange: (slotId: string) => void;
+    onStudentClick?: (studentId: string) => void;
 }
 
 export default function LiveSeatPlan({
@@ -35,7 +36,8 @@ export default function LiveSeatPlan({
     libraryName,
     libraryId,
     selectedSlotId,
-    onSlotChange
+    onSlotChange,
+    onStudentClick
 }: LiveSeatPlanProps) {
     const [selectedSeat, setSelectedSeat] = useState<DetailedSeat | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
@@ -254,7 +256,10 @@ export default function LiveSeatPlan({
                                             <div className="space-y-3">
                                                 {/* Current Occupant (if specific slot selected) */}
                                                 {selectedSlotId !== "all" && selectedSeat.currentBooking && (
-                                                    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-5 rounded-3xl text-white shadow-lg shadow-blue-200">
+                                                    <div 
+                                                        className="bg-gradient-to-br from-blue-600 to-indigo-700 p-5 rounded-3xl text-white shadow-lg shadow-blue-200 cursor-pointer hover:shadow-indigo-300 transition-all"
+                                                        onClick={() => onStudentClick && onStudentClick(selectedSeat.currentBooking!.student.id)}
+                                                    >
                                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-4">Current Occupant</p>
                                                         <div className="flex items-center gap-4">
                                                             <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
@@ -281,13 +286,17 @@ export default function LiveSeatPlan({
                                                 {/* Other Bookings List */}
                                                 <div className="space-y-2">
                                                     {(selectedSlotId === "all" ? selectedSeat.bookings : selectedSeat.bookings?.filter(b => b.id !== selectedSeat.currentBooking?.id)).map((booking, idx) => (
-                                                        <div key={idx} className="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex items-center gap-4 group hover:bg-white hover:shadow-md transition-all">
+                                                        <div 
+                                                            key={idx} 
+                                                            className="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex items-center gap-4 group hover:bg-white hover:shadow-md transition-all cursor-pointer"
+                                                            onClick={() => onStudentClick && booking.student?.id && onStudentClick(booking.student.id)}
+                                                        >
                                                             <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-gray-400 border border-gray-100">
                                                                 <User className="h-5 w-5" />
                                                             </div>
                                                             <div className="flex-1">
                                                                 <div className="flex justify-between items-start">
-                                                                    <p className="text-sm font-black text-gray-800 leading-none">
+                                                                    <p className="text-sm font-black text-gray-800 leading-none group-hover:text-blue-600 transition-colors">
                                                                         {booking.student?.firstName} {booking.student?.lastName}
                                                                     </p>
                                                                     <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded">

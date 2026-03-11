@@ -101,7 +101,7 @@ export default function StudentOnboardingWizard({
 
     useEffect(() => {
         if (searchResult?.success && searchResult.data) {
-            setStudentId(searchResult.data.id);
+            setStudentId(searchResult.data.userId);
             setStudentData(searchResult.data);
             setIsNewStudent(false);
         } else if (searchResult?.success && !searchResult.data && phoneNumber.length === 10) {
@@ -367,11 +367,15 @@ export default function StudentOnboardingWizard({
                                                 <SelectValue placeholder="Select a librarian" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {librarians?.data?.map(l => (
-                                                    <SelectItem key={l.id} value={l.id}>
-                                                        {l.firstName} {l.lastName}
-                                                    </SelectItem>
-                                                ))}
+                                                {librarians?.data?.map(l => {
+                                                    const name = [l.librarian?.firstName, l.librarian?.lastName].filter(Boolean).join(" ");
+                                                    const displayStr = name || l.email || "Librarian (Incomplete Profile)";
+                                                    return (
+                                                        <SelectItem key={l.id} value={l.id}>
+                                                            {displayStr}
+                                                        </SelectItem>
+                                                    );
+                                                })}
                                             </SelectContent>
                                         </Select>
                                     </div>

@@ -455,6 +455,14 @@ export const api = createApi({
       }),
       invalidatesTags: ["AuthUser"],
     }),
+    verifyOTP: build.mutation<any, { email: string; code: string }>({
+      query: (credentials) => ({
+        url: "auth/verify-otp",
+        method: "POST",
+        body: credentials,
+      }),
+      invalidatesTags: ["AuthUser"],
+    }),
     logout: build.mutation<void, void>({
       query: () => ({
         url: "auth/logout",
@@ -1445,6 +1453,8 @@ export const {
   useGetAuthUserQuery,
   useLoginMutation,
   useRegisterMutation,
+  useVerifyOTPMutation,
+  useLogoutMutation,
   useGetLibrarianQuery,
   useOnboardLibrarianMutation,
   useUpdateLibrarianMutation,
