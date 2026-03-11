@@ -167,7 +167,7 @@ export default function LiveSeatPlan({
                                                                         <div key={idx} className="bg-white/5 p-2 rounded-lg flex justify-between items-center gap-3">
                                                                             <div className="flex flex-col">
                                                                                 <span className="text-[11px] font-bold text-blue-400 leading-none">
-                                                                                    {b.student?.firstName || 'Student'}
+                                                                                    {b.student?.student?.firstName || 'Student'}
                                                                                 </span>
                                                                             </div>
                                                                             <span className="text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">
@@ -185,7 +185,7 @@ export default function LiveSeatPlan({
                                                             seat.currentBooking ? (
                                                                 <div className="bg-blue-500/10 p-2 rounded-xl border border-blue-500/20">
                                                                     <p className="text-[10px] text-blue-400 font-bold uppercase mb-1">Occupant</p>
-                                                                    <p className="text-sm font-bold">{seat.currentBooking.student.firstName} {seat.currentBooking.student.lastName}</p>
+                                                                    <p className="text-sm font-bold">{seat.currentBooking.student?.student?.firstName} {seat.currentBooking.student?.student?.lastName}</p>
                                                                     <p className="text-[10px] text-gray-400 mt-1">{seat.currentBooking.plan.planName}</p>
                                                                 </div>
                                                             ) : (
@@ -266,7 +266,7 @@ export default function LiveSeatPlan({
                                                                 <User className="h-6 w-6" />
                                                             </div>
                                                             <div className="flex-1">
-                                                                <p className="text-lg font-black leading-none">{selectedSeat.currentBooking.student.firstName}</p>
+                                                                <p className="text-lg font-black leading-none">{selectedSeat.currentBooking.student?.student?.firstName}</p>
                                                                 <p className="text-[11px] font-medium text-white/70 mt-1">{selectedSeat.currentBooking.student.email}</p>
                                                             </div>
                                                         </div>
@@ -297,7 +297,7 @@ export default function LiveSeatPlan({
                                                             <div className="flex-1">
                                                                 <div className="flex justify-between items-start">
                                                                     <p className="text-sm font-black text-gray-800 leading-none group-hover:text-blue-600 transition-colors">
-                                                                        {booking.student?.firstName} {booking.student?.lastName}
+                                                                        {booking.student?.student?.firstName} {booking.student?.student?.lastName}
                                                                     </p>
                                                                     <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded">
                                                                         {booking.plan?.planName || "Booking"}

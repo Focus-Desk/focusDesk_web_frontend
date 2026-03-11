@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import {
     Table,
@@ -27,6 +27,7 @@ import {
     ChevronUp,
     Loader2,
     Clock,
+    CreditCard,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,10 +43,6 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import UpgradePlanModal from "./UpgradePlanModal";
 import { toast } from "sonner";
-
-interface StudentManagementProps {
-    seats: DetailedSeat[];
-}
 
 interface StudentInfo {
     id: string;
@@ -67,6 +64,11 @@ interface StudentInfo {
     interests?: string[];
 }
 
+interface StudentManagementProps {
+    seats: any[];
+    mainTab: string;
+}
+
 type TabId = "ALL" | "ACTIVE" | "INACTIVE" | "OLD" | "EXPIRING";
 
 const TABS: { id: TabId; label: string }[] = [
@@ -77,7 +79,7 @@ const TABS: { id: TabId; label: string }[] = [
     { id: "EXPIRING", label: "Recently Expiring Plans" },
 ];
 
-export default function StudentManagement({ seats }: StudentManagementProps) {
+export default function StudentManagement({ seats, mainTab }: StudentManagementProps) {
     const { id } = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -92,8 +94,11 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     const [studentToUpgrade, setStudentToUpgrade] = useState<StudentInfo | null>(null);
     const [activeBookingForUpgrade, setActiveBookingForUpgrade] = useState<any>(null);
     const [activeBooking, setActiveBooking] = useState<any>(null);
+    const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
     const [bookingHistory, setBookingHistory] = useState<any[]>([]);
     const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+    const [isLoadingStudent, setIsLoadingStudent] = useState(false);
+    const processedStudentId = useRef<string | null>(null);
     const [modalView, setModalView] = useState<"MAIN" | "PLAN_HISTORY" | "TRANSACTIONS">("MAIN");
     const [isEditing, setIsEditing] = useState(false);
     const [editedData, setEditedData] = useState<Partial<StudentInfo>>({});
@@ -147,7 +152,6 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                     }
                     if (new Date(booking.createdAt) > new Date(existing.lastBookingDate!)) {
                         existing.lastBookingDate = booking.createdAt;
-                        // Use the most recent booking's student data to populate profile fields if missing from previous check
                         existing.gender = student?.gender || existing.gender;
                         existing.profilePhoto = student?.profilePhoto || existing.profilePhoto;
                         existing.aadhaarNumber = student?.aadhaarNumber || existing.aadhaarNumber;
@@ -163,7 +167,6 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
         return Array.from(studentMap.values());
     }, [seats]);
 
-    // Helper to calculate days remaining/past for expiry
     const getExpiringInfo = (studentId: string) => {
         const studentBookings = seats.flatMap(s => s.bookings.filter(b => b.student?.id === studentId));
         const activeBooking = studentBookings.find(b => {
@@ -197,8 +200,7 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
 
             if (activeTab === "EXPIRING") {
                 const diffDays = getExpiringInfo(student.id);
-                const matchesExpiry = diffDays !== null && Math.abs(diffDays) <= 3;
-                return matchesSearch && matchesExpiry;
+                return matchesSearch && diffDays !== null && Math.abs(diffDays) <= 3;
             }
 
             const matchesTab = activeTab === "ALL" || student.status === activeTab;
@@ -206,25 +208,14 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
         });
     }, [students, searchTerm, activeTab, seats]);
 
-    const stats: Record<TabId, number> = useMemo(() => ({
-        ALL: students.length,
-        ACTIVE: students.filter((s) => s.status === "ACTIVE").length,
-        INACTIVE: students.filter((s) => s.status === "INACTIVE").length,
-        OLD: students.filter((s) => s.status === "OLD").length,
-        EXPIRING: students.filter((s) => {
-            const diffDays = getExpiringInfo(s.id);
-            return diffDays !== null && Math.abs(diffDays) <= 3;
-        }).length,
-    }), [students, seats]);
-
     const handleViewDetails = async (student: StudentInfo) => {
         setSelectedStudent(student);
         setEditedData(student);
         setIsEditing(false);
         setModalView("MAIN");
         setIsLoadingBookings(true);
+        setIsLoadingStudent(true);
         try {
-            // Try fetching full details. The backend now handles both Prisma IDs and Cognito IDs.
             const studentResult = await triggerGetStudent(student.id).unwrap();
 
             if (studentResult) {
@@ -246,19 +237,29 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                 setSelectedStudent(fullStudent);
                 setEditedData(fullStudent);
             }
+            setIsLoadingStudent(false);
 
             const result = await triggerGetBookings({ studentId: student.id }).unwrap();
             if (result.success) {
                 const bookings = result.data.bookings || [];
                 setBookingHistory(bookings);
                 const now = new Date();
-                const active = bookings.find((b: any) => {
+                
+                // 1. Find the strictly active booking (now falls within range)
+                const currentActive = bookings.find((b: any) => {
                     const validFrom = new Date(b.bookingDetails?.validFrom);
                     const validTo = new Date(b.bookingDetails?.validTo);
                     return b.bookingDetails?.status === "ACTIVE" && validFrom <= now && validTo >= now;
                 });
-                // Fallback to the first active booking if no strict current one is found
-                setActiveBooking(active || bookings.find((b: any) => b.bookingDetails?.status === "ACTIVE"));
+
+                // 2. Find upcoming bookings (start in the future)
+                const future = bookings.filter((b: any) => {
+                    const validFrom = new Date(b.bookingDetails?.validFrom);
+                    return b.bookingDetails?.status === "ACTIVE" && validFrom > now;
+                }).sort((a: any, b: any) => new Date(a.bookingDetails.validFrom).getTime() - new Date(b.bookingDetails.validFrom).getTime());
+
+                setActiveBooking(currentActive || bookings.find((b: any) => b.bookingDetails?.status === "ACTIVE"));
+                setUpcomingBookings(future);
             }
         } catch {
             setBookingHistory([]);
@@ -267,25 +268,31 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
         }
     };
 
-    // Auto-open modal if URL has studentId
     useEffect(() => {
         const studentIdFromUrl = searchParams.get("studentId");
-        if (studentIdFromUrl && students.length > 0) {
+        
+        if (!studentIdFromUrl) {
+            processedStudentId.current = null;
+            return;
+        }
+
+        if (students.length === 0) return;
+
+        if (studentIdFromUrl !== processedStudentId.current) {
             const student = students.find(s => s.id === studentIdFromUrl);
-            if (student && (!selectedStudent || selectedStudent.id !== student.id)) {
+            if (student) {
+                processedStudentId.current = studentIdFromUrl;
                 handleViewDetails(student);
-                // Clean up the URL so it doesn't re-trigger on refresh
                 const newParams = new URLSearchParams(searchParams.toString());
                 newParams.delete("studentId");
                 router.replace(`?${newParams.toString()}`, { scroll: false });
             }
         }
-    }, [searchParams, students, router, selectedStudent]);
+    }, [searchParams, students, router]);
 
     const handleUpdateStudent = async () => {
         if (!selectedStudent) return;
         try {
-            // Map common fields and ensure interests is an array
             const submissionData = {
                 firstName: editedData.firstName,
                 lastName: editedData.lastName,
@@ -293,8 +300,8 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                 gender: editedData.gender,
                 dob: editedData.dob,
                 interests: Array.isArray(editedData.interests) ? editedData.interests : [],
-                about: editedData.targetExam, // Map targetExam to 'about' for backend
-                exam: editedData.targetExam,  // Also send as 'exam' for compatibility
+                about: editedData.targetExam,
+                exam: editedData.targetExam,
                 address: editedData.address,
                 aadhaarNumber: editedData.aadhaarNumber,
             };
@@ -334,7 +341,6 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     };
 
     const handleRemoveStudent = () => {
-        // Backend call will be wired later
         toast.success(`Student ${selectedStudent?.firstName} ${selectedStudent?.lastName} removed.`);
         setShowRemoveConfirm(false);
         setSelectedStudent(null);
@@ -342,150 +348,149 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
     };
 
     return (
-        <div className="space-y-0">
-            {/* Blue Header */}
-            <div className="bg-gradient-to-r from-blue-800 to-blue-900 rounded-t-3xl px-8 py-6 flex items-center justify-between">
-                <h2 className="text-2xl font-extrabold text-white tracking-tight">Students List</h2>
-                <div className="relative w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                        placeholder="Search students..."
-                        className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl h-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-            </div>
+        <>
+            {mainTab === "students" && (
+                <div className="space-y-0">
+                    <div className="bg-gradient-to-r from-blue-800 to-blue-900 rounded-t-3xl px-8 py-6 flex items-center justify-between">
+                        <h2 className="text-2xl font-extrabold text-white tracking-tight">Students List</h2>
+                        <div className="relative w-72">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                                placeholder="Search students..."
+                                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl h-10"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
 
-            {/* Subtabs */}
-            <div className="bg-white border-b px-6 pt-3 flex items-center gap-1">
-                {TABS.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={cn(
-                            "px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px",
-                            activeTab === tab.id
-                                ? "border-blue-600 text-blue-700"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                        )}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-                {/* Add Student button on the right */}
-                <div className="ml-auto pb-2">
-                    <Button
-                        size="sm"
-                        onClick={() => router.push(`?tab=onboarding`)}
-                        className="bg-blue-600 hover:bg-blue-700 rounded-xl font-bold shadow-sm"
-                    >
-                        <UserPlus className="h-4 w-4 mr-2" /> Add Student
-                    </Button>
-                </div>
-            </div>
+                    <div className="bg-white border-b px-6 pt-3 flex items-center gap-1">
+                        {TABS.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={cn(
+                                    "px-5 py-3 text-sm font-semibold transition-all border-b-2 -mb-px",
+                                    activeTab === tab.id
+                                        ? "border-blue-600 text-blue-700"
+                                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                )}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                        <div className="ml-auto pb-2">
+                            <Button
+                                size="sm"
+                                onClick={() => router.push(`?tab=onboarding`)}
+                                className="bg-blue-600 hover:bg-blue-700 rounded-xl font-bold shadow-sm"
+                            >
+                                <UserPlus className="h-4 w-4 mr-2" /> Add Student
+                            </Button>
+                        </div>
+                    </div>
 
-            {/* Student Table */}
-            <div className="bg-white rounded-b-3xl">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b bg-gray-50/50">
-                                <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider w-10">#</th>
-                                <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Name</th>
-                                <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Mobile No</th>
-                                <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Gender</th>
-                                <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Current Plan</th>
-                                {activeTab === "EXPIRING" && <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Plan expiring in</th>}
-                                <th className="text-right px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredStudents.length > 0 ? (
-                                filteredStudents.map((student, index) => {
-                                    const diffDays = getExpiringInfo(student.id);
-                                    const isRecentlyExpired = diffDays !== null && diffDays < 0;
+                    <div className="bg-white rounded-b-3xl">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b bg-gray-50/50">
+                                        <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider w-10">#</th>
+                                        <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Name</th>
+                                        <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Mobile No</th>
+                                        <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Gender</th>
+                                        <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Current Plan</th>
+                                        {activeTab === "EXPIRING" && <th className="text-left px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Plan expiring in</th>}
+                                        <th className="text-right px-6 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredStudents.length > 0 ? (
+                                        filteredStudents.map((student, index) => {
+                                            const diffDays = getExpiringInfo(student.id);
+                                            const isRecentlyExpired = diffDays !== null && diffDays < 0;
 
-                                    return (
-                                        <tr
-                                            key={student.id}
-                                            className={cn(
-                                                "border-b transition-colors hover:bg-blue-50/30",
-                                                (student as any).status === "DUES" || (activeTab === "EXPIRING" && isRecentlyExpired) ? "bg-red-50/40" : ""
-                                            )}
-                                        >
-                                            <td className="px-6 py-4 text-sm font-bold text-gray-400">{index + 1}.</td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="font-semibold text-gray-900">
-                                                        {student.firstName} {student.lastName}
-                                                    </span>
-                                                    {activeTab === "EXPIRING" && isRecentlyExpired && (
-                                                        <Badge variant="outline" className="bg-red-100 text-red-700 border-none font-black text-[9px] px-2 py-0.5 rounded-md">
-                                                            Payment Due
-                                                        </Badge>
+                                            return (
+                                                <tr
+                                                    key={student.id}
+                                                    className={cn(
+                                                        "border-b transition-colors hover:bg-blue-50/30",
+                                                        (student as any).status === "DUES" || (activeTab === "EXPIRING" && isRecentlyExpired) ? "bg-red-50/40" : ""
                                                     )}
-                                                    {activeTab !== "EXPIRING" && <StatusBadge status={student.status} />}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600 font-medium">
-                                                {student.phoneNumber ? `${student.phoneNumber}` : "N/A"}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{student.gender || "N/A"}</td>
-                                            <td className="px-6 py-4">
-                                                <span className="font-semibold text-gray-800">{student.currentPlan || "—"}</span>
-                                            </td>
-                                            {activeTab === "EXPIRING" && (
-                                                <td className="px-6 py-4">
-                                                    <span className={cn(
-                                                        "font-black text-sm",
-                                                        isRecentlyExpired ? "text-red-600" : "text-orange-600"
-                                                    )}>
-                                                        {diffDays === 0 ? "Today" :
-                                                            diffDays === 1 ? "1 Day" :
-                                                                diffDays! > 1 ? `${diffDays} Days` :
-                                                                    Math.abs(diffDays!) === 1 ? "1 Day Ago" :
-                                                                        `${Math.abs(diffDays!)} Days Ago`}
-                                                    </span>
-                                                </td>
-                                            )}
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3 justify-end">
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-xs px-5 h-8 shadow-sm"
-                                                        onClick={() => handleViewDetails(student)}
-                                                    >
-                                                        View Details
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="rounded-lg font-bold text-xs px-5 h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
-                                                        onClick={() => handleOpenUpgradeModal(student)}
-                                                    >
-                                                        Upgrade Plan
-                                                    </Button>
-                                                </div>
+                                                >
+                                                    <td className="px-6 py-4 text-sm font-bold text-gray-400">{index + 1}.</td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="font-semibold text-gray-900">
+                                                                {student.firstName} {student.lastName}
+                                                            </span>
+                                                            {activeTab === "EXPIRING" && isRecentlyExpired && (
+                                                                <Badge variant="outline" className="bg-red-100 text-red-700 border-none font-black text-[9px] px-2 py-0.5 rounded-md">
+                                                                    Payment Due
+                                                                </Badge>
+                                                            )}
+                                                            {activeTab !== "EXPIRING" && <StatusBadge status={student.status} />}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                                                        {student.phoneNumber ? `${student.phoneNumber}` : "N/A"}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-600">{student.gender || "N/A"}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="font-semibold text-gray-800">{student.currentPlan || "—"}</span>
+                                                    </td>
+                                                    {activeTab === "EXPIRING" && (
+                                                        <td className="px-6 py-4">
+                                                            <span className={cn(
+                                                                "font-black text-sm",
+                                                                isRecentlyExpired ? "text-red-600" : "text-orange-600"
+                                                            )}>
+                                                                {diffDays === 0 ? "Today" :
+                                                                    diffDays === 1 ? "1 Day" :
+                                                                        diffDays! > 1 ? `${diffDays} Days` :
+                                                                            Math.abs(diffDays!) === 1 ? "1 Day Ago" :
+                                                                                `${Math.abs(diffDays!)} Days Ago`}
+                                                            </span>
+                                                        </td>
+                                                    )}
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3 justify-end">
+                                                            <Button
+                                                                size="sm"
+                                                                className="bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-xs px-5 h-8 shadow-sm"
+                                                                onClick={() => handleViewDetails(student)}
+                                                            >
+                                                                View Details
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="rounded-lg font-bold text-xs px-5 h-8 border-blue-200 text-blue-700 hover:bg-blue-50"
+                                                                onClick={() => handleOpenUpgradeModal(student)}
+                                                            >
+                                                                Upgrade Plan
+                                                            </Button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={7} className="text-center py-16 text-gray-400">
+                                                <User className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                                                <p className="font-bold">No students found</p>
+                                                <p className="text-sm mt-1">Try adjusting your search or filter.</p>
                                             </td>
                                         </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan={6} className="text-center py-16 text-gray-400">
-                                        <User className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                                        <p className="font-bold">No students found</p>
-                                        <p className="text-sm mt-1">Try adjusting your search or filter.</p>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
 
-            {/* ====================== STUDENT DETAIL MODAL ====================== */}
             <AnimatePresence>
                 {selectedStudent && !showRemoveConfirm && (
                     <motion.div
@@ -502,7 +507,6 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                             onClick={(e) => e.stopPropagation()}
                             className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto"
                         >
-                            {/* Header with Title and Close */}
                             <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50 rounded-t-2xl">
                                 <h3 className="text-lg font-extrabold text-gray-900">
                                     {modalView === "MAIN" ? "Student Details" :
@@ -518,270 +522,251 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
 
                             {modalView === "MAIN" && (
                                 <>
-                                    {/* Student Info Header (Image 2 style) */}
-                                    <div className="px-6 py-6 border-b">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <p className="text-xs text-gray-400 font-medium">
-                                                Booking Id: {selectedStudent.id.slice(0, 16)}
-                                            </p>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className={cn("font-bold hover:bg-blue-50", isEditing ? "text-red-600" : "text-blue-600")}
-                                                onClick={() => {
-                                                    if (isEditing) {
-                                                        setEditedData(selectedStudent);
-                                                        setIsEditing(false);
-                                                    } else {
-                                                        setIsEditing(true);
-                                                    }
-                                                }}
-                                            >
-                                                {isEditing ? "Cancel Edit" : "Edit Profile"}
-                                            </Button>
+                                    {isLoadingStudent ? (
+                                        <div className="flex flex-col items-center justify-center py-24">
+                                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+                                            <p className="text-sm font-semibold text-gray-400 animate-pulse">Loading student profile...</p>
                                         </div>
-                                        <div className="flex gap-6">
-                                            {/* Photo */}
-                                            <div className="flex-shrink-0">
-                                                {selectedStudent.profilePhoto ? (
-                                                    <img
-                                                        src={selectedStudent.profilePhoto}
-                                                        alt={selectedStudent.firstName}
-                                                        className="h-36 w-28 rounded-xl object-cover border shadow-sm"
-                                                    />
-                                                ) : (
-                                                    <div className="h-36 w-28 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center border">
-                                                        <User className="h-12 w-12 text-blue-400" />
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Info List */}
-                                            <div className="flex-1 space-y-1.5 text-sm">
-                                                {isEditing ? (
-                                                    <div className="space-y-3">
-                                                        <div className="grid grid-cols-2 gap-3">
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[10px] font-bold uppercase text-gray-400">First Name</Label>
-                                                                <Input value={editedData.firstName || ""} onChange={e => setEditedData({ ...editedData, firstName: e.target.value })} className="h-9 px-3 text-sm" />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <Label className="text-[10px] font-bold uppercase text-gray-400">Last Name</Label>
-                                                                <Input value={editedData.lastName || ""} onChange={e => setEditedData({ ...editedData, lastName: e.target.value })} className="h-9 px-3 text-sm" />
-                                                            </div>
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Mobile Number</Label>
-                                                            <Input value={editedData.phoneNumber || ""} onChange={e => setEditedData({ ...editedData, phoneNumber: e.target.value })} className="h-9 px-3 text-sm" />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Gender</Label>
-                                                            <select
-                                                                className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                                                                value={editedData.gender || ""}
-                                                                onChange={e => setEditedData({ ...editedData, gender: e.target.value })}
-                                                            >
-                                                                <option value="">Select Gender</option>
-                                                                <option value="Male">Male</option>
-                                                                <option value="Female">Female</option>
-                                                                <option value="Other">Other</option>
-                                                            </select>
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Interests</Label>
-                                                            <Input
-                                                                placeholder="e.g. UPSC, SPSC, SSC"
-                                                                value={Array.isArray(editedData.interests) ? editedData.interests.join(", ") : (editedData as any).interests || ""}
-                                                                onChange={e => setEditedData({ ...editedData, interests: e.target.value.split(",").map(i => i.trim()) })}
-                                                                className="h-9 px-3 text-sm"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">About / Target Exam</Label>
-                                                            <Input value={editedData.targetExam || ""} onChange={e => setEditedData({ ...editedData, targetExam: e.target.value })} className="h-9 px-3 text-sm" />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Address</Label>
-                                                            <Input value={editedData.address || ""} onChange={e => setEditedData({ ...editedData, address: e.target.value })} className="h-9 px-3 text-sm" />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <Label className="text-[10px] font-bold uppercase text-gray-400">Aadhaar Number</Label>
-                                                            <Input value={editedData.aadhaarNumber || ""} onChange={e => setEditedData({ ...editedData, aadhaarNumber: e.target.value })} className="h-9 px-3 text-sm" />
-                                                        </div>
-                                                        <Button onClick={handleUpdateStudent} disabled={isUpdating} className="w-full bg-blue-600 hover:bg-blue-700 h-10 font-bold mt-2">
-                                                            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="space-y-1.5">
-                                                        <InfoRow label="Name" value={`${selectedStudent.firstName} ${selectedStudent.lastName}`} />
-                                                        <InfoRow label="Mobile" value={selectedStudent.phoneNumber || "N/A"} />
-                                                        {selectedStudent.dob && (
-                                                            <InfoRow label="Age" value={`${calculateAge(selectedStudent.dob)}`} />
-                                                        )}
-                                                        <InfoRow label="Gender" value={selectedStudent.gender || "N/A"} />
-                                                        <InfoRow label="Email" value={selectedStudent.email} />
-                                                        <InfoRow label="Interests" value={Array.isArray(selectedStudent.interests) ? selectedStudent.interests.join(", ") : typeof selectedStudent.interests === 'string' ? selectedStudent.interests : "N/A"} />
-                                                        {selectedStudent.aadhaarNumber && (
-                                                            <InfoRow label="Aadhaar Number" value={`XXXX-XXXX-${selectedStudent.aadhaarNumber.slice(-4)}`} />
-                                                        )}
-                                                        {selectedStudent.targetExam && (
-                                                            <InfoRow label="Target Exam" value={selectedStudent.targetExam} />
-                                                        )}
-                                                        {selectedStudent.address && (
-                                                            <InfoRow label="Area/Address" value={selectedStudent.address} />
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Current Plan Section (Image 1 style) */}
-                                    <div className="px-6 py-6 border-b bg-blue-50/30">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h4 className="text-sm font-bold text-gray-700">Current Plan:</h4>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="rounded-xl font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
-                                                onClick={() => handleOpenUpgradeModal(selectedStudent)}
-                                            >
-                                                Upgrade Plan
-                                            </Button>
-                                        </div>
-
-                                        {activeBooking ? (
-                                            <div className="relative overflow-hidden bg-white/60 backdrop-blur-sm border border-blue-100 rounded-2xl p-5 shadow-sm group">
-                                                <div className="absolute top-0 left-0 w-1 h-full bg-blue-400" />
-                                                <div className="flex items-end justify-between">
-                                                    <div>
-                                                        <div className="flex items-baseline gap-1">
-                                                            <span className="text-2xl font-black text-gray-900 leading-none">
-                                                                Rs. {activeBooking.bookingDetails?.totalAmount || activeBooking.plan?.price}
-                                                            </span>
-                                                            <span className="text-sm font-bold text-gray-400">/ month</span>
-                                                        </div>
-                                                        <div className="mt-2 flex items-center gap-2">
-                                                            <Badge variant="outline" className="bg-orange-100 text-orange-700 border-none font-black text-[10px] px-2 py-0.5 rounded-md">
-                                                                {activeBooking.plan?.hours} hrs/ day
-                                                            </Badge>
-                                                            <span className="italic text-[10px] font-bold text-gray-800 uppercase">
-                                                                {activeBooking.bookingDetails?.seatMode || activeBooking.plan?.planType} Seat
-                                                            </span>
-                                                        </div>
-                                                        <div className="mt-1 text-[10px] font-bold text-blue-600">
-                                                            Valid till: {format(new Date(activeBooking.bookingDetails?.validTo), "dd MMM, yyyy")}
-                                                        </div>
-                                                    </div>
-                                                    <div className="px-4 py-1 border border-blue-400 rounded-lg text-blue-600 font-bold text-sm bg-white uppercase">
-                                                        {activeBooking.plan?.planName}
-                                                    </div>
+                                    ) : (
+                                        <>
+                                            <div className="px-6 py-6 border-b">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <p className="text-xs text-gray-400 font-medium">
+                                                        Booking Id: {selectedStudent.id.slice(0, 16)}
+                                                    </p>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className={cn("font-bold hover:bg-blue-50", isEditing ? "text-red-600" : "text-blue-600")}
+                                                        onClick={() => {
+                                                            if (isEditing) {
+                                                                setEditedData(selectedStudent);
+                                                                setIsEditing(false);
+                                                            } else {
+                                                                setIsEditing(true);
+                                                            }
+                                                        }}
+                                                    >
+                                                        {isEditing ? "Cancel Edit" : "Edit Profile"}
+                                                    </Button>
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-6 text-gray-400 italic text-sm border-2 border-dashed border-gray-100 rounded-2xl">
-                                                No active plan found for this student.
-                                            </div>
-                                        )}
-                                    </div>
+                                                <div className="flex gap-6">
+                                                    <div className="flex-shrink-0">
+                                                        {selectedStudent.profilePhoto ? (
+                                                            <img
+                                                                src={selectedStudent.profilePhoto}
+                                                                alt={selectedStudent.firstName}
+                                                                className="h-36 w-28 rounded-xl object-cover border shadow-sm"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-36 w-28 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center border">
+                                                                <User className="h-12 w-12 text-blue-400" />
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-                                    {/* Next Plans Section */}
-                                    {bookingHistory.filter((b: any) => {
-                                        const isFuture = new Date(b.bookingDetails?.validFrom) > new Date();
-                                        const isNotActiveDisplayed = b.id !== activeBooking?.id;
-                                        return isFuture && isNotActiveDisplayed && (b.bookingDetails?.status === "PENDING" || b.bookingDetails?.status === "ACTIVE");
-                                    }).length > 0 && (
-                                            <div className="px-6 py-6 border-b bg-green-50/20">
-                                                <h4 className="text-sm font-bold text-gray-700 mb-4">Next Plans:</h4>
-                                                <div className="space-y-4">
-                                                    {bookingHistory
-                                                        .filter((b: any) => {
-                                                            const isFuture = new Date(b.bookingDetails?.validFrom) > new Date();
-                                                            const isNotActiveDisplayed = b.id !== activeBooking?.id;
-                                                            return isFuture && isNotActiveDisplayed && (b.bookingDetails?.status === "PENDING" || b.bookingDetails?.status === "ACTIVE");
-                                                        })
-                                                        .map((plan: any, idx: number) => (
-                                                            <div key={idx} className="relative overflow-hidden bg-white/60 backdrop-blur-sm border border-green-100 rounded-2xl p-5 shadow-sm group">
-                                                                <div className="absolute top-0 left-0 w-1 h-full bg-green-400" />
-                                                                <div className="flex items-end justify-between">
-                                                                    <div className="space-y-2">
-                                                                        <div className="flex items-baseline gap-1">
-                                                                            <span className="text-2xl font-black text-gray-900 leading-none">
-                                                                                Rs. {plan.bookingDetails?.totalAmount || plan.plan?.price}
-                                                                            </span>
-                                                                            <span className="text-sm font-bold text-gray-400">/ month</span>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <Badge variant="outline" className="bg-green-100 text-green-700 border-none font-black text-[10px] px-2 py-0.5 rounded-md">
-                                                                                {plan.plan?.hours} hrs/ day
-                                                                            </Badge>
-                                                                            <span className="italic text-[10px] font-bold text-gray-800 uppercase">
-                                                                                {plan.bookingDetails?.seatMode || plan.plan?.planType} Seat ({plan.seat?.seatNumber || "—"})
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex flex-col gap-1 text-[10px] font-bold text-green-600 uppercase tracking-tight">
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <Calendar className="h-3 w-3" />
-                                                                                <span>Starts: {format(new Date(plan.bookingDetails?.validFrom), "dd MMM, yyyy")}</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <Clock className="h-3 w-3" />
-                                                                                <span>Ends: {format(new Date(plan.bookingDetails?.validTo), "dd MMM, yyyy")}</span>
-                                                                            </div>
-                                                                        </div>
+                                                    <div className="flex-1 space-y-1.5 text-sm">
+                                                        {isEditing ? (
+                                                            <div className="space-y-3">
+                                                                <div className="grid grid-cols-2 gap-3">
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-[10px] font-bold uppercase text-gray-400">First Name</Label>
+                                                                        <Input value={editedData.firstName || ""} onChange={e => setEditedData({ ...editedData, firstName: e.target.value })} className="h-9 px-3 text-sm" />
                                                                     </div>
-                                                                    <div className="flex flex-col items-end gap-3">
-                                                                        <Badge className="bg-green-100 text-green-700 border-none font-black text-[9px] px-3 py-0.5 rounded-full">
-                                                                            UPCOMING
-                                                                        </Badge>
-                                                                        <div className="px-4 py-1 border border-green-400 rounded-lg text-green-600 font-bold text-sm bg-white uppercase">
-                                                                            {plan.plan?.planName}
-                                                                        </div>
+                                                                    <div className="space-y-1">
+                                                                        <Label className="text-[10px] font-bold uppercase text-gray-400">Last Name</Label>
+                                                                        <Input value={editedData.lastName || ""} onChange={e => setEditedData({ ...editedData, lastName: e.target.value })} className="h-9 px-3 text-sm" />
                                                                     </div>
                                                                 </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] font-bold uppercase text-gray-400">Mobile Number</Label>
+                                                                    <Input value={editedData.phoneNumber || ""} onChange={e => setEditedData({ ...editedData, phoneNumber: e.target.value })} className="h-9 px-3 text-sm" />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] font-bold uppercase text-gray-400">Gender</Label>
+                                                                    <select
+                                                                        className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                                                                        value={editedData.gender || ""}
+                                                                        onChange={e => setEditedData({ ...editedData, gender: e.target.value })}
+                                                                    >
+                                                                        <option value="">Select Gender</option>
+                                                                        <option value="Male">Male</option>
+                                                                        <option value="Female">Female</option>
+                                                                        <option value="Other">Other</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] font-bold uppercase text-gray-400">Interests</Label>
+                                                                    <Input
+                                                                        placeholder="e.g. UPSC, SPSC, SSC"
+                                                                        value={Array.isArray(editedData.interests) ? editedData.interests.join(", ") : (editedData as any).interests || ""}
+                                                                        onChange={e => setEditedData({ ...editedData, interests: e.target.value.split(",").map(i => i.trim()) })}
+                                                                        className="h-9 px-3 text-sm"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] font-bold uppercase text-gray-400">About / Target Exam</Label>
+                                                                    <Input value={editedData.targetExam || ""} onChange={e => setEditedData({ ...editedData, targetExam: e.target.value })} className="h-9 px-3 text-sm" />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] font-bold uppercase text-gray-400">Address</Label>
+                                                                    <Input value={editedData.address || ""} onChange={e => setEditedData({ ...editedData, address: e.target.value })} className="h-9 px-3 text-sm" />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <Label className="text-[10px] font-bold uppercase text-gray-400">Aadhaar Number</Label>
+                                                                    <Input value={editedData.aadhaarNumber || ""} onChange={e => setEditedData({ ...editedData, aadhaarNumber: e.target.value })} className="h-9 px-3 text-sm" />
+                                                                </div>
+                                                                <Button onClick={handleUpdateStudent} disabled={isUpdating} className="w-full bg-blue-600 hover:bg-blue-700 h-10 font-bold mt-2">
+                                                                    {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+                                                                </Button>
                                                             </div>
-                                                        ))}
+                                                        ) : (
+                                                            <div className="space-y-1.5">
+                                                                <InfoRow label="Name" value={`${selectedStudent.firstName} ${selectedStudent.lastName}`} />
+                                                                <InfoRow label="Mobile" value={selectedStudent.phoneNumber || "N/A"} />
+                                                                {selectedStudent.dob && (
+                                                                    <InfoRow label="Age" value={`${calculateAge(selectedStudent.dob)}`} />
+                                                                )}
+                                                                <InfoRow label="Gender" value={selectedStudent.gender || "N/A"} />
+                                                                <InfoRow label="Email" value={selectedStudent.email} />
+                                                                <InfoRow label="Interests" value={Array.isArray(selectedStudent.interests) ? selectedStudent.interests.join(", ") : typeof selectedStudent.interests === 'string' ? selectedStudent.interests : "N/A"} />
+                                                                {selectedStudent.aadhaarNumber && (
+                                                                    <InfoRow label="Aadhaar Number" value={`XXXX-XXXX-${selectedStudent.aadhaarNumber.slice(-4)}`} />
+                                                                )}
+                                                                {selectedStudent.targetExam && (
+                                                                    <InfoRow label="Target Exam" value={selectedStudent.targetExam} />
+                                                                )}
+                                                                {selectedStudent.address && (
+                                                                    <InfoRow label="Area/Address" value={selectedStudent.address} />
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        )}
 
-                                    {/* Navigation Buttons (Bottom Image 2) */}
-                                    <div className="px-6 py-6 grid grid-cols-2 gap-4">
-                                        <Button
-                                            variant="outline"
-                                            className="rounded-xl font-extrabold h-12 bg-blue-500 text-white hover:bg-blue-600 border-none shadow-md"
-                                            onClick={() => setModalView("PLAN_HISTORY")}
-                                        >
-                                            View Plan History
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="rounded-xl font-extrabold h-12 bg-gray-100 text-gray-800 hover:bg-gray-200 border-none"
-                                            onClick={() => setModalView("TRANSACTIONS")}
-                                        >
-                                            Transactions
-                                        </Button>
-                                    </div>
+                                            <div className="px-6 py-6 border-b bg-blue-50/30">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h4 className="text-sm font-bold text-gray-700">Current Plan:</h4>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="rounded-xl font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                                                        onClick={() => handleOpenUpgradeModal(selectedStudent)}
+                                                    >
+                                                        Upgrade Plan
+                                                    </Button>
+                                                </div>
 
-                                    {/* Final Footer Actions */}
-                                    <div className="px-6 pb-6 pt-2 flex items-center gap-4">
-                                        <Button variant="outline" className="rounded-xl font-bold px-6 h-10 border-gray-200">
-                                            <FileText className="h-4 w-4 mr-2" /> View Form
-                                        </Button>
-                                        <Button variant="outline" className="rounded-xl font-bold px-6 h-10 border-gray-200">
-                                            <Upload className="h-4 w-4 mr-2" /> Upload Form
-                                        </Button>
-                                        <div className="ml-auto">
-                                            <Button
-                                                variant="outline"
-                                                className="rounded-xl font-bold px-6 h-10 text-red-600 border-red-100 hover:bg-red-50"
-                                                onClick={() => setShowRemoveConfirm(true)}
-                                            >
-                                                <Trash2 className="h-4 w-4 mr-2" /> Remove
-                                            </Button>
-                                        </div>
-                                    </div>
+                                                {isLoadingBookings ? (
+                                                    <div className="flex flex-col items-center justify-center py-8 bg-white/60 rounded-2xl border border-blue-50">
+                                                        <Loader2 className="h-6 w-6 animate-spin text-blue-400 mb-2" />
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase">Fetching plan...</p>
+                                                    </div>
+                                                ) : activeBooking ? (
+                                                    <div className="relative overflow-hidden bg-white/60 backdrop-blur-sm border border-blue-100 rounded-2xl p-5 shadow-sm group">
+                                                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-400" />
+                                                        <div className="flex items-end justify-between">
+                                                            <div>
+                                                                <div className="flex items-baseline gap-1">
+                                                                    <span className="text-2xl font-black text-gray-900 leading-none">
+                                                                        Rs. {activeBooking.bookingDetails?.totalAmount || activeBooking.plan?.price}
+                                                                    </span>
+                                                                    <span className="text-sm font-bold text-gray-400">/ month</span>
+                                                                </div>
+                                                                <div className="mt-2 flex items-center gap-2">
+                                                                    <Badge variant="outline" className="bg-orange-100 text-orange-700 border-none font-black text-[10px] px-2 py-0.5 rounded-md">
+                                                                        {activeBooking.plan?.hours} hrs/ day
+                                                                    </Badge>
+                                                                    <span className="italic text-[10px] font-bold text-gray-800 uppercase">
+                                                                        {activeBooking.bookingDetails?.seatMode || activeBooking.plan?.planType} Seat
+                                                                    </span>
+                                                                </div>
+                                                                <div className="mt-1 text-[10px] font-bold text-blue-600">
+                                                                    Valid till: {format(new Date(activeBooking.bookingDetails?.validTo), "dd MMM, yyyy")}
+                                                                </div>
+                                                            </div>
+                                                            <div className="px-4 py-1 border border-blue-400 rounded-lg text-blue-600 font-bold text-sm bg-white uppercase">
+                                                                {activeBooking.plan?.planName}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-6 text-gray-400 italic text-sm border-2 border-dashed border-gray-100 rounded-2xl">
+                                                        No active plan found for this student.
+                                                    </div>
+                                                )}
+
+                                                {/* Next Plans Section */}
+                                                {!isLoadingBookings && upcomingBookings.length > 0 && (
+                                                    <div className="mt-6">
+                                                        <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                            <div className="h-1 w-1 rounded-full bg-green-500" />
+                                                            Upcoming Plans
+                                                        </h4>
+                                                        <div className="space-y-3">
+                                                            {upcomingBookings.map((booking, idx) => (
+                                                                <div key={idx} className="bg-green-50/50 border border-green-100 rounded-xl p-4 flex items-center justify-between group">
+                                                                    <div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-sm font-black text-gray-800">
+                                                                                {booking.plan?.planName || "Standard Plan"}
+                                                                            </span>
+                                                                            <Badge className="bg-green-100 text-green-700 border-none font-black text-[8px] px-2 py-0">
+                                                                                UPCOMING
+                                                                            </Badge>
+                                                                        </div>
+                                                                        <p className="text-[10px] font-bold text-gray-500 mt-1">
+                                                                            Starts: {format(new Date(booking.bookingDetails?.validFrom), "dd MMM, yyyy")}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <p className="text-sm font-black text-green-700">Rs. {booking.bookingDetails?.totalAmount || booking.plan?.price}</p>
+                                                                        <p className="text-[9px] font-bold text-gray-400 uppercase">{booking.plan?.hours} hrs/day</p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="px-6 py-6 grid grid-cols-2 gap-4">
+                                                <Button
+                                                    variant="outline"
+                                                    className="rounded-xl font-extrabold h-12 bg-blue-500 text-white hover:bg-blue-600 border-none shadow-md"
+                                                    onClick={() => setModalView("PLAN_HISTORY")}
+                                                >
+                                                    View Plan History
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    className="rounded-xl font-extrabold h-12 bg-gray-100 text-gray-800 hover:bg-gray-200 border-none"
+                                                    onClick={() => setModalView("TRANSACTIONS")}
+                                                >
+                                                    Transactions
+                                                </Button>
+                                            </div>
+
+                                            <div className="px-6 pb-6 pt-2 flex items-center gap-4">
+                                                <Button variant="outline" className="rounded-xl font-bold px-6 h-10 border-gray-200">
+                                                    <FileText className="h-4 w-4 mr-2" /> View Form
+                                                </Button>
+                                                <Button variant="outline" className="rounded-xl font-bold px-6 h-10 border-gray-200">
+                                                    <Upload className="h-4 w-4 mr-2" /> Upload Form
+                                                </Button>
+                                                <div className="ml-auto">
+                                                    <Button
+                                                        variant="outline"
+                                                        className="rounded-xl font-bold px-6 h-10 text-red-600 border-red-100 hover:bg-red-50"
+                                                        onClick={() => setShowRemoveConfirm(true)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 mr-2" /> Remove
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </>
                             )}
 
@@ -816,9 +801,8 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                                 <tbody>
                                                     {bookingHistory.map((booking: any, i: number) => {
                                                         const isActive = booking.bookingDetails?.status === "ACTIVE";
-                                                        const validFrom = new Date(booking.bookingDetails?.validFrom);
-                                                        const seatInfo = booking.seat ? ` – Seat ${booking.seat.seatNumber}` : "";
                                                         const slotInfo = booking.timeSlot?.name ? ` (${booking.timeSlot.name})` : "";
+                                                        const seatInfo = booking.seat ? ` – Seat ${booking.seat.seatNumber}` : "";
 
                                                         return (
                                                             <tr
@@ -936,14 +920,11 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                             setStudentToUpgrade(null);
                             setActiveBookingForUpgrade(null);
                         }}
-                        onSuccess={() => {
-                            // Optionally refresh student list or show global success
-                        }}
+                        onSuccess={() => {}}
                     />
                 )}
             </AnimatePresence>
 
-            {/* ====================== REMOVE CONFIRMATION DIALOG ====================== */}
             <AnimatePresence>
                 {showRemoveConfirm && selectedStudent && (
                     <motion.div
@@ -975,22 +956,13 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                             </div>
 
                             <div className="space-y-3 mb-6">
-                                <Label className="text-sm font-bold text-gray-700">Confirm by</Label>
-                                <div className="space-y-2">
-                                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="radio" name="confirmType" className="accent-red-500" defaultChecked />
-                                        <span>Email a cancellation or withdrawal for a partial approval</span>
-                                    </label>
-                                </div>
-                                <div className="mt-3">
-                                    <Label className="text-sm font-bold text-gray-700">Reason (optional)</Label>
-                                    <Input
-                                        placeholder="Enter reason for removal..."
-                                        className="mt-1 rounded-xl bg-white"
-                                        value={removeReason}
-                                        onChange={(e) => setRemoveReason(e.target.value)}
-                                    />
-                                </div>
+                                <Label className="text-sm font-bold text-gray-700">Confirm Reason (optional)</Label>
+                                <Input
+                                    placeholder="Enter reason for removal..."
+                                    className="mt-1 rounded-xl bg-white"
+                                    value={removeReason}
+                                    onChange={(e) => setRemoveReason(e.target.value)}
+                                />
                             </div>
 
                             <div className="flex gap-3">
@@ -1005,18 +977,16 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
                                     className="flex-1 rounded-xl font-bold h-10 bg-red-500 hover:bg-red-600 text-white"
                                     onClick={handleRemoveStudent}
                                 >
-                                    PROCEED WITH DELETION
+                                    PROCEED
                                 </Button>
                             </div>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </>
     );
 }
-
-// --- Helper Components ---
 
 function StatusBadge({ status }: { status: StudentInfo["status"] }) {
     const config: Record<string, { bg: string; text: string; label: string }> = {
