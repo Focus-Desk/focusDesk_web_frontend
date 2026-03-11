@@ -520,9 +520,15 @@ export default function UpgradePlanModal({
                                                         )}
                                                     </SelectTrigger>
                                                     <SelectContent className="rounded-2xl">
-                                                        {librarians?.data?.map(l => (
-                                                            <SelectItem key={l.id} value={l.id}>{l.librarian?.firstName} {l.librarian?.lastName}</SelectItem>
-                                                        ))}
+                                                        {librarians?.data?.map(l => {
+                                                            const name = [l.librarian?.firstName, l.librarian?.lastName].filter(Boolean).join(" ");
+                                                            const displayStr = name || l.email || "Librarian (Incomplete Profile)";
+                                                            return (
+                                                                <SelectItem key={l.id} value={l.id}>
+                                                                    {displayStr}
+                                                                </SelectItem>
+                                                            );
+                                                        })}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
