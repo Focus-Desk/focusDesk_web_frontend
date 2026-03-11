@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import {
     Table,
@@ -37,7 +37,7 @@ import {
     useLazyGetStudentByEmailQuery,
     useUpdateStudentMutation,
 } from "@/state/api";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import UpgradePlanModal from "./UpgradePlanModal";
@@ -80,6 +80,7 @@ const TABS: { id: TabId; label: string }[] = [
 export default function StudentManagement({ seats }: StudentManagementProps) {
     const { id } = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const libraryId = Array.isArray(id) ? id[0] : id;
     const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState<TabId>("ALL");
@@ -265,6 +266,21 @@ export default function StudentManagement({ seats }: StudentManagementProps) {
             setIsLoadingBookings(false);
         }
     };
+
+    // Auto-open modal if URL has studentId
+    useEffect(() => {
+        const studentIdFromUrl = searchParams.get("studentId");
+        if (studentIdFromUrl && students.length > 0) {
+            const student = students.find(s => s.id === studentIdFromUrl);
+            if (student && (!selectedStudent || selectedStudent.id !== student.id)) {
+                handleViewDetails(student);
+                // Clean up the URL so it doesn't re-trigger on refresh
+                const newParams = new URLSearchParams(searchParams.toString());
+                newParams.delete("studentId");
+                router.replace(`?${newParams.toString()}`, { scroll: false });
+            }
+        }
+    }, [searchParams, students, router, selectedStudent]);
 
     const handleUpdateStudent = async () => {
         if (!selectedStudent) return;
