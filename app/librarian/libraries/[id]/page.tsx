@@ -61,18 +61,20 @@ export default function LibraryManagementPage() {
 
     return (
         <div className="transition-all duration-700">
-            {activeTab === "home" ? (
-                <LibraryHome libraryId={libraryId} />
-            ) : activeTab === "seats" ? (
+            {activeTab === "home" && <LibraryHome libraryId={libraryId} />}
+            
+            {activeTab === "seats" && (
                 <LiveSeatPlan
                     seats={seats}
                     libraryName={library.libraryName}
                     libraryId={libraryId}
                     selectedSlotId={selectedSlotId}
                     onSlotChange={setSelectedSlotId}
-                    onStudentClick={(studentId) => router.push(`?tab=students&studentId=${studentId}`)}
+                    onStudentClick={(studentId) => router.replace(`?tab=seats&studentId=${studentId}`, { scroll: false })}
                 />
-            ) : activeTab === "onboarding" ? (
+            )}
+            
+            {activeTab === "onboarding" && (
                 <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
                     <div className="flex items-center justify-between mb-8 pb-4 border-b">
                         <div className="flex items-center gap-3">
@@ -89,15 +91,13 @@ export default function LibraryManagementPage() {
                     </div>
                     <StudentOnboardingFlow libraryId={libraryId} />
                 </div>
-            ) : activeTab === "queries" ? (
-                <LibraryQueries libraryId={libraryId} />
-            ) : activeTab === "bookings" ? (
-                <LibraryBookings libraryId={libraryId} />
-            ) : activeTab === "plans" ? (
-                <LibraryPlans libraryId={libraryId} />
-            ) : (
-                <StudentManagement seats={seats} />
             )}
+            
+            {activeTab === "queries" && <LibraryQueries libraryId={libraryId} />}
+            {activeTab === "bookings" && <LibraryBookings libraryId={libraryId} />}
+            {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
+            
+            <StudentManagement seats={seats} mainTab={activeTab} />
         </div>
     );
 }
