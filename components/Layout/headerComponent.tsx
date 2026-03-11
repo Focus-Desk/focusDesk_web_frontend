@@ -6,19 +6,24 @@ import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { BookOpen, Menu } from "lucide-react";
 
 // import { toast } from "sonner";
-import { useGetAuthUserQuery } from "@/state/api";
-import { signOut } from "aws-amplify/auth";
+import { useGetAuthUserQuery, useLogoutMutation } from "@/state/api";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
 export default function Header() {
 
   const { data: authUser } = useGetAuthUserQuery();
-  // const router = useRouter();
+  const [logout] = useLogoutMutation();
 
   const handleSignOut = async () => {
-    await signOut();
-    window.location.href = "/";
+    try {
+      await logout().unwrap();
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      localStorage.removeItem("token");
+      window.location.href = "/";
+    }
   };
 
   // Navigation items (static)
