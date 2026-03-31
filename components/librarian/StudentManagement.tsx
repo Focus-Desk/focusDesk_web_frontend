@@ -28,6 +28,7 @@ import {
     Loader2,
     Clock,
     CreditCard,
+    LayoutGrid,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ interface StudentInfo {
     status: "ACTIVE" | "DUES" | "INACTIVE" | "OLD";
     lastBookingDate?: string;
     currentSeat?: number;
+    currentSeatMode?: string;
     currentPlan?: string;
     profilePhoto?: string;
     aadhaarNumber?: string;
@@ -136,6 +138,7 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                         status: isActive ? "ACTIVE" : "OLD",
                         lastBookingDate: booking.createdAt,
                         currentSeat: isActive ? seat.seatNumber : undefined,
+                        currentSeatMode: isActive ? seat.mode : undefined,
                         currentPlan: (booking as any).plan?.planName || "—",
                         profilePhoto: student?.profilePhoto,
                         aadhaarNumber: student?.aadhaarNumber,
@@ -148,6 +151,7 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                     if (isActive) {
                         existing.status = "ACTIVE";
                         existing.currentSeat = seat.seatNumber;
+                        existing.currentSeatMode = seat.mode;
                         existing.currentPlan = (booking as any).plan?.planName || existing.currentPlan;
                     }
                     if (new Date(booking.createdAt) > new Date(existing.lastBookingDate!)) {
@@ -244,7 +248,7 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                 const bookings = result.data.bookings || [];
                 setBookingHistory(bookings);
                 const now = new Date();
-                
+
                 // 1. Find the strictly active booking (now falls within range)
                 const currentActive = bookings.find((b: any) => {
                     const validFrom = new Date(b.bookingDetails?.validFrom);
@@ -270,7 +274,7 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
 
     useEffect(() => {
         const studentIdFromUrl = searchParams.get("studentId");
-        
+
         if (!studentIdFromUrl) {
             processedStudentId.current = null;
             return;
@@ -531,9 +535,17 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                                         <>
                                             <div className="px-6 py-6 border-b">
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <p className="text-xs text-gray-400 font-medium">
-                                                        Booking Id: {selectedStudent.id.slice(0, 16)}
-                                                    </p>
+                                                    <div className="flex flex-wrap items-center gap-3">
+                                                        <p className="text-xs text-gray-400 font-medium">
+                                                            Booking Id: {selectedStudent.id.slice(0, 16)}
+                                                        </p>
+                                                        {selectedStudent.currentSeatMode?.toLowerCase() === "fixed" && selectedStudent.currentSeat && (
+                                                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-none font-bold shadow-sm flex items-center gap-1 text-[10px] px-2 py-0.5">
+                                                                <LayoutGrid className="h-3 w-3" />
+                                                                Seat {selectedStudent.currentSeat}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -679,7 +691,7 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                                                                         {activeBooking.plan?.hours} hrs/ day
                                                                     </Badge>
                                                                     <span className="italic text-[10px] font-bold text-gray-800 uppercase">
-                                                                        {activeBooking.bookingDetails?.seatMode || activeBooking.plan?.planType} Seat
+                                                                        {activeBooking.bookingDetails?.seatMode || activeBooking.plan?.planType} Seat {(activeBooking.bookingDetails?.seatMode?.toLowerCase() === "fixed" || activeBooking.plan?.planType?.toLowerCase() === "fixed") && (activeBooking.seat?.seatNumber || selectedStudent.currentSeat) ? `- ${activeBooking.seat?.seatNumber || selectedStudent.currentSeat}` : ""}
                                                                     </span>
                                                                 </div>
                                                                 <div className="mt-1 text-[10px] font-bold text-blue-600">
@@ -710,7 +722,7 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                                                                     <div>
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-sm font-black text-gray-800">
-                                                                                {booking.plan?.planName || "Standard Plan"}
+                                                                                {booking.plan?.planName || "Standard Plan"} {(booking.bookingDetails?.seatMode?.toLowerCase() === "fixed" || booking.plan?.planType?.toLowerCase() === "fixed") && booking.seat?.seatNumber ? `(Seat ${booking.seat.seatNumber})` : ""}
                                                                             </span>
                                                                             <Badge className="bg-green-100 text-green-700 border-none font-black text-[8px] px-2 py-0">
                                                                                 UPCOMING
@@ -920,7 +932,7 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                             setStudentToUpgrade(null);
                             setActiveBookingForUpgrade(null);
                         }}
-                        onSuccess={() => {}}
+                        onSuccess={() => { }}
                     />
                 )}
             </AnimatePresence>
