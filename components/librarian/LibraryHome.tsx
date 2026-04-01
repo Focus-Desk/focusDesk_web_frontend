@@ -65,7 +65,44 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
         const eventSource = new EventSource(`${baseUrl}api/library/${libraryId}/events`);
 
         const handleNewRequest = (event: MessageEvent, message: string) => {
-             toast.success(message);
+             let payload: any = {};
+             try {
+                 payload = JSON.parse(event.data);
+             } catch (e) {}
+
+             try {
+                 const audio = new Audio('/sounds/notification.mp3');
+                 audio.play();
+             } catch (err) {
+                 console.error("Failed to play notification sound", err);
+             }
+
+             toast.custom((t) => (
+                 <div className="bg-white rounded-[1.5rem] shadow-xl border border-gray-100 p-4 w-full flex items-start gap-4 cursor-pointer" onClick={() => toast.dismiss(t)}>
+                     <div className="bg-blue-600/10 rounded-full p-3 text-blue-700 shrink-0 self-center">
+                         <AlertCircle className="w-6 h-6" />
+                     </div>
+                     <div className="flex-1">
+                         <p className="text-sm font-black text-gray-900 tracking-tight">{message}</p>
+                         {payload?.studentId && (
+                             <p className="text-xs font-bold text-gray-500 mt-1 flex items-center gap-2">
+                                 <User className="w-3 h-3" />
+                                 STU-{payload.studentId.slice(-6).toUpperCase()}
+                             </p>
+                         )}
+                         <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-black tracking-widest uppercase mt-3">
+                             <Clock className="w-3 h-3" />
+                             {format(new Date(), "MMM dd • hh:mm a")}
+                         </div>
+                     </div>
+                     <button onClick={(e) => { e.stopPropagation(); toast.dismiss(t); }} className="text-gray-400 hover:text-gray-600 bg-gray-50 rounded-full p-2">
+                         <X className="w-4 h-4" />
+                     </button>
+                 </div>
+             ), {
+                 duration: 8000,
+             });
+
              dispatch(api.util.invalidateTags([
                  'Complaints',
                  'PauseRequests', 
