@@ -8,8 +8,11 @@ import {
     useGetLibraryReviewsForLibrarianQuery,
     useGetPauseRequestsByLibraryQuery,
     useUpdateComplaintStatusMutation,
-    useUpdatePauseRequestStatusMutation
+    useUpdatePauseRequestStatusMutation,
+    api
 } from "@/state/api";
+import { useDispatch } from "react-redux";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import ConfirmBookingModal from "./ConfirmBookingModal";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +56,31 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
     const [updatePauseRequestStatus, { isLoading: isUpdatingPause }] = useUpdatePauseRequestStatusMutation();
 
     const [selectedQuery, setSelectedQuery] = React.useState<any>(null);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        if (!libraryId) return;
+
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/';
+        const eventSource = new EventSource(`${baseUrl}api/library/${libraryId}/events`);
+
+        const handleNewRequest = (event: MessageEvent, message: string) => {
+             toast.success(message);
+             dispatch(api.util.invalidateTags([
+                 'Complaints',
+                 'PauseRequests', 
+                 'Bookings'
+             ]));
+        };
+
+        eventSource.addEventListener('NEW_COMPLAINT', (e) => handleNewRequest(e, "New Complaint Received!"));
+        eventSource.addEventListener('NEW_PLAN_REQUEST', (e) => handleNewRequest(e, "New Plan Pause Request Received!"));
+        eventSource.addEventListener('NEW_BOOKING_REQUEST', (e) => handleNewRequest(e, "New Booking Approval Request!"));
+
+        return () => {
+            eventSource.close();
+        };
+    }, [libraryId, dispatch]);
 
     const bookings = bookingsData?.data || [];
     const activeBookings = bookings.filter((b: any) => b.bookingDetails?.status === "ACTIVE");
