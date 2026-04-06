@@ -446,6 +446,20 @@ export const api = createApi({
       }),
       invalidatesTags: ["AuthUser"],
     }),
+    forgotPassword: build.mutation<any, any>({
+      query: (credentials) => ({
+        url: "auth/forgot-password",
+        method: "POST",
+        body: credentials,
+      }),
+    }),
+    resetPassword: build.mutation<any, any>({
+      query: (credentials) => ({
+        url: "auth/reset-password",
+        method: "POST",
+        body: credentials,
+      }),
+    }),
 
     register: build.mutation<any, any>({
       query: (userData) => ({
@@ -1452,6 +1466,8 @@ export const api = createApi({
 export const {
   useGetAuthUserQuery,
   useLoginMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useRegisterMutation,
   useVerifyOTPMutation,
   useLogoutMutation,
