@@ -110,9 +110,21 @@ export default function LiveSeatPlan({
                 <div className="flex flex-wrap gap-4 items-center justify-end flex-1">
                     {/* Legend */}
                     <div className="flex gap-6 mr-4 bg-white/30 p-2 px-4 rounded-full border border-white/50 shadow-inner">
-                        <LegendItem color="bg-[#BDBCBC]" label="Fixed Seats" />
-                        <LegendItem color="bg-[#C6E0B4]" label="Float Seats" />
-                        <LegendItem color="bg-[#70AD47]" label="Flexible Seats" />
+                        <LegendItem 
+                            color="bg-[#BDBCBC]" 
+                            label="Fixed Seats" 
+                            description="Once booked, the seat is reserved exclusively for that student for the selected slot. Other students must vacate the seat upon the rightful student’s arrival." 
+                        />
+                        <LegendItem 
+                            color="bg-[#C6E0B4]" 
+                            label="Float Seats" 
+                            description="These seats are not permanently assigned. Any student with a flexible seat booking can occupy them based on availability." 
+                        />
+                        <LegendItem 
+                            color="bg-[#70AD47]" 
+                            label="Flexible Seats" 
+                            description="These seats are available for flexible plans and, if required, can be converted into fixed seats." 
+                        />
                     </div>
 
                     <div className="relative w-full md:w-64">
@@ -369,18 +381,28 @@ export default function LiveSeatPlan({
     );
 }
 
-function LegendItem({ color, label }: { color: string; label: string }) {
+function LegendItem({ color, label, description }: { color: string; label: string; description?: React.ReactNode }) {
     return (
         <div className="flex items-center gap-2.5">
             <div className={`h-3 w-3 rounded-full ${color} shadow-sm border border-white/20`} />
             <span className="text-[11px] font-bold text-gray-500 uppercase tracking-tight">{label}</span>
             <TooltipProvider>
-                <Tooltip>
+                <Tooltip delayDuration={200}>
                     <TooltipTrigger asChild>
                         <Info className="h-3 w-3 text-gray-300 cursor-help hover:text-gray-500 transition-colors" />
                     </TooltipTrigger>
-                    <TooltipContent className="bg-gray-800 text-white p-2 text-[10px] rounded-lg border-none">
-                        Quick info about {label.toLowerCase()}
+                    <TooltipContent 
+                        side="bottom"
+                        className="bg-gray-900 border border-gray-800 text-white p-4 max-w-[220px] rounded-2xl shadow-2xl z-50"
+                    >
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-[11px] uppercase tracking-wider text-white/90 border-b border-white/10 pb-2">
+                                {label}
+                            </h4>
+                            <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
+                                {description || `Quick info about ${label.toLowerCase()}`}
+                            </p>
+                        </div>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
