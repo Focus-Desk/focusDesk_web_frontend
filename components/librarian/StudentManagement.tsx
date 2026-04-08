@@ -38,11 +38,13 @@ import {
     useLazyGetStudentQuery,
     useLazyGetStudentByEmailQuery,
     useUpdateStudentMutation,
+    useAssignStudentQRTokenMutation,
 } from "@/state/api";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import UpgradePlanModal from "./UpgradePlanModal";
+import QRCode from "react-qr-code";
 import { toast } from "sonner";
 
 interface StudentInfo {
@@ -105,6 +107,34 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
     const [isEditing, setIsEditing] = useState(false);
     const [editedData, setEditedData] = useState<Partial<StudentInfo>>({});
     const [updateStudent, { isLoading: isUpdating }] = useUpdateStudentMutation();
+
+    const [showQRButtons, setShowQRButtons] = useState(false);
+    const [showQRModal, setShowQRModal] = useState(false);
+    const [qrData, setQrData] = useState<string | null>(null);
+    const [qrPassType, setQrPassType] = useState<"IN" | "OUT">("IN");
+    const [assignToken, { isLoading: isAssigningQr }] = useAssignStudentQRTokenMutation();
+
+    const handleGenerateQR = async (passType: "IN" | "OUT") => {
+        if (!selectedStudent) return;
+        setQrPassType(passType);
+        const loadingToast = toast.loading("Generating Secure QR Token...");
+        try {
+            const result = await assignToken({ studentId: selectedStudent.id, passType }).unwrap();
+            if (result.success) {
+                toast.success(result.message, { id: loadingToast });
+                setQrData(JSON.stringify({ 
+                    token: result.data.token, 
+                    studentId: result.data.studentId, 
+                    passType: result.data.passType, 
+                    timestamp: result.data.timestamp 
+                }));
+                setShowQRModal(true);
+                setShowQRButtons(false);
+            }
+        } catch (err: any) {
+            toast.error(err?.data?.message || "Failed to generate offline QR token. Please try again.", { id: loadingToast });
+        }
+    };
 
     const [triggerGetBookings] = useLazyGetStudentBookingsQuery();
     const [triggerGetStudent] = useLazyGetStudentQuery();
@@ -660,14 +690,37 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                                             <div className="px-6 py-6 border-b bg-blue-50/30">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <h4 className="text-sm font-bold text-gray-700">Current Plan:</h4>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="rounded-xl font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
-                                                        onClick={() => handleOpenUpgradeModal(selectedStudent)}
-                                                    >
-                                                        Upgrade Plan
-                                                    </Button>
+                                                    <div className="flex gap-2 relative">
+                                                        {activeBooking && (
+                                                            <>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="rounded-xl font-bold border-gray-200 text-gray-700 hover:bg-gray-50 flex items-center gap-1"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setShowQRButtons(!showQRButtons);
+                                                                    }}
+                                                                >
+                                                                    Show QR
+                                                                </Button>
+                                                                {showQRButtons && (
+                                                                    <div className="absolute top-10 right-28 bg-white border border-gray-100 rounded-xl shadow-xl p-1.5 flex flex-col gap-1 z-50 min-w-[120px]">
+                                                                        <Button size="sm" variant="ghost" className="justify-start font-bold uppercase text-[10px] text-green-600" onClick={() => handleGenerateQR("IN")}>Check In QR</Button>
+                                                                        <Button size="sm" variant="ghost" className="justify-start font-bold uppercase text-[10px] text-red-600" onClick={() => handleGenerateQR("OUT")}>Check Out QR</Button>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="rounded-xl font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                                                            onClick={() => handleOpenUpgradeModal(selectedStudent)}
+                                                        >
+                                                            Upgrade Plan
+                                                        </Button>
+                                                    </div>
                                                 </div>
 
                                                 {isLoadingBookings ? (
@@ -934,6 +987,48 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
                         }}
                         onSuccess={() => { }}
                     />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showQRModal && qrData && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                        onClick={() => setShowQRModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-[2rem] shadow-2xl p-8 max-w-sm w-full relative flex flex-col items-center"
+                        >
+                            <button
+                                onClick={() => setShowQRModal(false)}
+                                className="absolute top-4 right-4 h-8 w-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-500"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
+                                <LayoutGrid className="h-6 w-6 text-blue-500" />
+                            </div>
+                            <h3 className="text-xl font-extrabold text-gray-900 mb-1">Pass QR Code</h3>
+                            <p className={cn("text-xs font-bold mb-8 uppercase tracking-widest text-center", qrPassType === "IN" ? "text-green-500" : "text-red-500")}>
+                                {qrPassType === "IN" ? "Check In" : "Check Out"}
+                            </p>
+                            
+                            <div className="bg-white p-4 rounded-xl border border-gray-100 flex justify-center w-full">
+                                <QRCode value={qrData} size={200} />
+                            </div>
+                            
+                            <p className="text-[10px] text-gray-400 font-bold mt-6 text-center leading-relaxed">
+                                This QR code acts as an offline entry/exit token. Only scan at verified library turnstiles.
+                            </p>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
