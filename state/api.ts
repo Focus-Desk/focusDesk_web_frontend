@@ -975,6 +975,14 @@ export const api = createApi({
       },
     }),
 
+    assignStudentQRToken: build.mutation<any, { studentId: string; passType: string }>({
+      query: (body) => ({
+        url: "qr/assign-token",
+        method: "POST",
+        body,
+      }),
+    }),
+
     deletePackageRule: build.mutation<{ success: boolean }, string>({
       query: (id) => ({ url: `package-rule/${id}`, method: "DELETE" }),
       invalidatesTags: ["PackageRules"],
@@ -1549,4 +1557,5 @@ export const {
   useGetLibraryBookingsQuery,
   useApproveBookingMutation,
   useRejectBookingMutation,
+  useAssignStudentQRTokenMutation,
 } = api;
