@@ -87,7 +87,6 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
     const filterTabs: { key: StatusFilter; label: string; count?: number }[] = [
         { key: "ALL", label: "All", count: records.length },
         { key: "PRESENT", label: "Present", count: data?.presentCount || 0 },
-        { key: "ABSENT", label: "Absent", count: data?.absentCount || 0 },
         { key: "LEFT", label: "Left", count: records.filter((r: any) => r.status === "LEFT").length },
         { key: "FLAGGED", label: "Flagged", count: records.filter((r: any) => r.isFlagged).length },
     ];
@@ -127,7 +126,6 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
                     {[
                         { label: "Total Students", value: data.totalStudents, icon: Users, color: "blue" },
                         { label: "Present", value: data.presentCount, icon: UserCheck, color: "emerald" },
-                        { label: "Absent", value: data.absentCount, icon: UserX, color: "red" },
                         { label: "Left", value: records.filter((r: any) => r.status === "LEFT").length, icon: LogOut, color: "amber" },
                     ].map((stat) => (
                         <div key={stat.label} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
