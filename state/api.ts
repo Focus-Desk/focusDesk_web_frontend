@@ -1468,6 +1468,11 @@ export const api = createApi({
         });
       },
     }),
+
+    getLibraryAttendance: build.query<any, { libraryId: string; date: string }>({
+      query: ({ libraryId, date }) => `attendance/library/${libraryId}?date=${date}`,
+      providesTags: ["Bookings"],
+    }),
   }),
 });
 
@@ -1558,4 +1563,5 @@ export const {
   useApproveBookingMutation,
   useRejectBookingMutation,
   useAssignStudentQRTokenMutation,
+  useGetLibraryAttendanceQuery,
 } = api;

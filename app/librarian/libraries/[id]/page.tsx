@@ -6,7 +6,7 @@ import { useGetDetailedLibrarySeatsQuery } from "@/state/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LayoutGrid, Users, Info, Settings, MapPin, UserPlus, MessageSquareText, Home, ClipboardList, Tag } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Users, Info, Settings, MapPin, UserPlus, MessageSquareText, Home, ClipboardList, Tag, CalendarCheck } from "lucide-react";
 import LiveSeatPlan from "@/components/librarian/LiveSeatPlan";
 import StudentManagement from "@/components/librarian/StudentManagement";
 import StudentOnboardingFlow from "@/components/librarian/StudentOnboardingFlow";
@@ -14,6 +14,7 @@ import LibraryQueries from "@/components/librarian/LibraryQueries";
 import LibraryBookings from "@/components/librarian/LibraryBookings";
 import LibraryPlans from "@/components/librarian/LibraryPlans";
 import LibraryHome from "@/components/librarian/LibraryHome";
+import LibraryAttendance from "@/components/librarian/LibraryAttendance";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "next/navigation";
@@ -57,6 +58,7 @@ export default function LibraryManagementPage() {
         { id: "queries", label: "Queries", icon: MessageSquareText },
         { id: "bookings", label: "Bookings", icon: ClipboardList },
         { id: "plans", label: "Plans", icon: Tag },
+        { id: "attendance", label: "Attendance", icon: CalendarCheck },
     ];
 
     return (
@@ -96,6 +98,7 @@ export default function LibraryManagementPage() {
             {activeTab === "queries" && <LibraryQueries libraryId={libraryId} />}
             {activeTab === "bookings" && <LibraryBookings libraryId={libraryId} />}
             {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
+            {activeTab === "attendance" && <LibraryAttendance libraryId={libraryId} />}
             
             <StudentManagement seats={seats} mainTab={activeTab} />
         </div>
