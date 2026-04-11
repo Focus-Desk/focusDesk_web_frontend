@@ -14,7 +14,8 @@ import {
     ClipboardList,
     Tag,
     Home,
-    ArrowLeft
+    ArrowLeft,
+    CalendarCheck
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -210,6 +211,25 @@ export function LibrarianSidebar() {
                                             <Link href={`/librarian/libraries/${libraryId}?tab=plans`} className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
                                                 <Tag className="h-8 w-8" />
                                                 {state === "expanded" && <span className="ml-3">Plans</span>}
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "attendance"}
+                                            tooltip="Attendance"
+                                            size="lg"
+                                            className={cn(
+                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                searchParams.get("tab") === "attendance"
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=attendance`} className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+                                                <CalendarCheck className="h-8 w-8" />
+                                                {state === "expanded" && <span className="ml-3">Attendance</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
