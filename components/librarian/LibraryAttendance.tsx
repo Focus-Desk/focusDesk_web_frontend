@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useGetLibraryAttendanceQuery } from "@/state/api";
+import { useGetLibraryAttendanceQuery, useGetStudentScansQuery } from "@/state/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import {
     Timer,
     AlertTriangle,
     Filter,
+    Eye,
+    X,
+    Coffee,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,6 +37,7 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
     const [selectedDate, setSelectedDate] = useState(today);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+    const [scanModalStudent, setScanModalStudent] = useState<any>(null);
 
     const { data, isLoading, isFetching } = useGetLibraryAttendanceQuery(
         { libraryId, date: selectedDate },
@@ -92,6 +96,7 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
     ];
 
     return (
+        <>
         <div className="space-y-8">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -206,8 +211,10 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
                                     <th className="text-left text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 py-4">Check In</th>
                                     <th className="text-left text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 py-4">Check Out</th>
                                     <th className="text-left text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 py-4">Duration</th>
+                                    <th className="text-left text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 py-4">Break</th>
                                     <th className="text-left text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 py-4">Scans</th>
                                     <th className="text-left text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 py-4">Status</th>
+                                    <th className="text-left text-[11px] font-black text-gray-400 uppercase tracking-widest px-4 py-4"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -258,6 +265,12 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                                                        <Coffee className="w-3.5 h-3.5 text-orange-400" />
+                                                        <span className="font-semibold">{formatDuration(record.totalBreakMinutes)}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-4">
                                                     <span className="text-sm font-bold text-gray-600">{record.scanCount || 0}</span>
                                                 </td>
                                                 <td className="px-4 py-4">
@@ -273,6 +286,15 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
                                                         )}
                                                     </div>
                                                 </td>
+                                                <td className="px-4 py-4">
+                                                    <button
+                                                        onClick={() => setScanModalStudent(record)}
+                                                        className="h-8 w-8 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 transition-colors"
+                                                        title="View Scans"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                </td>
                                             </motion.tr>
                                         );
                                     })}
@@ -283,5 +305,130 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
                 )}
             </div>
         </div>
+
+        {/* Scan History Modal */}
+        <AnimatePresence>
+            {scanModalStudent && (
+                <ScanHistoryModal
+                    student={scanModalStudent}
+                    libraryId={libraryId}
+                    date={selectedDate}
+                    onClose={() => setScanModalStudent(null)}
+                />
+            )}
+        </AnimatePresence>
+        </>
+    );
+}
+
+// Scan History Modal Component
+function ScanHistoryModal({ student, libraryId, date, onClose }: { student: any; libraryId: string; date: string; onClose: () => void }) {
+    const { data, isLoading } = useGetStudentScansQuery({ libraryId, studentId: student.studentId, date });
+    const scans: any[] = data?.data || [];
+
+    const formatTime = (iso: string) => {
+        if (!iso) return "—";
+        return format(new Date(iso), "hh:mm a");
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={onClose}
+        >
+            <motion.div
+                initial={{ scale: 0.95, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col"
+            >
+                {/* Header */}
+                <div className="px-7 pt-7 pb-5 border-b border-gray-100 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-extrabold text-gray-900">Scan Timeline</h3>
+                        <p className="text-xs text-gray-400 font-semibold mt-0.5">{student.studentName} — {date}</p>
+                    </div>
+                    <button onClick={onClose} className="h-9 w-9 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-colors">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Summary */}
+                <div className="px-7 py-4 bg-gray-50/80 border-b border-gray-100 flex gap-6">
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Scans</p>
+                        <p className="text-xl font-black text-gray-900 mt-1">{data?.totalScans || 0}</p>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Break</p>
+                        <p className="text-xl font-black text-orange-500 mt-1">
+                            {data?.totalBreakMinutes ? `${Math.floor(data.totalBreakMinutes / 60)}h ${data.totalBreakMinutes % 60}m` : "0m"}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Timeline */}
+                <div className="flex-1 overflow-y-auto px-7 py-5">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <div className="h-6 w-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    ) : scans.length === 0 ? (
+                        <p className="text-center text-gray-400 font-semibold py-8">No scan records found</p>
+                    ) : (
+                        <div className="relative">
+                            {/* Vertical line */}
+                            <div className="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gray-100" />
+
+                            <div className="space-y-1">
+                                {scans.map((scan: any, i: number) => {
+                                    const isIn = scan.passType === "IN";
+                                    return (
+                                        <div key={scan.id}>
+                                            {/* Break indicator (only for IN records that follow an OUT) */}
+                                            {isIn && scan.breakMinutes && scan.breakMinutes > 0 && (
+                                                <div className="flex items-center gap-3 pl-[26px] py-2">
+                                                    <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-100 rounded-lg px-3 py-1.5">
+                                                        <Coffee className="w-3 h-3 text-orange-400" />
+                                                        <span className="text-[11px] font-bold text-orange-600">
+                                                            Break: {scan.breakMinutes}m
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Scan entry */}
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn(
+                                                    "h-[30px] w-[30px] rounded-full flex items-center justify-center shrink-0 z-10",
+                                                    isIn ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
+                                                )}>
+                                                    {isIn ? <LogIn className="w-3.5 h-3.5" /> : <LogOut className="w-3.5 h-3.5" />}
+                                                </div>
+                                                <div className="flex-1 flex items-center justify-between bg-gray-50/80 rounded-xl px-4 py-3">
+                                                    <div>
+                                                        <p className={cn("text-xs font-black uppercase tracking-wider", isIn ? "text-emerald-600" : "text-amber-600")}>
+                                                            {isIn ? "Check In" : "Check Out"}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">{scan.gateId}</p>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-700">
+                                                        {formatTime(scan.createdAt)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+        </motion.div>
     );
 }

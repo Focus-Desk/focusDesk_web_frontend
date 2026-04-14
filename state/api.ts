@@ -1473,6 +1473,10 @@ export const api = createApi({
       query: ({ libraryId, date }) => `attendance/library/${libraryId}?date=${date}`,
       providesTags: ["Bookings"],
     }),
+
+    getStudentScans: build.query<any, { libraryId: string; studentId: string; date: string }>({
+      query: ({ libraryId, studentId, date }) => `attendance/library/${libraryId}/student/${studentId}/scans?date=${date}`,
+    }),
   }),
 });
 
@@ -1563,5 +1567,6 @@ export const {
   useApproveBookingMutation,
   useRejectBookingMutation,
   useAssignStudentQRTokenMutation,
+  useGetStudentScansQuery,
   useGetLibraryAttendanceQuery,
 } = api;
