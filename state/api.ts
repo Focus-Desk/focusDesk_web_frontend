@@ -342,7 +342,7 @@ export type AdminCreateBookingArgs = {
 
 export const api = createApi({
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL+"api",
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL + "api",
     credentials: "include",
     prepareHeaders: async (headers) => {
       // We no longer manually set Authorization header from localStorage
@@ -382,6 +382,7 @@ export const api = createApi({
     "PauseRequests",
     "LibrarySeats",
     "AuthUser",
+    "Machines",
   ],
   endpoints: (build) => ({
     getAuthUser: build.query<
@@ -975,7 +976,7 @@ export const api = createApi({
       },
     }),
 
-    assignStudentQRToken: build.mutation<any, { studentId: string; passType: string }>({
+    assignStudentQRToken: build.mutation<any, { studentId: string; libraryId: string; passType?: string }>({
       query: (body) => ({
         url: "qr/assign-token",
         method: "POST",
@@ -1477,6 +1478,20 @@ export const api = createApi({
     getStudentScans: build.query<any, { libraryId: string; studentId: string; date: string }>({
       query: ({ libraryId, studentId, date }) => `attendance/library/${libraryId}/student/${studentId}/scans?date=${date}`,
     }),
+
+    getLibraryMachines: build.query<any, { libraryId: string }>({
+      query: ({ libraryId }) => `machines/library/${libraryId}`,
+      providesTags: ["Machines"],
+    }),
+
+    toggleMachineStatus: build.mutation<any, { machineId: string; isActive: boolean }>({
+      query: ({ machineId, ...data }) => ({
+        url: `machines/${machineId}/status`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["Machines"],
+    }),
   }),
 });
 
@@ -1569,4 +1584,6 @@ export const {
   useAssignStudentQRTokenMutation,
   useGetStudentScansQuery,
   useGetLibraryAttendanceQuery,
+  useGetLibraryMachinesQuery,
+  useToggleMachineStatusMutation,
 } = api;

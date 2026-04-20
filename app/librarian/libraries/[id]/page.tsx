@@ -15,6 +15,7 @@ import LibraryBookings from "@/components/librarian/LibraryBookings";
 import LibraryPlans from "@/components/librarian/LibraryPlans";
 import LibraryHome from "@/components/librarian/LibraryHome";
 import LibraryAttendance from "@/components/librarian/LibraryAttendance";
+import LibraryHardware from "@/components/librarian/LibraryHardware";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useSearchParams } from "next/navigation";
@@ -59,6 +60,7 @@ export default function LibraryManagementPage() {
         { id: "bookings", label: "Bookings", icon: ClipboardList },
         { id: "plans", label: "Plans", icon: Tag },
         { id: "attendance", label: "Attendance", icon: CalendarCheck },
+        { id: "hardware", label: "Hardware Devices", icon: Settings },
     ];
 
     return (
@@ -99,6 +101,7 @@ export default function LibraryManagementPage() {
             {activeTab === "bookings" && <LibraryBookings libraryId={libraryId} />}
             {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
             {activeTab === "attendance" && <LibraryAttendance libraryId={libraryId} />}
+            {activeTab === "hardware" && <LibraryHardware libraryId={libraryId} />}
             
             <StudentManagement seats={seats} mainTab={activeTab} />
         </div>

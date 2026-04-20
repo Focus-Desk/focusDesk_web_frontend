@@ -233,6 +233,25 @@ export function LibrarianSidebar() {
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "hardware"}
+                                            tooltip="Hardware Devices"
+                                            size="lg"
+                                            className={cn(
+                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                searchParams.get("tab") === "hardware"
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href={`/librarian/libraries/${libraryId}?tab=hardware`} className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+                                                <Settings className="h-8 w-8" />
+                                                {state === "expanded" && <span className="ml-3">Hardware Devices</span>}
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
                                 </>
                             ) : (
                                 <>

@@ -1,0 +1,92 @@
+1. Endpoint: GET /api/attendance/active-qr Headers: Authorization: Bearer <StudentAuthToken>
+
+Request Body: None
+
+Response: {
+  "success": true,
+  "token": "eyJhbGciOiJIUz...",
+  "qrImage": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgA...",
+  "passType": "IN",    /* Dynamically "IN" or "OUT" */
+  "currentState": "OUTSIDE"
+}
+
+
+2. Endpoint: POST /api/qr/assign-token Headers: Authorization: Bearer <LibrarianAuthToken>
+
+Request Body: {
+  "studentId": "dbf2c...",
+  "libraryId": "lib-xyz..." /* Required to target the specific library's token pool */
+}
+
+Response: {
+  "success": true,
+  "data": {
+    "token": "a1b2c3...",
+    "studentId": "dbf2c...",
+    "libraryId": "lib-xyz...",
+    "passType": "IN",    /* Tells the frontend/dashboard text what type it generated */
+    ...
+  }
+}
+
+3.  Endpoint: POST /api/qr/generate-tokens?count=100 
+
+Request Body: {
+  "libraryId": "lib-xyz..."
+}
+
+Response:  {
+  "success": true,
+  "data": {
+    "generated": 100,
+    "tokens": ["2a6f3b...", "..."]
+  },
+  "message": "Successfully generated 100 unused generic QR tokens."
+}
+
+
+
+
+
+
+----------------------------------------------------------------------------
+We need to implement a "Stateful Entry QR" feature on the student mobile app. The app will claim a static hex token from the backend's offline pool, cache it locally for exactly 2 minutes, and display a countdown timer using the server's timestamp. After 2 minutes, it should fetch a new one.
+
+Task: Create the QR Pass Screen inside the App that fetches the token, renders it, and manages a clear 2-minute countdown timer based on the server's generated timestamp.
+API Endpoint Instructions:
+
+1. Call the endpoint POST /api/qr/assign-token.
+2. Ensure you pass the authentication headers (e.g., Authorization: Bearer <StudentAuthToken> if your routes require it).
+3. Crucial: You must send a JSON Body with the student's ID and the target library ID:
+
+{
+  "studentId": "dbf2c25...",  /* Retrieve this from the active user's local state */
+  "libraryId": "lib-xyz..."   /* The library they are trying to check into */
+}
+
+4. The server will respond with JSON that looks like this:
+{
+  "success": true,
+  "data": {
+    "token": "a1b2c3d4e5f6...", 
+    "studentId": "dbf2c253...",
+    "passType": "IN",    
+    "assignedAt": "2024-04-20T10:00:00.000Z", /* UTC Timestamp of Generation */
+    "cached": false
+  }
+}
+
+
+UI & Logic Requirements:
+
+Fetch & Render: Extract data.token and render it as a local QR Code (using a library like react-native-qrcode-svg).
+Pass Type Label: Show a bold text label underneath depending on the data.passType:
+If "IN", render text "CHECK IN" (Text color: Green).
+If "OUT", render text "CHECK OUT" (Text color: Red).
+2-Minute Expiration Timer:
+Take the data.assignedAt timestamp from the server.
+Add exactly 2 minutes to it (this is your expiration time).
+Create a setInterval loop that calculates Expiration Time minus Current Time every second.
+Display this remaining time dynamically below the QR code (e.g., "Expires in: 01:45").
+Once it hits 00:00, automatically execute the assign-token API call again to refresh it and restart the timer!
+Error Handling: If the endpoint throws an error (which happens if the library's physical token pool runs out), show a graceful retry button and an error message like: "Unable to securely request QR pass. Please try again."
