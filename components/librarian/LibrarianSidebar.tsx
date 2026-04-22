@@ -75,20 +75,9 @@ export function LibrarianSidebar() {
 
     return (
         <Sidebar collapsible="icon" className="border-r bg-white shadow-xl">
-            <SidebarHeader className="h-20 flex items-center justify-center p-2 border-b">
-                <div className="flex items-center gap-3 overflow-hidden w-full group-data-[collapsible=icon]:justify-center px-4 group-data-[collapsible=icon]:px-0">
-                    <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
-                        <LibraryIcon className="h-8 w-8 text-white" />
-                    </div>
-                    {state === "expanded" && (
-                        <span className="font-bold text-xl text-gray-800 tracking-tight whitespace-nowrap">
-                            Focus Desk
-                        </span>
-                    )}
-                </div>
-            </SidebarHeader>
 
-            <SidebarContent className="p-0 py-6 group-data-[collapsible=icon]:py-4">
+
+            <SidebarContent className="p-0 py-4 group-data-[collapsible=icon]:py-4">
                 <SidebarGroup className="p-0 group-data-[collapsible=icon]:items-center">
                     <SidebarGroupLabel className={cn(
                         "text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 px-6 transition-all duration-300",
