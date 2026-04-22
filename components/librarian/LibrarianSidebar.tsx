@@ -74,10 +74,8 @@ export function LibrarianSidebar() {
     const isActive = (path: string) => pathname === path;
 
     return (
-        <Sidebar collapsible="icon" className="border-r bg-white shadow-xl">
-
-
-            <SidebarContent className="p-0 py-4 group-data-[collapsible=icon]:py-4">
+        <Sidebar collapsible="icon" className="top-20 h-[calc(100vh-5rem)] border-r bg-white shadow-xl">
+            <SidebarContent className="p-0 py-4 overflow-x-hidden">
                 <SidebarGroup className="p-0 group-data-[collapsible=icon]:items-center">
                     <SidebarGroupLabel className={cn(
                         "text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 px-6 transition-all duration-300",
@@ -96,15 +94,15 @@ export function LibrarianSidebar() {
                                             tooltip="Overview"
                                             size="lg"
                                             className={cn(
-                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                "rounded-2xl transition-all duration-200 group flex items-center",
                                                 (searchParams.get("tab") === "home" || (!searchParams.get("tab") && isActive("/librarian/dashboard")))
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard?tab=home" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-                                                <Home className="h-8 w-8" />
-                                                {state === "expanded" && <span className="ml-3">Library Home</span>}
+                                            <Link href="/librarian/dashboard?tab=home" className="flex items-center w-full">
+                                                <Home className="!h-6 !w-6 shrink-0" />
+                                                {state === "expanded" && <span className="ml-3 truncate">Library Home</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -115,15 +113,15 @@ export function LibrarianSidebar() {
                                             tooltip="Seat Plan"
                                             size="lg"
                                             className={cn(
-                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                "rounded-2xl transition-all duration-200 group flex items-center",
                                                 searchParams.get("tab") === "seats"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard?tab=seats" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-                                                <LayoutGrid className="h-8 w-8" />
-                                                {state === "expanded" && <span className="ml-3">Live Seat Map</span>}
+                                            <Link href="/librarian/dashboard?tab=seats" className="flex items-center w-full">
+                                                <LayoutGrid className="!h-6 !w-6 shrink-0" />
+                                                {state === "expanded" && <span className="ml-3 truncate">Live Seat Map</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -134,15 +132,15 @@ export function LibrarianSidebar() {
                                             tooltip="Students"
                                             size="lg"
                                             className={cn(
-                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                "rounded-2xl transition-all duration-200 group flex items-center",
                                                 searchParams.get("tab") === "students"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard?tab=students" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-                                                <Users className="h-8 w-8" />
-                                                {state === "expanded" && <span className="ml-3">Student Manager</span>}
+                                            <Link href="/librarian/dashboard?tab=students" className="flex items-center w-full">
+                                                <Users className="!h-6 !w-6 shrink-0" />
+                                                {state === "expanded" && <span className="ml-3 truncate">Student Manager</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -153,15 +151,15 @@ export function LibrarianSidebar() {
                                             tooltip="Queries"
                                             size="lg"
                                             className={cn(
-                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                "rounded-2xl transition-all duration-200 group flex items-center",
                                                 searchParams.get("tab") === "queries"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard?tab=queries" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-                                                <MessageSquareText className="h-8 w-8" />
-                                                {state === "expanded" && <span className="ml-3">Queries</span>}
+                                            <Link href="/librarian/dashboard?tab=queries" className="flex items-center w-full">
+                                                <MessageSquareText className="!h-6 !w-6 shrink-0" />
+                                                {state === "expanded" && <span className="ml-3 truncate">Queries</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -172,15 +170,15 @@ export function LibrarianSidebar() {
                                             tooltip="Bookings"
                                             size="lg"
                                             className={cn(
-                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                "rounded-2xl transition-all duration-200 group flex items-center",
                                                 searchParams.get("tab") === "bookings"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard?tab=bookings" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-                                                <ClipboardList className="h-8 w-8" />
-                                                {state === "expanded" && <span className="ml-3">Bookings</span>}
+                                            <Link href="/librarian/dashboard?tab=bookings" className="flex items-center w-full">
+                                                <ClipboardList className="!h-6 !w-6 shrink-0" />
+                                                {state === "expanded" && <span className="ml-3 truncate">Bookings</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -191,15 +189,15 @@ export function LibrarianSidebar() {
                                             tooltip="Plans"
                                             size="lg"
                                             className={cn(
-                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                "rounded-2xl transition-all duration-200 group flex items-center",
                                                 searchParams.get("tab") === "plans"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard?tab=plans" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-                                                <Tag className="h-8 w-8" />
-                                                {state === "expanded" && <span className="ml-3">Plans</span>}
+                                            <Link href="/librarian/dashboard?tab=plans" className="flex items-center w-full">
+                                                <Tag className="!h-6 !w-6 shrink-0" />
+                                                {state === "expanded" && <span className="ml-3 truncate">Plans</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -210,15 +208,15 @@ export function LibrarianSidebar() {
                                             tooltip="Attendance"
                                             size="lg"
                                             className={cn(
-                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                "rounded-2xl transition-all duration-200 group flex items-center",
                                                 searchParams.get("tab") === "attendance"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard?tab=attendance" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-                                                <CalendarCheck className="h-8 w-8" />
-                                                {state === "expanded" && <span className="ml-3">Attendance</span>}
+                                            <Link href="/librarian/dashboard?tab=attendance" className="flex items-center w-full">
+                                                <CalendarCheck className="!h-6 !w-6 shrink-0" />
+                                                {state === "expanded" && <span className="ml-3 truncate">Attendance</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -229,15 +227,15 @@ export function LibrarianSidebar() {
                                             tooltip="Hardware Devices"
                                             size="lg"
                                             className={cn(
-                                                "rounded-2xl transition-all duration-300 group flex items-center justify-start group-data-[collapsible=icon]:justify-center",
+                                                "rounded-2xl transition-all duration-200 group flex items-center",
                                                 searchParams.get("tab") === "hardware"
                                                     ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
                                                     : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
                                             )}
                                         >
-                                            <Link href="/librarian/dashboard?tab=hardware" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-                                                <Settings className="h-8 w-8" />
-                                                {state === "expanded" && <span className="ml-3">Hardware Devices</span>}
+                                            <Link href="/librarian/dashboard?tab=hardware" className="flex items-center w-full">
+                                                <Settings className="!h-6 !w-6 shrink-0" />
+                                                {state === "expanded" && <span className="ml-3 truncate">Hardware Devices</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -320,9 +318,9 @@ export function LibrarianSidebar() {
                             onClick={handleSignOut}
                             tooltip="Log Out"
                             size="lg"
-                            className="h-12 w-full rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold flex items-center justify-start px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center border border-transparent hover:border-red-100"
+                            className="h-12 w-full rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold flex items-center border border-transparent hover:border-red-100"
                         >
-                            <LogOut className="h-6 w-6" />
+                             <LogOut className="!h-6 !w-6 shrink-0" />
                             {state === "expanded" && <span className="ml-3">Sign Out</span>}
                         </SidebarMenuButton>
                     </SidebarMenuItem>
