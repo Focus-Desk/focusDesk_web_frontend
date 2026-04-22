@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import {
     Sidebar,
     SidebarContent,
@@ -33,9 +34,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     useGetAuthUserQuery,
-    useGetLibrariesByLibrarianQuery
+    useGetLibrariesByLibrarianQuery,
+    useLogoutMutation
 } from "@/state/api";
-import { signOut } from "aws-amplify/auth";
 import { cn } from "@/lib/utils";
 
 export function LibrarianSidebar() {
@@ -51,16 +52,23 @@ export function LibrarianSidebar() {
     });
 
     const hasLibrary = libraries && libraries.length > 0;
+    const [logoutMutation] = useLogoutMutation();
     const { state } = useSidebar();
 
     const handleSignOut = async () => {
+        const loadingToast = toast.loading("Signing you out...");
         try {
-            await signOut();
+            // Attempt backend logout (invalidates tags and handles server-side session if any)
+            await logoutMutation().unwrap();
         } catch (error) {
-            console.error("Amplify sign out error:", error);
+            console.error("Logout mutation error:", error);
+        } finally {
+            localStorage.removeItem("token");
+            toast.success("Signed out successfully!", { id: loadingToast });
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 500);
         }
-        localStorage.removeItem("token");
-        window.location.href = "/";
     };
 
     const isActive = (path: string) => pathname === path;
@@ -323,9 +331,9 @@ export function LibrarianSidebar() {
                             onClick={handleSignOut}
                             tooltip="Log Out"
                             size="lg"
-                            className="h-12 w-full rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all font-medium flex items-center justify-start px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
+                            className="h-12 w-full rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold flex items-center justify-start px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center border border-transparent hover:border-red-100"
                         >
-                            <LogOut className="h-7 w-7" />
+                            <LogOut className="h-6 w-6" />
                             {state === "expanded" && <span className="ml-3">Sign Out</span>}
                         </SidebarMenuButton>
                     </SidebarMenuItem>
