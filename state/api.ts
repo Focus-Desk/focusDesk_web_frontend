@@ -361,10 +361,13 @@ export const api = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL + "api",
     credentials: "include",
     prepareHeaders: async (headers) => {
-      // We no longer manually set Authorization header from localStorage
-      // as cookies are automatically handled by the browser with credentials: 'include'
+      // 1. Get token from localStorage as the primary secure session method
+      const token = localStorage.getItem("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
 
-      // Optional: keep Amplify session as second fallback if needed for mobile/other clients
+      // 2. Fallback/Optional: keep Amplify session if needed for mobile/legacy
       try {
         const session = await fetchAuthSession();
         const { idToken } = session.tokens ?? {};
