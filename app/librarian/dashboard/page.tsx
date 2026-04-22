@@ -18,6 +18,7 @@ import LibraryPlans from "@/components/librarian/LibraryPlans";
 import LibraryHome from "@/components/librarian/LibraryHome";
 import LibraryAttendance from "@/components/librarian/LibraryAttendance";
 import LibraryHardware from "@/components/librarian/LibraryHardware";
+import LibrarianProfile from "@/components/librarian/LibrarianProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LibrarianDashboard() {
@@ -106,8 +107,9 @@ export default function LibrarianDashboard() {
             {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
             {activeTab === "attendance" && <LibraryAttendance libraryId={libraryId} />}
             {activeTab === "hardware" && <LibraryHardware libraryId={libraryId} />}
+            {activeTab === "profile" && <LibrarianProfile />}
             
-            <StudentManagement seats={seats} mainTab={activeTab} />
+            <StudentManagement seats={seats} mainTab={activeTab} libraryId={libraryId as string} />
         </div>
     );
 }

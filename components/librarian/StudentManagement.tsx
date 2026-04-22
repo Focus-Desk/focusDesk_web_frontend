@@ -73,6 +73,7 @@ interface StudentInfo {
 interface StudentManagementProps {
     seats: any[];
     mainTab: string;
+    libraryId: string;
 }
 
 type TabId = "ALL" | "ACTIVE" | "INACTIVE" | "OLD" | "EXPIRING";
@@ -85,11 +86,10 @@ const TABS: { id: TabId; label: string }[] = [
     { id: "EXPIRING", label: "Recently Expiring Plans" },
 ];
 
-export default function StudentManagement({ seats, mainTab }: StudentManagementProps) {
+export default function StudentManagement({ seats, mainTab, libraryId }: StudentManagementProps) {
     const { id } = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const libraryId = Array.isArray(id) ? id[0] : id;
     const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState<TabId>("ALL");
     const [selectedStudent, setSelectedStudent] = useState<StudentInfo | null>(null);

@@ -292,6 +292,7 @@ export function LibrarianSidebar() {
                             size="lg"
                             className="rounded-xl hover:bg-gray-50 transition-all flex items-center justify-between group-data-[collapsible=icon]:justify-center"
                             tooltip="Profile Settings"
+                            onClick={() => router.push("/librarian/dashboard?tab=profile")}
                         >
                             <div className="flex items-center gap-3 overflow-hidden group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center">
                                 <Avatar className={cn(
