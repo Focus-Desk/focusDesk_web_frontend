@@ -39,7 +39,9 @@ const CustomLogin = () => {
                     toast.success(result.message || "OTP sent to your email!");
                     setStep("OTP");
                 } else {
-                    localStorage.removeItem("token");
+                    if (result.data?.token) {
+                        localStorage.setItem("token", result.data.token);
+                    }
                     toast.success("Login successful!");
                     router.push("/librarian/dashboard");
                 }
@@ -59,7 +61,9 @@ const CustomLogin = () => {
             }
             const result = await googleLoginMutation({ idToken: credentialResponse.credential }).unwrap();
             if (result.success) {
-                localStorage.removeItem("token");
+                if (result.data?.token) {
+                    localStorage.setItem("token", result.data.token);
+                }
                 toast.success("Login successful!");
                 window.location.href = "/librarian/dashboard"; 
             } else {
@@ -75,7 +79,9 @@ const CustomLogin = () => {
         try {
             const result = await verifyOTP({ email, code: otp }).unwrap();
             if (result.success) {
-                localStorage.removeItem("token");
+                if (result.data?.token) {
+                    localStorage.setItem("token", result.data.token);
+                }
                 toast.success("Login successful!");
                 router.push("/librarian/dashboard");
             } else {
