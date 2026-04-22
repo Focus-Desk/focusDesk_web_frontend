@@ -120,7 +120,7 @@ export default function StudentManagement({ seats, mainTab, libraryId }: Student
         if (!selectedStudent || !libraryId) return;
         const loadingToast = toast.loading("Generating Secure QR Token...");
         try {
-            // Ensure we use the User.id (userId) instead of Student.id for QR schemas
+            // Priority: Resolve the true User.id (userId)
             const targetStudentId = selectedStudent.userId || selectedStudent.student?.userId || selectedStudent.id;
             const result = await assignToken({ studentId: targetStudentId, libraryId }).unwrap();
             console.log("this is the result from the backend", result);
@@ -164,6 +164,7 @@ export default function StudentManagement({ seats, mainTab, libraryId }: Student
                 if (!existing) {
                     studentMap.set(studentUser.id, {
                         id: studentUser.id,
+                        userId: studentUser.id,
                         firstName: student?.firstName || "",
                         lastName: student?.lastName || "",
                         email: studentUser.email,
@@ -259,7 +260,7 @@ export default function StudentManagement({ seats, mainTab, libraryId }: Student
             if (studentResult) {
                 const fullStudent: StudentInfo = {
                     ...student,
-                    id: studentResult.id || student.id,
+                    userId: studentResult.userId || student.userId || student.id,
                     firstName: studentResult.firstName || student.firstName,
                     lastName: studentResult.lastName || student.lastName,
                     email: studentResult.email || student.email,
