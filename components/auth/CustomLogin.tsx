@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { LogIn, Mail, Lock, Loader2, Eye, EyeOff, KeyRound } from "lucide-react";
+import { GoogleLogin } from '@react-oauth/google';
+import { useGoogleLoginMutation } from "@/state/api";
 
 const CustomLogin = () => {
     const [email, setEmail] = useState("");
@@ -25,6 +27,7 @@ const CustomLogin = () => {
     const [verifyOTP, { isLoading: isVerifyLoading }] = useVerifyOTPMutation();
     const [forgotPassword, { isLoading: isForgotLoading }] = useForgotPasswordMutation();
     const [resetPassword, { isLoading: isResetLoading }] = useResetPasswordMutation();
+    const [googleLoginMutation] = useGoogleLoginMutation();
     const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -40,6 +43,25 @@ const CustomLogin = () => {
                     toast.success("Login successful!");
                     router.push("/librarian/dashboard");
                 }
+            } else {
+                toast.error(result.message || "Login failed");
+            }
+        } catch (err: any) {
+            toast.error(err.data?.message || "Invalid credentials");
+        }
+    };
+
+    const handleGoogleSuccess = async (credentialResponse: any) => {
+        try {
+            if (!credentialResponse.credential) {
+                toast.error("Google authentication failed");
+                return;
+            }
+            const result = await googleLoginMutation({ idToken: credentialResponse.credential }).unwrap();
+            if (result.success) {
+                localStorage.removeItem("token");
+                toast.success("Login successful!");
+                window.location.href = "/librarian/dashboard"; 
             } else {
                 toast.error(result.message || "Login failed");
             }
@@ -127,7 +149,8 @@ const CustomLogin = () => {
                     </div>
 
                     {step === "LOGIN" ? (
-                        <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-6">
+                            <form onSubmit={handleLogin} className="space-y-6">
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-sm font-semibold text-gray-700 ml-1">
                                     Email Address
@@ -192,6 +215,27 @@ const CustomLogin = () => {
                                 )}
                             </Button>
                         </form>
+                        
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-gray-200" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white px-2 text-gray-500 font-semibold tracking-wide">Or continue with</span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center w-full">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={() => toast.error("Google login failed")}
+                                useOneTap
+                                shape="pill"
+                                theme="outline"
+                                size="large"
+                            />
+                        </div>
+                    </div>
                     ) : step === "OTP" ? (
                         <form onSubmit={handleVerify} className="space-y-6">
                             <div className="space-y-2">

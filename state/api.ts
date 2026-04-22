@@ -43,6 +43,22 @@ type OnboardLibrarianArgs = {
   addressProof: File;
 };
 
+type AuthResponse = {
+    success: boolean;
+    message?: string;
+    data?: {
+        user: any;
+        token: string;
+        requiresOTP?: boolean;
+        email?: string;
+    };
+};
+
+type VerifyOTPRequest = {
+    email: string;
+    code: string;
+};
+
 // For updating existing librarian (Step 4 KYC form)
 type UpdateLibrarianArgs = {
   userId: string;
@@ -447,7 +463,29 @@ export const api = createApi({
       }),
       invalidatesTags: ["AuthUser"],
     }),
-    forgotPassword: build.mutation<any, any>({
+    verifyOTP: build.mutation<AuthResponse, VerifyOTPRequest>({
+      query: (credentials) => ({
+        url: 'auth/verify-otp',
+        method: 'POST',
+        body: credentials,
+      }),
+    }),
+    googleLogin: build.mutation<AuthResponse, { idToken: string }>({
+      query: (body) => ({
+        url: 'auth/google',
+        method: 'POST',
+        body,
+      }),
+    }),
+    connectGoogle: build.mutation<{ success: boolean; message: string }, { idToken: string }>({
+      query: (body) => ({
+        url: 'auth/connect-google',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ["AuthUser"],
+    }),
+    forgotPassword: build.mutation<{ success: boolean; message: string }, { email: string }>({
       query: (credentials) => ({
         url: "auth/forgot-password",
         method: "POST",
@@ -467,14 +505,6 @@ export const api = createApi({
         url: "auth/register",
         method: "POST",
         body: userData,
-      }),
-      invalidatesTags: ["AuthUser"],
-    }),
-    verifyOTP: build.mutation<any, { email: string; code: string }>({
-      query: (credentials) => ({
-        url: "auth/verify-otp",
-        method: "POST",
-        body: credentials,
       }),
       invalidatesTags: ["AuthUser"],
     }),
@@ -1498,10 +1528,12 @@ export const api = createApi({
 export const {
   useGetAuthUserQuery,
   useLoginMutation,
+  useGoogleLoginMutation,
+  useConnectGoogleMutation,
+  useVerifyOTPMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useRegisterMutation,
-  useVerifyOTPMutation,
   useLogoutMutation,
   useGetLibrarianQuery,
   useOnboardLibrarianMutation,

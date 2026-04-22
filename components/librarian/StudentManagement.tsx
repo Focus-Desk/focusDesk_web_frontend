@@ -49,6 +49,8 @@ import { toast } from "sonner";
 
 interface StudentInfo {
     id: string;
+    userId?: string;
+    student?: any;
     firstName: string;
     lastName: string;
     email: string;
@@ -71,6 +73,7 @@ interface StudentInfo {
 interface StudentManagementProps {
     seats: any[];
     mainTab: string;
+    libraryId: string;
 }
 
 type TabId = "ALL" | "ACTIVE" | "INACTIVE" | "OLD" | "EXPIRING";
@@ -83,11 +86,10 @@ const TABS: { id: TabId; label: string }[] = [
     { id: "EXPIRING", label: "Recently Expiring Plans" },
 ];
 
-export default function StudentManagement({ seats, mainTab }: StudentManagementProps) {
+export default function StudentManagement({ seats, mainTab, libraryId }: StudentManagementProps) {
     const { id } = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const libraryId = Array.isArray(id) ? id[0] : id;
     const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState<TabId>("ALL");
     const [selectedStudent, setSelectedStudent] = useState<StudentInfo | null>(null);
@@ -118,7 +120,10 @@ export default function StudentManagement({ seats, mainTab }: StudentManagementP
         if (!selectedStudent || !libraryId) return;
         const loadingToast = toast.loading("Generating Secure QR Token...");
         try {
-            const result = await assignToken({ studentId: selectedStudent.id, libraryId }).unwrap();
+            // Ensure we use the User.id (userId) instead of Student.id for QR schemas
+            const targetStudentId = selectedStudent.userId || selectedStudent.student?.userId || selectedStudent.id;
+            const result = await assignToken({ studentId: targetStudentId, libraryId }).unwrap();
+            console.log("this is the result from the backend", result);
             if (result.success) {
                 toast.success(result.message, { id: loadingToast });
                 setQrPassType(result.data.passType);
