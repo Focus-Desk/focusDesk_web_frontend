@@ -260,7 +260,7 @@ export default function StudentManagement({ seats, mainTab, libraryId }: Student
             if (studentResult) {
                 const fullStudent: StudentInfo = {
                     ...student,
-                    userId: studentResult.userId || student.userId || student.id,
+                    userId: student.userId || studentResult.id || student.id,
                     firstName: studentResult.firstName || student.firstName,
                     lastName: studentResult.lastName || student.lastName,
                     email: studentResult.email || student.email,
