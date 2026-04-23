@@ -84,11 +84,12 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
         }
     };
 
-    const getModeLabel = (transactions: any[]) => {
+    const getModeLabel = (transactions: any[], studentName: string, price: any) => {
         if (!transactions || transactions.length === 0) return "N/A";
         const t = transactions[0];
         if (t.razorpayPaymentId) return "Online through Razorpay";
         if (t.paymentMethod === "CASH") return "Cash on reception";
+        console.log(t.paymentMethod + studentName + price)
         return "Online on reception";
     };
 
@@ -188,7 +189,7 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className="text-sm font-medium text-gray-700">
-                                                {getModeLabel(booking.transactions)}
+                                                {getModeLabel(booking.transactions, booking.student.student?.firstName, booking.totalAmount)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
