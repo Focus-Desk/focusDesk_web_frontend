@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useGetLibraryMachinesQuery, useToggleMachineStatusMutation } from "@/state/api";
-import { Server, Activity, Power, Shield, Settings2, Clock, MapPin, Search } from "lucide-react";
+import { Server, Activity, Power, Shield, Settings2, Clock, MapPin, Search, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +13,11 @@ export default function LibraryHardware({ libraryId }: { libraryId: string }) {
     const { data, isLoading, error } = useGetLibraryMachinesQuery({ libraryId }, { skip: !libraryId });
     const [toggleMachineStatus, { isLoading: isToggling }] = useToggleMachineStatusMutation();
     const [searchQuery, setSearchQuery] = React.useState("");
+
+    const handleCopy = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        toast.success(`${label} copied to clipboard!`);
+    };
 
     const handleToggleStatus = async (machineId: string, currentStatus: boolean) => {
         try {
@@ -148,9 +153,18 @@ export default function LibraryHardware({ libraryId }: { libraryId: string }) {
                                         <div className="flex items-center gap-2 text-gray-500 text-xs font-semibold uppercase tracking-wider">
                                             <Settings2 className="w-3.5 h-3.5" /> Machine ID
                                         </div>
-                                        <span className="font-mono text-xs text-gray-700 bg-white px-2 py-1 rounded-md border shadow-sm max-w-[120px] truncate" title={machine.id}>
-                                            {machine.id.substring(0, 8)}...{machine.id.substring(machine.id.length - 4)}
-                                        </span>
+                                        <div className="flex items-center gap-1.5 grow justify-end">
+                                            <span className="font-mono text-xs text-gray-700 bg-white px-2 py-1 rounded-md border shadow-sm max-w-[120px] truncate" title={machine.id}>
+                                                {machine.id.substring(0, 8)}...{machine.id.substring(machine.id.length - 4)}
+                                            </span>
+                                            <button 
+                                                onClick={() => handleCopy(machine.id, "Machine ID")}
+                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all active:scale-90"
+                                                title="Copy full Machine ID"
+                                            >
+                                                <Copy className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2 text-gray-500 text-xs font-semibold uppercase tracking-wider">
