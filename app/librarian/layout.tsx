@@ -4,7 +4,7 @@ import React from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { LibrarianSidebar } from "@/components/librarian/LibrarianSidebar";
 import LibrarySSEProvider from "@/components/librarian/LibrarySSEProvider";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Library as LibraryIcon } from "lucide-react";
 
 export default function LibrarianLayout({
@@ -13,6 +13,32 @@ export default function LibrarianLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const activeTab = searchParams.get("tab") || "home";
+
+    const getTabTitle = () => {
+        if (pathname !== "/librarian/dashboard") {
+            if (pathname === "/librarian/add-library") return "Add New Library";
+            if (pathname.includes("/libraries")) return "Library Management";
+            return "Librarian Portal";
+        }
+
+        const titles: Record<string, string> = {
+            home: "Library Overview",
+            seats: "Live Seat Map",
+            students: "Student Manager",
+            queries: "Support Queries",
+            bookings: "Booking Requests",
+            plans: "Library Plans",
+            attendance: "Daily Attendance",
+            hardware: "Hardware Devices",
+            transactions: "Transaction History",
+            profile: "Profile Settings",
+            onboarding: "Student Onboarding",
+        };
+
+        return titles[activeTab] || "Dashboard Overview";
+    };
 
     return (
         <SidebarProvider>
@@ -33,9 +59,7 @@ export default function LibrarianLayout({
                             <SidebarTrigger className="h-9 w-9 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" />
                             <div className="h-6 w-[1px] bg-gray-200 mx-2 hidden md:block" />
                             <h2 className="text-xs font-bold text-gray-400 hidden md:block tracking-widest uppercase">
-                                {pathname === "/librarian/dashboard" ? "Dashboard Overview" :
-                                    pathname === "/librarian/add-library" ? "Add New Library" :
-                                        pathname.includes("/libraries") ? "Library Management" : "Librarian Portal"}
+                                {getTabTitle()}
                             </h2>
                         </div>
                     </header>

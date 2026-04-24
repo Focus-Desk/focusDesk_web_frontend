@@ -28,13 +28,15 @@ import {
     X,
     AlertTriangle,
     ClipboardList,
-    Loader2
+    Loader2,
+    Home,
+    LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays, isAfter, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import router from "next/router";
+
 interface LibraryHomeProps {
     libraryId: string;
 }
@@ -473,7 +475,23 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <Home className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Library Overview</h2>
+                        <p className="text-sm text-gray-500 font-medium mt-0.5">
+                            Welcome back, {librarian?.firstName || "Sheetal"} — {format(new Date(), "EEEE, MMM dd")}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Column: Welcome + Bookings + Queries */}
             <div className="lg:col-span-8 space-y-8 flex flex-col">
                 <WelcomeBox />
@@ -500,6 +518,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
             <div className="lg:col-span-4 space-y-8">
                 <BookingGraph />
                 <RecentStudent />
+            </div>
             </div>
         </div>
     );

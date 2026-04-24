@@ -13,7 +13,8 @@ import {
     ClipboardList,
     Tag,
     Home,
-    CalendarCheck
+    CalendarCheck,
+    Banknote
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -180,6 +181,25 @@ export function LibrarianSidebar() {
                                             <Link href="/librarian/dashboard?tab=bookings" className="flex items-center w-full">
                                                 <ClipboardList className="!h-6 !w-6 shrink-0" />
                                                 {showLabels && <span className="ml-3 truncate">Bookings</span>}
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "transactions"}
+                                            tooltip="Transactions"
+                                            size="lg"
+                                            className={cn(
+                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                searchParams.get("tab") === "transactions"
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href="/librarian/dashboard?tab=transactions" className="flex items-center w-full">
+                                                <Banknote className="!h-6 !w-6 shrink-0" />
+                                                {showLabels && <span className="ml-3 truncate">Transactions</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>

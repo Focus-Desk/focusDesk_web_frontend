@@ -93,7 +93,23 @@ export default function LiveSeatPlan({
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <LayoutGrid className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Live Seat Map</h2>
+                        <p className="text-sm text-gray-500 font-medium mt-0.5">
+                            Real-time overview of seat occupancy and availability
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-6">
             {/* Top Stats & Filters */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="flex gap-4">
@@ -378,6 +394,7 @@ export default function LiveSeatPlan({
                 </AnimatePresence>
             </div>
         </div>
+    </div>
     );
 }
 

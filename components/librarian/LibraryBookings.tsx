@@ -28,6 +28,7 @@ import {
 } from "@/state/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useSearchParams, useRouter } from "next/navigation";
 import ConfirmBookingModal from "./ConfirmBookingModal";
 
 interface LibraryBookingsProps {
@@ -48,6 +49,9 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBooking, setSelectedBooking] = useState<any>(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
     const { data: bookingsData, isLoading } = useGetLibraryBookingsQuery({
         libraryId,
@@ -58,6 +62,12 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
     const [rejectBooking, { isLoading: isRejecting }] = useRejectBookingMutation();
 
     const bookings = bookingsData?.data || [];
+
+    const handleStudentClick = (studentId: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("studentId", studentId);
+        router.replace(`?${params.toString()}`, { scroll: false });
+    };
 
     const filteredBookings = useMemo(() => {
         if (!searchQuery) return bookings;
@@ -169,19 +179,22 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
                                         className="hover:bg-gray-50/50 transition-colors group"
                                     >
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm ring-1 ring-blue-100">
+                                            <button 
+                                                onClick={() => handleStudentClick(booking.student.id)}
+                                                className="flex items-center gap-3 group/student text-left"
+                                            >
+                                                <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm ring-1 ring-blue-100 group-hover/student:bg-blue-600 group-hover/student:text-white transition-all">
                                                     {booking.student.student?.firstName?.[0] || booking.student.email?.[0]?.toUpperCase()}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-900 text-sm">
+                                                    <span className="font-bold text-gray-900 text-sm group-hover/student:text-blue-600 transition-colors underline-offset-4 group-hover/student:underline decoration-blue-200">
                                                         {booking.student.student?.firstName} {booking.student.student?.lastName}
                                                     </span>
                                                     <span className="text-[10px] text-gray-400 font-medium">
-                                                        {booking.student.student?.phoneNumber}
+                                                        {booking.student.student?.phoneNumber || booking.student.email}
                                                     </span>
                                                 </div>
-                                            </div>
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className="text-sm font-medium text-gray-700">
