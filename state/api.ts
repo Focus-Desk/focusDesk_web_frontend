@@ -1,4 +1,4 @@
-import { createNewUserInDatabase, withToast } from "@/lib/utils";
+import { withToast } from "@/lib/utils";
 import {
   Mentor,
   Librarian,
@@ -10,7 +10,6 @@ import {
   Offer,
 } from "@/types/prismaTypes";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 
 type User = {
   userId: string;
@@ -361,21 +360,9 @@ export const api = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL + "api",
     credentials: "include",
     prepareHeaders: async (headers) => {
-      // 1. Get token from localStorage as the primary secure session method
       const token = localStorage.getItem("token");
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
-      }
-
-      // 2. Fallback/Optional: keep Amplify session if needed for mobile/legacy
-      try {
-        const session = await fetchAuthSession();
-        const { idToken } = session.tokens ?? {};
-        if (idToken) {
-          headers.set("Authorization", `Bearer ${idToken}`);
-        }
-      } catch (e) {
-        // No Amplify session found
       }
       return headers;
     },
@@ -414,43 +401,17 @@ export const api = createApi({
     >({
       queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
         try {
-          // Priority: Check our own secure session cookie first
           const meResponse = await fetchWithBQ("auth/me");
-          if (!meResponse.error) {
-            const data = (meResponse.data as any).data; // Backend returns { success: true, data: { ... } }
-            return {
-              data: {
-                cognitoInfo: { userId: data.userId || data.id, username: data.username || data.email },
-                userInfo: data as Librarian,
-                userRole: (data.user?.role || data.role || "librarian").toLowerCase(),
-              }
-            };
+          if (meResponse.error) {
+            return { error: meResponse.error };
           }
-
-          // Fallback to Amplify session for legacy support/mobile
-          const session = await fetchAuthSession();
-          const { idToken } = session.tokens ?? {};
-          const user = await getCurrentUser();
-          const userRole = "librarian";
-
-          let userDetailsResponse = await fetchWithBQ(`/librarians/${user.userId}`);
-          if (
-            userDetailsResponse.error &&
-            userDetailsResponse.error.status === 404
-          ) {
-            userDetailsResponse = await createNewUserInDatabase(
-              user,
-              idToken,
-              userRole,
-              fetchWithBQ
-            );
-          }
+          const data = (meResponse.data as any).data;
           return {
             data: {
-              cognitoInfo: { ...user },
-              userInfo: userDetailsResponse.data as Librarian,
-              userRole,
-            },
+              cognitoInfo: { userId: data.userId || data.id, username: data.username || data.email },
+              userInfo: data as Librarian,
+              userRole: (data.user?.role || data.role || "librarian").toLowerCase(),
+            }
           };
         } catch (error: any) {
           return { error: error.message || "Could not fetch user data" };
