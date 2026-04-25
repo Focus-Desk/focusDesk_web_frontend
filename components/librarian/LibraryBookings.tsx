@@ -28,6 +28,7 @@ import {
 } from "@/state/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useSearchParams, useRouter } from "next/navigation";
 import ConfirmBookingModal from "./ConfirmBookingModal";
 
 interface LibraryBookingsProps {
@@ -48,6 +49,9 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBooking, setSelectedBooking] = useState<any>(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    
+    const router = useRouter();
+    const searchParams = useSearchParams();
 
     const { data: bookingsData, isLoading } = useGetLibraryBookingsQuery({
         libraryId,
@@ -58,16 +62,32 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
     const [rejectBooking, { isLoading: isRejecting }] = useRejectBookingMutation();
 
     const bookings = bookingsData?.data || [];
+    const today = format(new Date(), "yyyy-MM-dd");
+    const [selectedDate, setSelectedDate] = useState(today);
+
+    const handleStudentClick = (studentId: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("studentId", studentId);
+        router.replace(`?${params.toString()}`, { scroll: false });
+    };
 
     const filteredBookings = useMemo(() => {
-        if (!searchQuery) return bookings;
-        const q = searchQuery.toLowerCase();
-        return bookings.filter((b: any) =>
-            b.student.student?.firstName?.toLowerCase().includes(q) ||
-            b.student.student?.lastName?.toLowerCase().includes(q) ||
-            b.student.student?.phoneNumber?.includes(q)
-        );
-    }, [bookings, searchQuery]);
+        let filtered = bookings;
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter((b: any) =>
+                b.student.student?.firstName?.toLowerCase().includes(q) ||
+                b.student.student?.lastName?.toLowerCase().includes(q) ||
+                b.student.student?.phoneNumber?.includes(q)
+            );
+        }
+        if (selectedDate) {
+            filtered = filtered.filter((b: any) => 
+                format(new Date(b.createdAt), "yyyy-MM-dd") === selectedDate
+            );
+        }
+        return filtered;
+    }, [bookings, searchQuery, selectedDate]);
 
     const handleApprove = async (booking: any) => {
         setSelectedBooking(booking);
@@ -94,8 +114,45 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header with Search */}
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <ClipboardList className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Booking Requests</h2>
+                        <p className="text-sm text-gray-500 font-medium mt-0.5">
+                            Manage and approve student booking applications
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 px-3 text-gray-400">
+                        <Calendar className="h-4 w-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Filter Date</span>
+                    </div>
+                    <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 focus:ring-0 cursor-pointer"
+                    />
+                    {selectedDate && (
+                        <button 
+                            onClick={() => setSelectedDate("")}
+                            className="p-2 hover:bg-gray-100 rounded-xl text-gray-400 transition-colors"
+                        >
+                            <XCircle className="h-4 w-4" />
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                {/* Header with Search */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div className="flex flex-wrap gap-2 p-1.5 bg-gray-100/80 rounded-2xl w-full lg:w-auto">
                     {TAB_CONFIG.map((tab) => (
@@ -169,19 +226,22 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
                                         className="hover:bg-gray-50/50 transition-colors group"
                                     >
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm ring-1 ring-blue-100">
+                                            <button 
+                                                onClick={() => handleStudentClick(booking.student.id)}
+                                                className="flex items-center gap-3 group/student text-left"
+                                            >
+                                                <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm ring-1 ring-blue-100 group-hover/student:bg-blue-600 group-hover/student:text-white transition-all">
                                                     {booking.student.student?.firstName?.[0] || booking.student.email?.[0]?.toUpperCase()}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-900 text-sm">
+                                                    <span className="font-bold text-gray-900 text-sm group-hover/student:text-blue-600 transition-colors underline-offset-4 group-hover/student:underline decoration-blue-200">
                                                         {booking.student.student?.firstName} {booking.student.student?.lastName}
                                                     </span>
                                                     <span className="text-[10px] text-gray-400 font-medium">
-                                                        {booking.student.student?.phoneNumber}
+                                                        {booking.student.student?.phoneNumber || booking.student.email}
                                                     </span>
                                                 </div>
-                                            </div>
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className="text-sm font-medium text-gray-700">
@@ -268,6 +328,7 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
                     />
                 )}
             </AnimatePresence>
+            </div>
         </div>
     );
 }

@@ -19,6 +19,7 @@ import {
     Search,
     Loader2,
     AlertCircle,
+    CheckCircle2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -325,16 +326,22 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
     };
 
     return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-            {/* Header / Controls */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Library Plans</h2>
-                    <p className="text-sm text-gray-500 font-medium">Manage your subscription models and pricing</p>
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <Tag className="w-7 h-7" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Library Plans</h2>
+                        <p className="text-sm text-gray-500 font-medium mt-0.5">
+                            Manage your subscription models and pricing
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            {/* Plans List */}
             <div className="space-y-16">
                 {isLoadingPlans ? (
                     <div className="space-y-12">
@@ -390,24 +397,4 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
             )}
         </div>
     );
-}
-
-function CheckCircle2(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-            <path d="m9 12 2 2 4-4" />
-        </svg>
-    )
 }

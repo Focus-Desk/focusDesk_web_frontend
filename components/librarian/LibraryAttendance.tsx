@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface LibraryAttendanceProps {
     libraryId: string;
@@ -33,11 +34,20 @@ interface LibraryAttendanceProps {
 type StatusFilter = "ALL" | "PRESENT" | "LEFT" | "ABSENT" | "FLAGGED";
 
 export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
     const today = format(new Date(), "yyyy-MM-dd");
     const [selectedDate, setSelectedDate] = useState(today);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
     const [scanModalStudent, setScanModalStudent] = useState<any>(null);
+
+    const handleStudentClick = (studentId: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("studentId", studentId);
+        router.replace(`?${params.toString()}`, { scroll: false });
+    };
 
     const { data, isLoading, isFetching } = useGetLibraryAttendanceQuery(
         { libraryId, date: selectedDate },
@@ -231,15 +241,20 @@ export default function LibraryAttendance({ libraryId }: LibraryAttendanceProps)
                                                 className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
                                             >
                                                 <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-sm shrink-0">
+                                                    <button 
+                                                        onClick={() => handleStudentClick(record.studentId)}
+                                                        className="flex items-center gap-3 group/student text-left"
+                                                    >
+                                                        <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-sm shrink-0 group-hover/student:bg-blue-600 group-hover/student:text-white transition-all ring-1 ring-gray-100">
                                                             {record.studentName?.charAt(0)?.toUpperCase() || "?"}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-gray-900">{record.studentName}</p>
+                                                            <p className="text-sm font-bold text-gray-900 group-hover/student:text-blue-600 transition-colors underline-offset-4 group-hover/student:underline decoration-blue-200">
+                                                                {record.studentName}
+                                                            </p>
                                                             <p className="text-[11px] text-gray-400 font-medium">{record.email || record.phoneNumber || "—"}</p>
                                                         </div>
-                                                    </div>
+                                                    </button>
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <span className="text-sm font-bold text-gray-600">
