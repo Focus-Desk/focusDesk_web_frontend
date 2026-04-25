@@ -22,6 +22,7 @@ const CustomLogin = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [otp, setOtp] = useState("");
     const [step, setStep] = useState<"LOGIN" | "OTP" | "FORGOT_PASSWORD" | "FORGOT_PASSWORD_OTP">("LOGIN");
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     const [login, { isLoading: isLoginLoading }] = useLoginMutation();
     const [verifyOTP, { isLoading: isVerifyLoading }] = useVerifyOTPMutation();
@@ -43,6 +44,7 @@ const CustomLogin = () => {
                         localStorage.setItem("token", result.data.token);
                     }
                     toast.success("Login successful!");
+                    setIsRedirecting(true);
                     router.push("/librarian/dashboard");
                 }
             } else {
@@ -65,6 +67,7 @@ const CustomLogin = () => {
                     localStorage.setItem("token", result.data.token);
                 }
                 toast.success("Login successful!");
+                setIsRedirecting(true);
                 router.push("/librarian/dashboard"); 
             } else {
                 toast.error(result.message || "Login failed");
@@ -83,6 +86,7 @@ const CustomLogin = () => {
                     localStorage.setItem("token", result.data.token);
                 }
                 toast.success("Login successful!");
+                setIsRedirecting(true);
                 router.push("/librarian/dashboard");
             } else {
                 toast.error(result.message || "Verification failed");
@@ -130,7 +134,7 @@ const CustomLogin = () => {
         }
     };
 
-    const isAnyLoading = isLoginLoading || isVerifyLoading || isForgotLoading || isResetLoading || isGoogleLoading;
+    const isAnyLoading = isLoginLoading || isVerifyLoading || isForgotLoading || isResetLoading || isGoogleLoading || isRedirecting;
 
     return (
         <div className="relative min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
