@@ -68,29 +68,34 @@ export default function LibraryHardware({ libraryId }: { libraryId: string }) {
     const activeCount = machines.filter((m: any) => m.isActive).length;
 
     return (
-        <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
-            {/* Header Section */}
-            <div className="rounded-3xl p-8 text-black border border-gray-200 relative overflow-hidden shadow-xl">
-                <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+                        <Server className="w-7 h-7" />
+                    </div>
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">Hardware Devices</h1>
-                        <p className="max-w-md text-sm leading-relaxed">
-                            Manage the physical scan gates running at this library.
-                            Toggle their active states to revoke or allow their API access instantly.
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Hardware Management</h2>
+                        <p className="text-sm text-gray-500 font-medium mt-0.5">
+                            Monitor and control your physical scan gates
                         </p>
                     </div>
-                    <div className="flex gap-4 md:justify-end">
-                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center w-32">
-                            <div className="text-3xl font-bold mb-1">{machines.length}</div>
-                            <div className="text-xs font-medium tracking-wide uppercase">Total Gates</div>
-                        </div>
-                        <div className="bg-emerald-500/20 backdrop-blur-md rounded-2xl p-4 border border-emerald-500/30 text-center w-32">
-                            <div className="text-3xl font-bold mb-1">{activeCount}</div>
-                            <div className="text-xs font-medium tracking-wide uppercase">Active</div>
-                        </div>
+                </div>
+
+                <div className="flex gap-4 md:justify-end">
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-center w-32">
+                        <div className="text-2xl font-black text-gray-900 mb-0.5">{machines.length}</div>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Gates</div>
+                    </div>
+                    <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 shadow-sm text-center w-32">
+                        <div className="text-2xl font-black text-emerald-600 mb-0.5">{activeCount}</div>
+                        <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Active</div>
                     </div>
                 </div>
             </div>
+
+            <div className="space-y-6">
 
             {/* Filter / Search Bar */}
             <div className="bg-white p-4 rounded-full border shadow-sm flex items-center gap-3 px-6">
@@ -181,5 +186,6 @@ export default function LibraryHardware({ libraryId }: { libraryId: string }) {
                 </div>
             )}
         </div>
+    </div>
     );
 }
