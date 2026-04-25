@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import CustomLogin from "@/components/auth/CustomLogin";
 import { api } from "@/state/api";
+import { Loader2 } from "lucide-react";
 
 const Auth = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -32,7 +33,14 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
 
   // Prevent hydration mismatch by waiting for client-side mount
   if (!mounted || authLoading) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+          <p className="text-gray-500 font-medium animate-pulse">Initializing focusDesk...</p>
+        </div>
+      </div>
+    );
   }
 
   // Handle librarian authentication (this app is librarian-only)
