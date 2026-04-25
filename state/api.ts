@@ -472,6 +472,7 @@ export const api = createApi({
         method: 'POST',
         body: credentials,
       }),
+      invalidatesTags: ["AuthUser"],
     }),
     googleLogin: build.mutation<AuthResponse, { idToken: string }>({
       query: (body) => ({
@@ -479,6 +480,7 @@ export const api = createApi({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ["AuthUser"],
     }),
     connectGoogle: build.mutation<{ success: boolean; message: string }, { idToken: string }>({
       query: (body) => ({

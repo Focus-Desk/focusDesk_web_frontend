@@ -27,7 +27,7 @@ const CustomLogin = () => {
     const [verifyOTP, { isLoading: isVerifyLoading }] = useVerifyOTPMutation();
     const [forgotPassword, { isLoading: isForgotLoading }] = useForgotPasswordMutation();
     const [resetPassword, { isLoading: isResetLoading }] = useResetPasswordMutation();
-    const [googleLoginMutation] = useGoogleLoginMutation();
+    const [googleLoginMutation, { isLoading: isGoogleLoading }] = useGoogleLoginMutation();
     const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -65,7 +65,7 @@ const CustomLogin = () => {
                     localStorage.setItem("token", result.data.token);
                 }
                 toast.success("Login successful!");
-                window.location.href = "/librarian/dashboard"; 
+                router.push("/librarian/dashboard"); 
             } else {
                 toast.error(result.message || "Login failed");
             }
@@ -130,8 +130,23 @@ const CustomLogin = () => {
         }
     };
 
+    const isAnyLoading = isLoginLoading || isVerifyLoading || isForgotLoading || isResetLoading || isGoogleLoading;
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
+        <div className="relative min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
+            {/* Global Loading Overlay */}
+            {isAnyLoading && (
+                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm transition-all duration-300">
+                    <div className="bg-white p-8 rounded-3xl shadow-2xl shadow-blue-500/10 border border-gray-100 flex flex-col items-center gap-4">
+                        <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                        <div className="text-center">
+                            <p className="text-lg font-bold text-gray-900 leading-tight">Authenticating...</p>
+                            <p className="text-sm text-gray-500 font-medium">Please wait a moment</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
