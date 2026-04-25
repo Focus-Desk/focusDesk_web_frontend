@@ -1,4 +1,6 @@
 "use client";
+
+import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 import {
@@ -35,23 +37,6 @@ export default function LibrarianProfile() {
     toast.success(`${label} copied to clipboard!`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center p-8">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <p className="text-sm text-gray-500">Loading profile data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!profile) return null;
-
-  // The backend might return isGoogleConnected directly on `userInfo.user.isGoogleConnected` based on getMe output
-  // Wait, getMe returns librarian data: { id, firstName, lastName, ... user: { id, email, role, isGoogleConnected } }
-  const isGoogleConnected = profile.user?.isGoogleConnected || false;
-
   const handleConnectGoogle = async (credentialResponse: any) => {
     try {
       if (!credentialResponse.credential) {
@@ -69,6 +54,21 @@ export default function LibrarianProfile() {
       toast.error(err.data?.message || "Failed to connect to Google");
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-8">
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+          <p className="text-sm text-gray-500">Loading profile data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
+  const isGoogleConnected = profile.user?.isGoogleConnected || false;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
