@@ -52,7 +52,7 @@ export default function LibrarianDashboard() {
         return (
             <div className="p-8 text-center space-y-4 pt-10">
                 <div className="text-gray-500 font-medium">You don't have any libraries registered yet.</div>
-                <Button onClick={() => router.push("/librarian/onboarding")}>
+                <Button onClick={() => router.push("/librarian/add-library")}>
                     Register New Library
                 </Button>
             </div>
