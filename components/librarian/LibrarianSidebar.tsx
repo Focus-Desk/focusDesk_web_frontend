@@ -289,7 +289,7 @@ export function LibrarianSidebar() {
                                                 : "text-gray-500 hover:bg-gray-50"
                                         )}
                                     >
-                                        <Link href="/librarian/onboarding" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+                                        <Link href="/librarian/add-library" className="flex items-center w-full px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
                                             <PlusCircle className="h-4 w-4" />
                                             {showLabels && <span className="ml-2">Create Library</span>}
                                         </Link>
