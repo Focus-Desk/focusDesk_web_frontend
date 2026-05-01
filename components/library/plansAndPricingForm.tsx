@@ -52,6 +52,17 @@ const initialPricingData: PricingData = {
     submittedTabs: [],
 };
 
+const normalizePricingData = (data?: Partial<PricingData> | null): PricingData => ({
+    masterSlots: Array.isArray(data?.masterSlots) ? data!.masterSlots : initialPricingData.masterSlots,
+    slotConfigs: Array.isArray(data?.slotConfigs) ? data!.slotConfigs : initialPricingData.slotConfigs,
+    plans: Array.isArray(data?.plans) ? data!.plans : initialPricingData.plans,
+    seatConfigurations: Array.isArray(data?.seatConfigurations) ? data!.seatConfigurations : initialPricingData.seatConfigurations,
+    lockers: Array.isArray(data?.lockers) ? data!.lockers : initialPricingData.lockers,
+    packageRules: Array.isArray(data?.packageRules) ? data!.packageRules : initialPricingData.packageRules,
+    offers: Array.isArray(data?.offers) ? data!.offers : initialPricingData.offers,
+    submittedTabs: Array.isArray(data?.submittedTabs) ? data!.submittedTabs : initialPricingData.submittedTabs,
+});
+
 
 type FormProps = {
     libraryId: string;
@@ -69,7 +80,7 @@ const tabOrder = ['timeslot', 'plan', 'locker', 'seat', 'package', 'offer'];
 export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentStep, onSuccess, formData, updateFormData }: FormProps) {
 
     // --- LOCAL STATE INITIALIZATION (FROM PERSISTED DATA) ---
-    const initialLocalData = formData.pricingData || initialPricingData;
+    const initialLocalData = normalizePricingData(formData.pricingData);
 
     const [activeTab, setActiveTab] = useState(initialLocalData.submittedTabs.slice(-1)[0] || 'timeslot');
     const [submittedTabs, setSubmittedTabs] = useState(initialLocalData.submittedTabs);
@@ -116,7 +127,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [slotConfigs, plans, lockers, seatConfigurations, packageRules, offers, submittedTabs]);
+    }, [masterSlots, slotConfigs, plans, lockers, seatConfigurations, packageRules, offers, submittedTabs]);
     // --- END SIDE EFFECT ---
 
 
@@ -1159,7 +1170,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     <button
                         type="button"
                         onClick={() => setCurrentStep(currentStep => currentStep - 1)}
-                        className="w-full px-6 py-3 border border-gray-300 rounded-xl bg-transparent text-gray-700 text-lg font-[500] cursor-pointer transition-all duration-300 hover:bg-gray-100"
+                        className="w-full px-6 py-3 border border-gray-300 rounded-xl bg-transparent text-gray-700 text-lg font-medium cursor-pointer transition-all duration-300 hover:bg-gray-100"
                     >
                         Previous
                     </button>
