@@ -342,24 +342,26 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         }
         setApiStatus('idle');
         try {
-            const results = await Promise.all(
-                validLockers.map(l => createLocker({
-                    libraryId,
-                    lockerType: l.lockerType,
-                    numberOfLockers: parseInt(l.numberOfLockers),
-                    price: parseFloat(l.charge),
-                    description: l.description
-                }).unwrap())
-            );
-            // Store database IDs for linking to seat configurations
-            setLockers(prev => prev.map((locker, index) => {
-                const resultIndex = validLockers.findIndex(vl => vl.id === locker.id);
-                if (resultIndex !== -1 && results[resultIndex]) {
-                    return { ...locker, dbId: results[resultIndex]?.data?.id || results[resultIndex]?.id || '' };
-                }
+            // Send lockers as a single array payload (groups) as required by the API
+            const groupsPayload = validLockers.map(l => ({
+                lockerType: l.lockerType,
+                numberOfLockers: parseInt(l.numberOfLockers),
+                price: parseFloat(l.charge),
+                description: l.description,
+            }));
+
+            const res = await createLocker({ libraryId, groups: groupsPayload } as any).unwrap();
+
+            // Normalize response: server may return created lockers array under data or directly
+            const createdLockers = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : (res?.created || res?.lockers || []));
+
+            // Store database IDs for linking to seat configurations when possible
+            setLockers(prev => prev.map(locker => {
+                const found = createdLockers.find((cl: any) => cl.lockerType === locker.lockerType || cl.id === locker.dbId || cl.numberOfLockers === Number(locker.numberOfLockers));
+                if (found) return { ...locker, dbId: found.id || found._id || '' };
                 return locker;
             }));
-            console.log("Locker submission results:", results);
+            console.log("Locker submission results:", createdLockers);
             setApiStatus('success');
             return true;
         } catch (error) {
