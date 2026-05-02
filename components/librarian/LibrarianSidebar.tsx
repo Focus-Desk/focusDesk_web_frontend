@@ -14,7 +14,8 @@ import {
     Tag,
     Home,
     CalendarCheck,
-    Banknote
+    Banknote,
+    Clock
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -53,6 +54,9 @@ export function LibrarianSidebar() {
     });
 
     const hasLibrary = libraries && libraries.length > 0;
+    const library = hasLibrary ? libraries[0] : null;
+    const isLibraryActive = library?.isActive && library?.reviewStatus === "APPROVED";
+
     const [logoutMutation] = useLogoutMutation();
     const { state, isMobile } = useSidebar();
     const showLabels = state === "expanded" || isMobile;
@@ -88,6 +92,7 @@ export function LibrarianSidebar() {
                     <SidebarGroupContent className="p-0 w-full">
                         <SidebarMenu className="gap-1.5 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:items-center">
                             {hasLibrary ? (
+                                isLibraryActive ? (
                                 <>
                                     <SidebarMenuItem>
                                         <SidebarMenuButton
@@ -261,6 +266,27 @@ export function LibrarianSidebar() {
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 </>
+                                ) : (
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            asChild
+                                            isActive={searchParams.get("tab") === "home" || (!searchParams.get("tab") && isActive("/librarian/dashboard"))}
+                                            tooltip="Status"
+                                            size="lg"
+                                            className={cn(
+                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                (searchParams.get("tab") === "home" || (!searchParams.get("tab") && isActive("/librarian/dashboard")))
+                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                            )}
+                                        >
+                                            <Link href="/librarian/dashboard?tab=home" className="flex items-center w-full">
+                                                <Clock className="!h-6 !w-6 shrink-0" />
+                                                {showLabels && <span className="ml-3 truncate">Approval Status</span>}
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )
                             ) : (
                                 <SidebarMenuItem>
                                     <div className="px-4 text-xs text-gray-500 text-center py-4">
