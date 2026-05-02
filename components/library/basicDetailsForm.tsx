@@ -46,7 +46,6 @@ export default function BasicDetailsForm({ userId, isReadOnly, setCurrentStep, o
             const payload = {
                 librarianId: userId,
                 libraryName: formData.libraryName,
-                address: "To be updated in next step",
                 contactNumber: formData.contactNumber,
                 contactPersonName: formData.personName,
                 email: formData.email,

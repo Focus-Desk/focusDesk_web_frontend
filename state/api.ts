@@ -22,7 +22,7 @@ type OnboardLibrarianArgs = {
   email: string;
   firstName: string;
   lastName: string;
-  profilePhoto?: File;
+  profilePhoto?: string;
   contactNumber: string;
   alternateContactNumber?: string;
   dateOfBirth: string;
@@ -39,7 +39,7 @@ type OnboardLibrarianArgs = {
   gstin?: string;
   aadhaarNumber: string;
   addressProofType: string;
-  addressProof: File;
+  addressProofUrl: string;
 };
 
 type AuthResponse = {
@@ -86,8 +86,11 @@ type UpdateLibrarianArgs = {
 type CreateLibraryStep1Args = {
   librarianId: string;
   libraryName: string;
-  address: string;
+  address?: string;
   contactNumber: string;
+  contactPersonName: string;
+  email: string;
+  interestedInListing: boolean;
 };
 
 type CreateTimeSlotArgs = {
@@ -1358,6 +1361,10 @@ export const api = createApi({
         body,
       }),
     }),
+    getOnboardingStatus: build.query<any, void>({
+      query: () => '/library/onboarding-status',
+      providesTags: ['Libraries'],
+    }),
 
     getStudentBookings: build.query<any, { studentId: string; status?: string }>({
       query: ({ studentId, status }) => {
@@ -1506,6 +1513,7 @@ export const {
   useUpdateLibrarianMutation,
   useCreateLibraryStep1Mutation,
   useUpdateLibraryStep2Mutation,
+  useGetOnboardingStatusQuery,
   useGetStudentQuery,
   useUpdateStudentSettingsMutation,
   useGetMentorQuery,

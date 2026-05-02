@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRegisterMutation } from "@/state/api";
+import { useRegisterMutation, useVerifyOTPMutation } from "@/state/api";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,11 @@ const CustomSignup = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [step, setStep] = useState<"SIGNUP" | "OTP">("SIGNUP");
+    const [otp, setOtp] = useState("");
 
     const [register, { isLoading }] = useRegisterMutation();
+    const [verifyOTP, { isLoading: isVerifyLoading }] = useVerifyOTPMutation();
     const router = useRouter();
 
     const handleSignup = async (e: React.FormEvent) => {
@@ -37,8 +40,8 @@ const CustomSignup = () => {
             }).unwrap();
 
             if (result.success) {
-                toast.success("Registration successful! Please login.");
-                router.push("/signin");
+                toast.success(result.message || "OTP sent to your email!");
+                setStep("OTP");
             } else {
                 toast.error(result.message || "Registration failed");
             }
@@ -46,6 +49,26 @@ const CustomSignup = () => {
             toast.error(err.data?.message || "Registration failed. Please try again.");
         }
     };
+
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const result = await verifyOTP({ email, code: otp }).unwrap();
+            if (result.success) {
+                if (result.data?.token) {
+                    localStorage.setItem("token", result.data.token);
+                }
+                toast.success("Verification successful! You are now logged in.");
+                router.push("/librarian/dashboard");
+            } else {
+                toast.error(result.message || "Verification failed");
+            }
+        } catch (err: any) {
+            toast.error(err.data?.message || "Invalid or expired OTP");
+        }
+    };
+
+    const isAnyLoading = isLoading || isVerifyLoading;
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 py-12">
@@ -60,14 +83,15 @@ const CustomSignup = () => {
                             <UserPlus className="w-8 h-8" />
                         </div>
                         <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
-                            Librarian Signup
+                            {step === "SIGNUP" ? "Librarian Signup" : "Verify Email"}
                         </h1>
                         <p className="text-gray-500 font-medium">
-                            Create your account to start managing your library
+                            {step === "SIGNUP" ? "Create your account to start managing your library" : "Enter the OTP sent to your email"}
                         </p>
                     </div>
 
-                    <form onSubmit={handleSignup} className="space-y-6">
+                    {step === "SIGNUP" ? (
+                        <form onSubmit={handleSignup} className="space-y-6">
                         <div className="space-y-2">
                             <Label htmlFor="email" className="text-sm font-semibold text-gray-700 ml-1">
                                 Email Address
@@ -138,16 +162,59 @@ const CustomSignup = () => {
 
                         <Button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isAnyLoading}
                             className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5"
                         >
-                            {isLoading ? (
+                            {isAnyLoading ? (
                                 <Loader2 className="w-6 h-6 animate-spin" />
                             ) : (
                                 "Create Account"
                             )}
                         </Button>
                     </form>
+                    ) : (
+                        <form onSubmit={handleVerify} className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="otp" className="text-sm font-semibold text-gray-700 ml-1">
+                                    Verification Code
+                                </Label>
+                                <div className="relative border-gray-200 rounded-xl">
+                                    <Input
+                                        id="otp"
+                                        type="text"
+                                        placeholder="Enter 6-digit OTP"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value)}
+                                        className="text-center tracking-widest text-xl h-14 bg-gray-50/50 focus:bg-white transition-all rounded-xl border-gray-200"
+                                        maxLength={6}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                disabled={isVerifyLoading}
+                                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5"
+                            >
+                                {isVerifyLoading ? (
+                                    <Loader2 className="w-6 h-6 animate-spin" />
+                                ) : (
+                                    "Verify OTP & Login"
+                                )}
+                            </Button>
+
+                            <div className="text-center mt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setStep("SIGNUP")}
+                                    className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
+                                >
+                                    Back to Signup
+                                </button>
+                            </div>
+                        </form>
+                    )}
 
                     <div className="mt-10 text-center">
                         <p className="text-gray-500 text-sm">
