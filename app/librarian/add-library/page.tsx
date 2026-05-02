@@ -38,7 +38,6 @@ interface OnboardingData {
     city: string;
     state: string;
     pincode: string;
-    libraryContactNo: string;
     googleMapLink: string;
     totalSeats: string;
     openingTime: string;
@@ -71,7 +70,7 @@ interface OnboardingData {
 const initialOnboardingData: OnboardingData = {
     librarianId: null, userId: '', email: '', firstName: '', lastName: '',
     libraryName: '', address: '', contactNumber: '', personName: '', interestedInListing: false,
-    libraryAddress: '', city: '', state: '', pincode: '', libraryContactNo: '', googleMapLink: '',
+    libraryAddress: '', city: '', state: '', pincode: '', googleMapLink: '',
     totalSeats: '', openingTime: '09:00', closingTime: '21:00', managerName: '', managerPhone: '', managerEmail: '',
     libraryId: null,
     kyc_firstName: '', kyc_lastName: '', dateOfBirth: '', alternateContactNumber: '',
