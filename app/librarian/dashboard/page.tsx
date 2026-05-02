@@ -8,7 +8,7 @@ import {
     useGetDetailedLibrarySeatsQuery
 } from "@/state/api";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, UserPlus, Clock, Headset } from "lucide-react";
 import LiveSeatPlan from "@/components/librarian/LiveSeatPlan";
 import StudentManagement from "@/components/librarian/StudentManagement";
 import StudentOnboardingFlow from "@/components/librarian/StudentOnboardingFlow";
@@ -35,16 +35,18 @@ export default function LibrarianDashboard() {
         { skip: !librarian }
     );
 
-    const libraryId = librariesData && librariesData.length > 0 ? librariesData[0].id : null;
+    const libraryData = librariesData && librariesData.length > 0 ? librariesData[0] : null;
+    const libraryId = libraryData?.id;
+    const isLibraryActive = libraryData?.isActive && libraryData?.reviewStatus === "APPROVED";
 
     const [selectedSlotId, setSelectedSlotId] = React.useState<string>("all");
 
     const { data: detailedData, isLoading: detailedLoading, error } = useGetDetailedLibrarySeatsQuery(
         { id: libraryId as string, slotId: selectedSlotId },
-        { skip: !libraryId }
+        { skip: !libraryId || !isLibraryActive }
     );
 
-    if (authLoading || librariesLoading || (libraryId && detailedLoading)) {
+    if (authLoading || librariesLoading || (isLibraryActive && detailedLoading)) {
         return <LibraryManagementSkeleton />;
     }
 
@@ -55,6 +57,34 @@ export default function LibrarianDashboard() {
                 <Button onClick={() => router.push("/librarian/add-library")}>
                     Register New Library
                 </Button>
+            </div>
+        );
+    }
+
+    if (libraryData && !isLibraryActive) {
+        return (
+            <div className="p-8 h-full flex items-center justify-center pt-20">
+                <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-gray-100 shadow-xl text-center space-y-6">
+                    <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                        <Clock className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold text-gray-900">Review Pending</h2>
+                        <p className="text-gray-500 text-sm leading-relaxed">
+                            Your library <strong>{libraryData.libraryName}</strong> has been created and is currently under review by our team. 
+                            You will be notified once it is approved and activated.
+                        </p>
+                    </div>
+                    
+                    <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 text-left mt-6">
+                        <h3 className="font-semibold text-gray-900 text-sm mb-1 flex items-center gap-2">
+                            <Headset className="w-4 h-4 text-blue-600" /> Need Help?
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                            If you have any questions or need to expedite the process, please contact our support team at <a href="mailto:support@focusdesk.in" className="text-blue-600 font-medium hover:underline">support@focusdesk.in</a>.
+                        </p>
+                    </div>
+                </div>
             </div>
         );
     }
