@@ -181,7 +181,7 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
                     <div>
                         <h2 className="text-2xl font-black text-gray-900 tracking-tight">Library Configuration</h2>
                         <p className="text-sm text-gray-500 font-medium mt-0.5">
-                            Manage and update your library settings from Step 3
+                            Manage and update your library Inventory
                         </p>
                     </div>
                 </div>
