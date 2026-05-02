@@ -9,6 +9,7 @@ import {
     ChevronRight,
     LogOut,
     Settings,
+    Settings2,
     MessageSquareText,
     ClipboardList,
     Tag,
@@ -222,8 +223,8 @@ export function LibrarianSidebar() {
                                             )}
                                         >
                                             <Link href="/librarian/dashboard?tab=plans" className="flex items-center w-full">
-                                                <Tag className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Plans</span>}
+                                                <Settings2 className="!h-6 !w-6 shrink-0" />
+                                                {showLabels && <span className="ml-3 truncate">Configuration</span>}
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>

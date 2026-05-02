@@ -14,7 +14,7 @@ import StudentManagement from "@/components/librarian/StudentManagement";
 import StudentOnboardingFlow from "@/components/librarian/StudentOnboardingFlow";
 import LibraryQueries from "@/components/librarian/LibraryQueries";
 import LibraryBookings from "@/components/librarian/LibraryBookings";
-import LibraryPlans from "@/components/librarian/LibraryPlans";
+import LibraryConfiguration from "@/components/librarian/LibraryConfiguration";
 import LibraryHome from "@/components/librarian/LibraryHome";
 import LibraryAttendance from "@/components/librarian/LibraryAttendance";
 import LibraryHardware from "@/components/librarian/LibraryHardware";
@@ -135,7 +135,7 @@ export default function LibrarianDashboard() {
             
             {activeTab === "queries" && <LibraryQueries libraryId={libraryId} />}
             {activeTab === "bookings" && <LibraryBookings libraryId={libraryId} />}
-            {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
+            {activeTab === "plans" && <LibraryConfiguration libraryId={libraryId} />}
             {activeTab === "attendance" && <LibraryAttendance libraryId={libraryId} />}
             {activeTab === "hardware" && <LibraryHardware libraryId={libraryId} />}
             {activeTab === "transactions" && <LibraryTransactions libraryId={libraryId} />}
