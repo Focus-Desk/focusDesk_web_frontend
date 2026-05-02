@@ -205,18 +205,18 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
     const submitSlotConfigs = async () => {
         setApiStatus('idle');
 
-        // Filter out empty master slots
-        const validMasterSlots = masterSlots.filter(s => s.tag.trim() !== '');
+        // Filter out empty and already submitted master slots
+        const validMasterSlots = masterSlots.filter(s => s.tag.trim() !== '' && !s.dbId);
 
-        // Filter out empty slot configurations
+        // Filter out empty and already submitted configurations
         const validConfigs = slotConfigs.filter(c =>
-            c.name.trim() !== '' && (c.slotIds || []).length > 0
+            c.name.trim() !== '' && (c.slotIds || []).length > 0 && !c.dbId
         );
 
-        if (validMasterSlots.length === 0 || validConfigs.length === 0) {
-            console.warn("No valid master slots or configurations to submit.");
-            setApiStatus('error');
-            return false;
+        if (validMasterSlots.length === 0 && validConfigs.length === 0) {
+            console.log("No valid new master slots or configs to submit.");
+            setApiStatus('success');
+            return true;
         }
 
         try {
@@ -233,8 +233,13 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                 })
             );
 
-            const masterSlotMapping: Record<number, string> = {};
-            slotResults.forEach(r => masterSlotMapping[r.localId] = r.dbId);
+            // Update master slots state with new DB IDs so we can use them immediately
+            let updatedMasterSlots = [...masterSlots];
+            updatedMasterSlots = updatedMasterSlots.map(s => {
+                const mapping = slotResults.find(r => r.localId === s.id);
+                return mapping ? { ...s, dbId: mapping.dbId } : s;
+            });
+            setMasterSlots(updatedMasterSlots);
 
             // 2. Submit Slot Configurations linking to these UUIDs
             const configResults = await Promise.all(
@@ -246,9 +251,9 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
                     const configId = configRes.data.id;
 
-                    // Link selected master slots to this configuration
+                    // Link selected master slots to this configuration (look up in updated master slots)
                     const selectedDbIds = config.slotIds
-                        .map((localId: number) => masterSlotMapping[localId])
+                        .map((localId: number) => updatedMasterSlots.find(s => s.id === localId)?.dbId)
                         .filter(Boolean);
 
                     if (selectedDbIds.length > 0) {
@@ -261,12 +266,6 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     return { dbId: configId, localId: config.id, slotDbIds: selectedDbIds };
                 })
             );
-
-            // Also update master slots and configs with their DB IDs for future reference
-            setMasterSlots(prev => prev.map(s => {
-                const mapping = slotResults.find(r => r.localId === s.id);
-                return mapping ? { ...s, dbId: mapping.dbId } : s;
-            }));
 
             setSlotConfigs(prev => prev.map(c => {
                 const res = configResults.find(r => r.localId === c.id);
@@ -285,8 +284,11 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitPlans = async () => {
         setApiStatus('idle');
-        const validPlans = plans.filter(p => p.monthlyFee && p.hours && p.planName);
-        if (validPlans.length === 0) return true;
+        const validPlans = plans.filter(p => p.monthlyFee && p.hours && p.planName && !p.dbId);
+        if (validPlans.length === 0) {
+            setApiStatus('success');
+            return true;
+        }
 
         try {
             const results = await Promise.all(
@@ -332,12 +334,14 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitLockers = async () => {
         const validLockers = lockers.filter(l =>
-            l.numberOfLockers.trim() !== '' &&
-            l.charge.trim() !== '' &&
-            parseInt(l.numberOfLockers) > 0
+            l.numberOfLockers.toString().trim() !== '' &&
+            l.charge.toString().trim() !== '' &&
+            parseInt(l.numberOfLockers) > 0 &&
+            !l.dbId // Only submit NEW lockers
         );
         if (validLockers.length === 0) {
-            console.log("No valid lockers to submit — skipping API call.");
+            console.log("No valid new lockers to submit — skipping API call.");
+            setApiStatus('success');
             return true;
         }
         setApiStatus('idle');
@@ -373,10 +377,12 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
     const submitSeatConfigurations = async () => {
         const validSeatConfigurations = seatConfigurations.filter(sc =>
             sc.seatNumbers.trim() !== '' &&
-            sc.seatType.trim() !== ''
+            sc.seatType.trim() !== '' &&
+            !sc.dbId // Custom handling to prevent duplicate seat ranges
         );
         if (validSeatConfigurations.length === 0) {
-            console.log("No valid seat configurations to submit — skipping API call.");
+            console.log("No valid new seat configurations to submit — skipping API call.");
+            setApiStatus('success');
             return true;
         }
         setApiStatus('idle');
@@ -395,6 +401,9 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                 ranges: allRanges
             }).unwrap();
 
+            // Simulate setting dbId so we don't submit them again
+            setSeatConfigurations(prev => prev.map(sc => validSeatConfigurations.find(v => v.id === sc.id) ? { ...sc, dbId: 'created' } : sc));
+
             setApiStatus('success');
             return true;
         } catch (error) {
@@ -406,17 +415,17 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitPackageRules = async () => {
         const validPackageRules = packageRules.filter(pr =>
-            pr.planId.trim() !== '' && pr.discount.toString().trim() !== ''
+            pr.planId.trim() !== '' && pr.discount.toString().trim() !== '' && !pr.dbId
         );
         if (validPackageRules.length === 0) {
-            console.log("No valid package rules to submit — skipping API call.");
+            console.log("No valid new package rules to submit — skipping API call.");
+            setApiStatus('success');
             return true;
         }
         setApiStatus('idle');
         try {
             const results = await Promise.all(
                 validPackageRules.map(pr => {
-                    // Resolve plan database ID
                     const selectedPlan = plans.find(p => String(p.id) === pr.planId);
                     return createPackageRule({
                         libraryId,
@@ -426,6 +435,15 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     }).unwrap();
                 })
             );
+            
+            setPackageRules(prev => prev.map(pr => {
+                const resultIndex = validPackageRules.findIndex(v => v.id === pr.id);
+                if (resultIndex !== -1 && results[resultIndex]) {
+                    return { ...pr, dbId: (results[resultIndex] as any)?.data?.id || 'created' };
+                }
+                return pr;
+            }));
+
             setApiStatus('success');
             return true;
         } catch (error) {
@@ -436,23 +454,21 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitOffers = async () => {
         const validOffers = offers.filter(o =>
-            o.title.trim() !== '' ||
-            o.couponCode.trim() !== '' ||
-            o.discountValue.toString().trim() !== ''
+            (o.title.trim() !== '' || o.couponCode.trim() !== '' || o.discountValue.toString().trim() !== '') && !o.dbId
         );
         if (validOffers.length === 0) {
-            console.log("No valid offers to submit — skipping API call.");
+            console.log("No valid new offers to submit — skipping API call.");
+            setApiStatus('success');
             return true;
         }
         setApiStatus('idle');
         try {
             const results = await Promise.all(
                 validOffers.map(o => {
-                    // Resolve plan database IDs
                     const resolvedPlanIds = (o.planIds || []).map((localId: string) => {
                         const selectedPlan = plans.find(p => String(p.id) === localId);
                         return selectedPlan?.dbId || localId;
-                    }).filter((id: string) => id); // Filter out empty strings
+                    }).filter((id: string) => id); 
 
                     return createOffer({
                         libraryId,
@@ -469,6 +485,15 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     }).unwrap();
                 })
             );
+            
+            setOffers(prev => prev.map(o => {
+                const resultIndex = validOffers.findIndex(v => v.id === o.id);
+                if (resultIndex !== -1 && results[resultIndex]) {
+                    return { ...o, dbId: (results[resultIndex] as any)?.data?.id || 'created' };
+                }
+                return o;
+            }));
+
             setApiStatus('success');
             return true;
         } catch (error) {
