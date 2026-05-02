@@ -18,12 +18,10 @@ import { uploadToCloudinary } from "@/state/photoUpload";
 type DetailedData = { [key: string]: any };
 
 interface OnboardingDataSlice {
-  libraryName: string;
   libraryAddress: string;
   city: string;
   state: string;
   pincode: string;
-  libraryContactNo: string;
   googleMapLink: string;
   totalSeats: string;
   openingTime: string;
@@ -551,31 +549,7 @@ export default function DetailedListingForm({
           <legend className="font-semibold text-lg px-2">
             Library Details
           </legend>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="libraryName">Library Name</Label>
-              <Input
-                id="libraryName"
-                name="libraryName"
-                value={formData.libraryName}
-                onChange={handleChange}
-                required
-                disabled={isReadOnly}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="libraryContactNo">Library Contact Number</Label>
-              <Input
-                id="libraryContactNo"
-                name="libraryContactNo"
-                type="tel"
-                value={formData.libraryContactNo}
-                onChange={handleChange}
-                required
-                disabled={isReadOnly}
-              />
-            </div>
-          </div>
+
           <div className="space-y-2">
             <Label htmlFor="libraryAddress">Library Address</Label>
             <Input

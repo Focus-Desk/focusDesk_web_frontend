@@ -9,7 +9,7 @@ import { SubmitButton } from '@/components/ui/submitButton';
 import React from 'react';
 
 interface OnboardingDataSlice {
-    libraryName: string; address: string; contactNumber: string; personName: string; email: string; interestedInListing: boolean;
+    libraryName: string; contactNumber: string; personName: string; email: string; interestedInListing: boolean;
 }
 
 interface BasicDetailsFormProps {
@@ -46,7 +46,7 @@ export default function BasicDetailsForm({ userId, isReadOnly, setCurrentStep, o
             const payload = {
                 librarianId: userId,
                 libraryName: formData.libraryName,
-                address: formData.address,
+                address: "To be updated in next step",
                 contactNumber: formData.contactNumber,
                 contactPersonName: formData.personName,
                 email: formData.email,
@@ -85,17 +85,7 @@ export default function BasicDetailsForm({ userId, isReadOnly, setCurrentStep, o
                     />
                 </div>
 
-                <div>
-                    <Label className='mb-2'>Library Address</Label>
-                    <Input
-                        placeholder="Enter Library Address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        disabled={isReadOnly}
-                        required
-                    />
-                </div>
+
 
                 <div className='grid md:grid-cols-2 gap-4'>
                     <div>
