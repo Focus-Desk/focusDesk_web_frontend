@@ -46,7 +46,7 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
 
   // Only gate DASHBOARD pages behind auth
   if (isDashboardPage) {
-    if (authLoading || authFetching) {
+    if (authLoading) {
       return <FullPageLoader message="Loading your dashboard..." />;
     }
     if (!isAuthenticated) {
