@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import LibraryPlans from "./LibraryPlans";
 import LibraryPromotions from "./LibraryPromotions";
+import LibraryLockers from "./LibraryLockers";
 import { useGetTimeSlotsByLibraryIdQuery, useGetLockersQuery, useGetSeatsByLibraryQuery } from "@/state/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
