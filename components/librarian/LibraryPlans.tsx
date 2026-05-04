@@ -121,15 +121,9 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
             <section className="space-y-8">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-4">
                     <div className="flex items-center gap-4">
-                        <div className={cn(
-                            "h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm border",
-                            title === "Fixed" ? "bg-indigo-50 text-indigo-600 border-indigo-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
-                        )}>
-                            {title === "Fixed" ? <Zap className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
-                        </div>
                         <div>
                             <h3 className="text-2xl font-black text-gray-900 tracking-tight">{title} Plans</h3>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{filtered.length} Active Configurations</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{filtered.length} Active Plans</p>
                         </div>
                     </div>
 

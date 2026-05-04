@@ -237,11 +237,8 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
         <div className="space-y-8">
             <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-100">
-                        <Ticket className="h-6 w-6" />
-                    </div>
                     <div>
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Promotional Offers</h3>
+                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Promotions</h3>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{offers?.length || 0} active coupons</p>
                     </div>
                 </div>
@@ -328,9 +325,6 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
         <div className="space-y-8">
             <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-100">
-                        <Zap className="h-6 w-6" />
-                    </div>
                     <div>
                         <h3 className="text-xl font-black text-gray-900 tracking-tight">Package Savings</h3>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{rules?.length || 0} bundle rules</p>
