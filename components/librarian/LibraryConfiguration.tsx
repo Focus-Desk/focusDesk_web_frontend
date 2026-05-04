@@ -38,9 +38,6 @@ const SlotManagement = ({ libraryId }: { libraryId: string }) => {
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
                 <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-100">
-                        <Clock className="h-6 w-6" />
-                    </div>
                     <div>
                         <h3 className="text-xl font-black text-gray-900 tracking-tight">Shift Schedule</h3>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{slots.length} Operation windows</p>
@@ -139,9 +136,6 @@ const SeatManagement = ({ libraryId }: { libraryId: string }) => {
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
                 <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-100">
-                        <LayoutGrid className="h-6 w-6" />
-                    </div>
                     <div>
                         <h3 className="text-xl font-black text-gray-900 tracking-tight">Seat Inventory</h3>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{seats?.length || 0} Registered Desks</p>
@@ -270,24 +264,8 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
                 </div>
 
                 <div className="flex items-center gap-6 relative z-10">
-                    <div className="h-16 w-16 rounded-[1.5rem] bg-gray-900 text-white flex items-center justify-center shadow-2xl">
-                        <Shield className="h-8 w-8" />
-                    </div>
                     <div>
                         <h2 className="text-3xl font-black text-gray-900 tracking-tighter">Library Control Hub</h2>
-                        <p className="text-sm font-medium text-gray-500 mt-1 flex items-center gap-2">
-                            Advanced Management System <Badge variant="outline" className="text-[9px] h-4 rounded-md">v2.0</Badge>
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex gap-4 relative z-10">
-                    <div className="bg-gray-50 px-6 py-3 rounded-2xl border border-gray-100 text-center min-w-[120px]">
-                        <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">System Health</span>
-                        <div className="flex items-center justify-center gap-2">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                            <span className="text-xs font-black text-gray-900">Synchronized</span>
-                        </div>
                     </div>
                 </div>
             </div>

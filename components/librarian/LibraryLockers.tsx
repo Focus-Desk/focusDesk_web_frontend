@@ -91,19 +91,16 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-2">
                 <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-[1.5rem] bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100">
-                        <Lock className="h-7 w-7" />
-                    </div>
                     <div>
-                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Security Vaults</h3>
+                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Lockers</h3>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lockers?.length || 0} Total Units across {Object.keys(groupedLockers).length} Categories</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="relative group hidden md:block">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
-                        <Input 
-                            placeholder="Find units..." 
+                        <Input
+                            placeholder="Find units..."
                             className="pl-11 h-11 w-64 rounded-xl border-gray-100 bg-white/50 focus:bg-white shadow-sm transition-all"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -143,9 +140,9 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {items.filter((l: any) => 
-                                    l.lockerNumber?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                    l.code?.toLowerCase().includes(searchQuery.toLowerCase())
+                                {items.filter((l: any) =>
+                                    String(l.lockerNumber || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                    String(l.code || "").toLowerCase().includes(searchQuery.toLowerCase())
                                 ).map((locker: any) => (
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.98 }}
@@ -166,7 +163,7 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
                                         </div>
 
                                         <div className="space-y-1 mb-6">
-                                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest leading-tight">Access Code</h4>
+                                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest leading-tight">Locker Id</h4>
                                             <code className="text-lg font-black text-emerald-600 tracking-tighter">{locker.code}</code>
                                         </div>
 
