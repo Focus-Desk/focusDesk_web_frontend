@@ -49,7 +49,7 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBooking, setSelectedBooking] = useState<any>(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    
+
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -82,7 +82,7 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
             );
         }
         if (selectedDate) {
-            filtered = filtered.filter((b: any) => 
+            filtered = filtered.filter((b: any) =>
                 format(new Date(b.createdAt), "yyyy-MM-dd") === selectedDate
             );
         }
@@ -118,9 +118,6 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-                        <ClipboardList className="w-7 h-7" />
-                    </div>
                     <div>
                         <h2 className="text-2xl font-black text-gray-900 tracking-tight">Booking Requests</h2>
                         <p className="text-sm text-gray-500 font-medium mt-0.5">
@@ -141,7 +138,7 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
                         className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 focus:ring-0 cursor-pointer"
                     />
                     {selectedDate && (
-                        <button 
+                        <button
                             onClick={() => setSelectedDate("")}
                             className="p-2 hover:bg-gray-100 rounded-xl text-gray-400 transition-colors"
                         >
@@ -153,181 +150,181 @@ export default function LibraryBookings({ libraryId }: LibraryBookingsProps) {
 
             <div className="space-y-6">
                 {/* Header with Search */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div className="flex flex-wrap gap-2 p-1.5 bg-gray-100/80 rounded-2xl w-full lg:w-auto">
-                    {TAB_CONFIG.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={cn(
-                                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                                activeTab === tab.id
-                                    ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
-                                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                            )}
-                        >
-                            <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? "text-blue-500" : "text-gray-400")} />
-                            {tab.label}
-                        </button>
-                    ))}
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div className="flex flex-wrap gap-2 p-1.5 bg-gray-100/80 rounded-2xl w-full lg:w-auto">
+                        {TAB_CONFIG.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
+                                    activeTab === tab.id
+                                        ? "bg-white text-blue-600 shadow-sm ring-1 ring-black/5"
+                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                                )}
+                            >
+                                <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? "text-blue-500" : "text-gray-400")} />
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="relative w-full lg:w-72 group">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                        <input
+                            type="search"
+                            placeholder="Search student or ID..."
+                            className="w-full bg-white border border-gray-200 rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                 </div>
 
-                <div className="relative w-full lg:w-72 group">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                    <input
-                        type="search"
-                        placeholder="Search student or ID..."
-                        className="w-full bg-white border border-gray-200 rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-gray-400"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-            </div>
-
-            {/* Bookings List */}
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Mode of Payment</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Payment Amount</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Date & Time</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {isLoading ? (
-                                Array.from({ length: 5 }).map((_, i) => (
-                                    <tr key={i} className="animate-pulse">
-                                        <td colSpan={6} className="px-6 py-4">
-                                            <div className="h-10 bg-gray-100 rounded-xl" />
+                {/* Bookings List */}
+                <div className="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50/50 border-b border-gray-100">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Name</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Mode of Payment</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Payment Amount</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Date & Time</th>
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {isLoading ? (
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td colSpan={6} className="px-6 py-4">
+                                                <div className="h-10 bg-gray-100 rounded-xl" />
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : filteredBookings.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-20 text-center">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="h-16 w-16 rounded-full bg-gray-50 flex items-center justify-center">
+                                                    <ClipboardList className="h-8 w-8 text-gray-300" />
+                                                </div>
+                                                <p className="text-gray-500 font-medium">No bookings found</p>
+                                            </div>
                                         </td>
                                     </tr>
-                                ))
-                            ) : filteredBookings.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-20 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="h-16 w-16 rounded-full bg-gray-50 flex items-center justify-center">
-                                                <ClipboardList className="h-8 w-8 text-gray-300" />
-                                            </div>
-                                            <p className="text-gray-500 font-medium">No bookings found</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredBookings.map((booking: any) => (
-                                    <motion.tr
-                                        initial={{ opacity: 0, y: 5 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        key={booking.id}
-                                        className="hover:bg-gray-50/50 transition-colors group"
-                                    >
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <button 
-                                                onClick={() => handleStudentClick(booking.student.id)}
-                                                className="flex items-center gap-3 group/student text-left"
-                                            >
-                                                <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm ring-1 ring-blue-100 group-hover/student:bg-blue-600 group-hover/student:text-white transition-all">
-                                                    {booking.student.student?.firstName?.[0] || booking.student.email?.[0]?.toUpperCase()}
-                                                </div>
+                                ) : (
+                                    filteredBookings.map((booking: any) => (
+                                        <motion.tr
+                                            initial={{ opacity: 0, y: 5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            key={booking.id}
+                                            className="hover:bg-gray-50/50 transition-colors group"
+                                        >
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    onClick={() => handleStudentClick(booking.student.id)}
+                                                    className="flex items-center gap-3 group/student text-left"
+                                                >
+                                                    <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm ring-1 ring-blue-100 group-hover/student:bg-blue-600 group-hover/student:text-white transition-all">
+                                                        {booking.student.student?.firstName?.[0] || booking.student.email?.[0]?.toUpperCase()}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-gray-900 text-sm group-hover/student:text-blue-600 transition-colors underline-offset-4 group-hover/student:underline decoration-blue-200">
+                                                            {booking.student.student?.firstName} {booking.student.student?.lastName}
+                                                        </span>
+                                                        <span className="text-[10px] text-gray-400 font-medium">
+                                                            {booking.student.student?.phoneNumber || booking.student.email}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    {getModeLabel(booking.transactions, booking.student.student?.firstName, booking.totalAmount)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-gray-900 text-sm group-hover/student:text-blue-600 transition-colors underline-offset-4 group-hover/student:underline decoration-blue-200">
-                                                        {booking.student.student?.firstName} {booking.student.student?.lastName}
+                                                    <span className="text-sm font-bold text-gray-900">
+                                                        ₹{booking.totalAmount}
                                                     </span>
                                                     <span className="text-[10px] text-gray-400 font-medium">
-                                                        {booking.student.student?.phoneNumber || booking.student.email}
+                                                        {booking.plan.planName}
                                                     </span>
                                                 </div>
-                                            </button>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-sm font-medium text-gray-700">
-                                                {getModeLabel(booking.transactions, booking.student.student?.firstName, booking.totalAmount)}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-gray-900">
-                                                    ₹{booking.totalAmount}
-                                                </span>
-                                                <span className="text-[10px] text-gray-400 font-medium">
-                                                    {booking.plan.planName}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-                                                    <Calendar className="h-3 w-3 text-gray-400" />
-                                                    {format(new Date(booking.createdAt), "dd MMM, yyyy")}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+                                                        <Calendar className="h-3 w-3 text-gray-400" />
+                                                        {format(new Date(booking.createdAt), "dd MMM, yyyy")}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
+                                                        <Clock className="h-3 w-3" />
+                                                        {format(new Date(booking.createdAt), "hh:mm aa")}
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
-                                                    <Clock className="h-3 w-3" />
-                                                    {format(new Date(booking.createdAt), "hh:mm aa")}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            {booking.status === "PENDING" ? (
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() => handleApprove(booking)}
-                                                        disabled={isApproving}
-                                                        className="h-9 w-9 p-0 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-md shadow-green-100 transition-all active:scale-95"
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                {booking.status === "PENDING" ? (
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => handleApprove(booking)}
+                                                            disabled={isApproving}
+                                                            className="h-9 w-9 p-0 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-md shadow-green-100 transition-all active:scale-95"
+                                                        >
+                                                            {isApproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-5 w-5" />}
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() => handleReject(booking.id)}
+                                                            disabled={isRejecting}
+                                                            className="h-9 w-9 p-0 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100 transition-all active:scale-95"
+                                                        >
+                                                            {isRejecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-5 w-5" />}
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <Badge
+                                                        className={cn(
+                                                            "rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border",
+                                                            booking.status === "ACTIVE"
+                                                                ? "bg-green-50 text-green-600 border-green-100"
+                                                                : "bg-gray-50 text-gray-500 border-gray-100 shadow-sm"
+                                                        )}
                                                     >
-                                                        {isApproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-5 w-5" />}
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => handleReject(booking.id)}
-                                                        disabled={isRejecting}
-                                                        className="h-9 w-9 p-0 rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100 transition-all active:scale-95"
-                                                    >
-                                                        {isRejecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-5 w-5" />}
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <Badge
-                                                    className={cn(
-                                                        "rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border",
-                                                        booking.status === "ACTIVE"
-                                                            ? "bg-green-50 text-green-600 border-green-100"
-                                                            : "bg-gray-50 text-gray-500 border-gray-100 shadow-sm"
-                                                    )}
-                                                >
-                                                    {booking.status}
-                                                </Badge>
-                                            )}
-                                        </td>
-                                    </motion.tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                                        {booking.status}
+                                                    </Badge>
+                                                )}
+                                            </td>
+                                        </motion.tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-            <AnimatePresence>
-                {showConfirmModal && selectedBooking && (
-                    <ConfirmBookingModal
-                        booking={selectedBooking}
-                        libraryId={libraryId}
-                        onClose={() => {
-                            setShowConfirmModal(false);
-                            setSelectedBooking(null);
-                        }}
-                        onSuccess={() => {
-                            // The mutation automatically invalidates tags, 
-                            // so the list will refresh
-                        }}
-                    />
-                )}
-            </AnimatePresence>
+                <AnimatePresence>
+                    {showConfirmModal && selectedBooking && (
+                        <ConfirmBookingModal
+                            booking={selectedBooking}
+                            libraryId={libraryId}
+                            onClose={() => {
+                                setShowConfirmModal(false);
+                                setSelectedBooking(null);
+                            }}
+                            onSuccess={() => {
+                                // The mutation automatically invalidates tags, 
+                                // so the list will refresh
+                            }}
+                        />
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

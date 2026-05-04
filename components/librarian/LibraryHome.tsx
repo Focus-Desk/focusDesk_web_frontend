@@ -317,7 +317,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                                                 await updateComplaintStatus({ id: selectedQuery.id, status: "RESOLVED", reportReason: "", reportDetails: "" }).unwrap();
                                                 toast.success("Complaint resolved");
                                                 setSelectedQuery(null);
-                                            } catch (err) {}
+                                            } catch (err) { }
                                         }}
                                     >
                                         {isUpdatingComplaint ? <Loader2 className="h-4 w-4 animate-spin" /> : "Mark as Resolved"}
@@ -333,7 +333,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                                                     await updatePauseRequestStatus({ id: selectedQuery.id, status: "APPROVED", rejectionReason: "" }).unwrap();
                                                     toast.success("Request approved");
                                                     setSelectedQuery(null);
-                                                } catch (err) {}
+                                                } catch (err) { }
                                             }}
                                         >
                                             {isUpdatingPause ? <Loader2 className="h-4 w-4 animate-spin" /> : "Approve"}
@@ -346,7 +346,7 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                                                     await updatePauseRequestStatus({ id: selectedQuery.id, status: "REJECTED", rejectionReason: "Rejected by Librarian" }).unwrap();
                                                     toast.success("Request rejected");
                                                     setSelectedQuery(null);
-                                                } catch (err) {}
+                                                } catch (err) { }
                                             }}
                                         >
                                             {isUpdatingPause ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reject"}
@@ -479,9 +479,6 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-                        <Home className="w-7 h-7" />
-                    </div>
                     <div>
                         <h2 className="text-2xl font-black text-gray-900 tracking-tight">Library Overview</h2>
                         <p className="text-sm text-gray-500 font-medium mt-0.5">
@@ -492,33 +489,33 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left Column: Welcome + Bookings + Queries */}
-            <div className="lg:col-span-8 space-y-8 flex flex-col">
-                <WelcomeBox />
+                {/* Left Column: Welcome + Bookings + Queries */}
+                <div className="lg:col-span-8 space-y-8 flex flex-col">
+                    <WelcomeBox />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 min-h-[450px]">
-                    <BookingsList />
-                    <QueriesList />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 min-h-[450px]">
+                        <BookingsList />
+                        <QueriesList />
+                    </div>
+                    <AnimatePresence>
+                        {selectedQuery && selectedQuery.qType === "MANUAL_BOOKING" ? (
+                            <ConfirmBookingModal
+                                booking={selectedQuery}
+                                libraryId={libraryId}
+                                onClose={() => setSelectedQuery(null)}
+                                onSuccess={() => setSelectedQuery(null)}
+                            />
+                        ) : (
+                            <RequestDetailModal />
+                        )}
+                    </AnimatePresence>
                 </div>
-                <AnimatePresence>
-                    {selectedQuery && selectedQuery.qType === "MANUAL_BOOKING" ? (
-                        <ConfirmBookingModal 
-                            booking={selectedQuery}
-                            libraryId={libraryId}
-                            onClose={() => setSelectedQuery(null)}
-                            onSuccess={() => setSelectedQuery(null)}
-                        />
-                    ) : (
-                        <RequestDetailModal />
-                    )}
-                </AnimatePresence>
-            </div>
 
-            {/* Right Column: Trends + Recent Activity */}
-            <div className="lg:col-span-4 space-y-8">
-                <BookingGraph />
-                <RecentStudent />
-            </div>
+                {/* Right Column: Trends + Recent Activity */}
+                <div className="lg:col-span-4 space-y-8">
+                    <BookingGraph />
+                    <RecentStudent />
+                </div>
             </div>
         </div>
     );
