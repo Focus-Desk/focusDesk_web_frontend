@@ -131,106 +131,6 @@ const SlotManagement = ({ libraryId }: { libraryId: string }) => {
     );
 };
 
-// --- LOCKER MANAGEMENT (SECURITY/VAULT STYLE) ---
-const LockerManagement = ({ libraryId }: { libraryId: string }) => {
-    const { data: lockers, isLoading } = useGetLockersQuery(libraryId);
-
-    return (
-        <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
-                <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm border border-emerald-100">
-                        <Lock className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Security Lockers</h3>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lockers?.length || 0} Storage units</p>
-                    </div>
-                </div>
-                <Button className="h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-100 transition-all hover:scale-[1.02]">
-                    <Plus className="w-4 h-4" /> Add Locker
-                </Button>
-            </div>
-
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="h-64 bg-gray-50 animate-pulse rounded-[2.5rem] border border-gray-100" />
-                    ))}
-                </div>
-            ) : !lockers || lockers.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-gray-100 rounded-[3rem] p-16 text-center">
-                    <div className="h-20 w-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                        <Lock className="h-10 w-10 text-gray-200" />
-                    </div>
-                    <h4 className="text-lg font-bold text-gray-900">No lockers configured</h4>
-                    <p className="text-gray-500 mt-2 max-w-xs mx-auto text-sm">Offer secure storage to your members to increase your monthly revenue.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {lockers.map((locker: any) => (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            key={locker.id}
-                            className="group relative bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
-                        >
-                            {/* Status Tag */}
-                            <div className="absolute top-6 right-6">
-                                <Badge className={cn(
-                                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter",
-                                    locker.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-gray-50 text-gray-400 border-gray-100"
-                                )}>
-                                    {locker.isActive ? "Online" : "Disabled"}
-                                </Badge>
-                            </div>
-
-                            <div className="flex items-center gap-5 mb-8">
-                                <div className="h-16 w-16 rounded-[1.25rem] bg-gray-900 text-white flex items-center justify-center font-black text-2xl shadow-xl group-hover:bg-emerald-600 transition-colors duration-500">
-                                    {locker.lockerNumber || "L"}
-                                </div>
-                                <div>
-                                    <h4 className="text-xl font-black text-gray-900 leading-tight">{locker.lockerType}</h4>
-                                    <code className="text-[10px] font-bold text-emerald-600 tracking-widest">{locker.code}</code>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 space-y-6">
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-black text-gray-900 tracking-tighter">₹{locker.price}</span>
-                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">/ Month</span>
-                                </div>
-
-                                <div className="p-5 rounded-[1.75rem] bg-gray-50/50 border border-gray-100 group-hover:bg-white group-hover:border-emerald-100 transition-all duration-500">
-                                    <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200/50">
-                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Usage Model</span>
-                                        <span className="text-[10px] font-black text-gray-700">{locker.isStandalone ? "Public Access" : "Seat-Linked"}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Attachment</span>
-                                        <span className="text-[10px] font-black text-emerald-600">
-                                            {locker.linkedSeatId ? `Seat #${locker.linkedSeatId.slice(-4)}` : "None"}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 flex gap-2">
-                                <Button className="flex-1 h-12 rounded-2xl font-bold bg-white text-gray-900 border border-gray-100 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-100 shadow-sm transition-all">
-                                    Manage Unit
-                                </Button>
-                                <Button variant="ghost" className="h-12 w-12 rounded-2xl text-red-400 hover:bg-red-50 hover:text-red-600 transition-all">
-                                    <Trash2 className="h-5 w-5" />
-                                </Button>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
 // --- SEAT MANAGEMENT (GRID/DASHBOARD STYLE) ---
 const SeatManagement = ({ libraryId }: { libraryId: string }) => {
     const { data: seats, isLoading } = useGetSeatsByLibraryQuery(libraryId);
@@ -421,7 +321,7 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
             <div className="min-h-[600px] animate-in fade-in duration-700">
                 {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
                 {activeTab === "slots" && <SlotManagement libraryId={libraryId} />}
-                {activeTab === "lockers" && <LockerManagement libraryId={libraryId} />}
+                {activeTab === "lockers" && <LibraryLockers libraryId={libraryId} />}
                 {activeTab === "seats" && <SeatManagement libraryId={libraryId} />}
                 {activeTab === "promotions" && <LibraryPromotions libraryId={libraryId} />}
             </div>
