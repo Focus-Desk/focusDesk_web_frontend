@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { 
+import {
     useGetLibraryBookingsQuery,
 } from "@/state/api";
 import {
@@ -58,13 +58,13 @@ export default function LibraryTransactions({ libraryId }: LibraryTransactionsPr
                 });
             }
         });
-        
+
         let result = flatList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        
+
         if (selectedDate) {
             result = result.filter(tx => format(new Date(tx.createdAt), "yyyy-MM-dd") === selectedDate);
         }
-        
+
         return result;
     }, [bookings, selectedDate]);
 
@@ -102,9 +102,6 @@ export default function LibraryTransactions({ libraryId }: LibraryTransactionsPr
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-                        <Receipt className="w-7 h-7" />
-                    </div>
                     <div>
                         <h2 className="text-2xl font-black text-gray-900 tracking-tight">Transaction History</h2>
                         <p className="text-sm text-gray-500 font-medium mt-0.5">
@@ -125,7 +122,7 @@ export default function LibraryTransactions({ libraryId }: LibraryTransactionsPr
                         className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 focus:ring-0 cursor-pointer"
                     />
                     {selectedDate && (
-                        <button 
+                        <button
                             onClick={() => setSelectedDate("")}
                             className="p-2 hover:bg-gray-100 rounded-xl text-gray-400 transition-colors"
                         >
@@ -186,7 +183,7 @@ export default function LibraryTransactions({ libraryId }: LibraryTransactionsPr
                                             className="hover:bg-gray-50/50 transition-colors"
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <button 
+                                                <button
                                                     onClick={() => handleStudentClick(tx.student.id)}
                                                     className="flex items-center gap-3 group/student text-left"
                                                 >
