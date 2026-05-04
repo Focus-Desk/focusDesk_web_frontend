@@ -424,12 +424,10 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
 
             <div className="min-h-[400px]">
                 {activeSection === "offers" ? renderOffers() : renderRules()}
-            </div>
-
-            {/* Offer Dialog */}
+            </div>            {/* Offer Dialog */}
             <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
-                <DialogContent className="w-[95vw] sm:max-w-2xl rounded-[2rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none">
-                    <div className="bg-indigo-600 p-6 sm:p-8 text-white relative">
+                <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] rounded-[2rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
+                    <div className="bg-indigo-600 p-6 sm:p-8 text-white relative shrink-0">
                         <Sparkles className="absolute top-4 right-4 h-16 sm:h-24 w-16 sm:w-24 opacity-10 -rotate-12" />
                         <DialogHeader>
                             <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tighter">
@@ -441,7 +439,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                         </DialogHeader>
                     </div>
 
-                    <div className="p-5 sm:p-8 space-y-6 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <div className="p-5 sm:p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Offer Title</Label>
@@ -567,7 +565,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                         </div>
                     </div>
 
-                    <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3">
+                    <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
                         <Button variant="ghost" onClick={() => setIsOfferDialogOpen(false)} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
                         <Button onClick={handleSaveOffer} className="h-11 sm:h-12 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
                             {editingItem ? "Update Promotion" : "Deploy Offer"}
@@ -578,8 +576,8 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
 
             {/* Rule Dialog */}
             <Dialog open={isRuleDialogOpen} onOpenChange={setIsRuleDialogOpen}>
-                <DialogContent className="w-[95vw] sm:max-w-md rounded-[2rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none">
-                    <div className="bg-amber-600 p-6 sm:p-8 text-white relative">
+                <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] rounded-[2rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
+                    <div className="bg-amber-600 p-6 sm:p-8 text-white relative shrink-0">
                         <Zap className="absolute top-4 right-4 h-16 sm:h-20 w-16 sm:w-20 opacity-10 rotate-12" />
                         <DialogHeader>
                             <DialogTitle className="text-xl sm:text-2xl font-black tracking-tighter">
@@ -591,7 +589,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                         </DialogHeader>
                     </div>
 
-                    <div className="p-6 sm:p-8 space-y-6">
+                    <div className="p-6 sm:p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Base Subscription</Label>
                             <select
@@ -609,7 +607,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Term (Months)</Label>
                                 <select
                                     value={ruleForm.months}
-                                    onChange={e => setRuleForm({ ...ruleForm, months: parseInt(e.target.value) })}
+                                    onChange={e => setRuleForm({ ...ruleForm, months: parseInt(e.target.value) || 1 })}
                                     className="w-full h-11 sm:h-12 rounded-xl border border-gray-100 bg-gray-50 px-4 font-bold text-sm outline-none appearance-none"
                                 >
                                     {[1, 3, 4, 6, 12].map(m => <option key={m} value={m}>{m} Months</option>)}
@@ -620,14 +618,17 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                 <Input
                                     type="number"
                                     value={ruleForm.percentOff}
-                                    onChange={e => setRuleForm({ ...ruleForm, percentOff: parseInt(e.target.value) })}
+                                    onChange={e => {
+                                        const val = parseInt(e.target.value);
+                                        setRuleForm({ ...ruleForm, percentOff: isNaN(val) ? 0 : val });
+                                    }}
                                     className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 font-bold text-sm"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3">
+                    <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
                         <Button variant="ghost" onClick={() => setIsRuleDialogOpen(false)} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
                         <Button onClick={handleSaveRule} className="h-12 px-8 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
                             {editingItem ? "Update Bundle" : "Apply Rule"}
