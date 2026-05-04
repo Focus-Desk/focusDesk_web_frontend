@@ -2,8 +2,8 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { 
-    useGetAuthUserQuery, 
+import {
+    useGetAuthUserQuery,
     useGetLibrariesByLibrarianQuery,
     useGetDetailedLibrarySeatsQuery
 } from "@/state/api";
@@ -71,11 +71,11 @@ export default function LibrarianDashboard() {
                     <div className="space-y-2">
                         <h2 className="text-2xl font-bold text-gray-900">Review Pending</h2>
                         <p className="text-gray-500 text-sm leading-relaxed">
-                            Your library <strong>{libraryData.libraryName}</strong> has been created and is currently under review by our team. 
+                            Your library <strong>{libraryData.libraryName}</strong> has been created and is currently under review by our team.
                             You will be notified once it is approved and activated.
                         </p>
                     </div>
-                    
+
                     <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 text-left mt-6">
                         <h3 className="font-semibold text-gray-900 text-sm mb-1 flex items-center gap-2">
                             <Headset className="w-4 h-4 text-blue-600" /> Need Help?
@@ -102,7 +102,7 @@ export default function LibrarianDashboard() {
     return (
         <div className="transition-all duration-700">
             {activeTab === "home" && <LibraryHome libraryId={libraryId} />}
-            
+
             {activeTab === "seats" && (
                 <LiveSeatPlan
                     seats={seats}
@@ -113,7 +113,7 @@ export default function LibrarianDashboard() {
                     onStudentClick={(studentId) => router.replace(`?tab=seats&studentId=${studentId}`, { scroll: false })}
                 />
             )}
-            
+
             {activeTab === "onboarding" && (
                 <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
                     <div className="flex items-center justify-between mb-8 pb-4 border-b">
@@ -132,7 +132,7 @@ export default function LibrarianDashboard() {
                     <StudentOnboardingFlow libraryId={libraryId} />
                 </div>
             )}
-            
+
             {activeTab === "queries" && <LibraryQueries libraryId={libraryId} />}
             {activeTab === "bookings" && <LibraryBookings libraryId={libraryId} />}
             {activeTab === "plans" && <LibraryConfiguration libraryId={libraryId} />}
@@ -140,7 +140,7 @@ export default function LibrarianDashboard() {
             {activeTab === "hardware" && <LibraryHardware libraryId={libraryId} />}
             {activeTab === "transactions" && <LibraryTransactions libraryId={libraryId} />}
             {activeTab === "profile" && <LibrarianProfile />}
-            
+
             <StudentManagement seats={seats} mainTab={activeTab} libraryId={libraryId as string} />
         </div>
     );

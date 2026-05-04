@@ -94,179 +94,179 @@ export function LibrarianSidebar() {
                         <SidebarMenu className="gap-1.5 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:items-center">
                             {hasLibrary ? (
                                 isLibraryActive ? (
-                                <>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "home" || (!searchParams.get("tab") && isActive("/librarian/dashboard"))}
-                                            tooltip="Overview"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                (searchParams.get("tab") === "home" || (!searchParams.get("tab") && isActive("/librarian/dashboard")))
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=home" className="flex items-center w-full">
-                                                <Home className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Library Home</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "seats"}
-                                            tooltip="Seat Plan"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                searchParams.get("tab") === "seats"
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=seats" className="flex items-center w-full">
-                                                <LayoutGrid className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Live Seat Map</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "students"}
-                                            tooltip="Students"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                searchParams.get("tab") === "students"
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=students" className="flex items-center w-full">
-                                                <Users className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Student Manager</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "queries"}
-                                            tooltip="Queries"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                searchParams.get("tab") === "queries"
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=queries" className="flex items-center w-full">
-                                                <MessageSquareText className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Queries</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "bookings"}
-                                            tooltip="Bookings"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                searchParams.get("tab") === "bookings"
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=bookings" className="flex items-center w-full">
-                                                <ClipboardList className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Bookings</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "transactions"}
-                                            tooltip="Transactions"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                searchParams.get("tab") === "transactions"
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=transactions" className="flex items-center w-full">
-                                                <Banknote className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Transactions</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "plans"}
-                                            tooltip="Plans"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                searchParams.get("tab") === "plans"
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=plans" className="flex items-center w-full">
-                                                <Settings2 className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Configuration</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "attendance"}
-                                            tooltip="Attendance"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                searchParams.get("tab") === "attendance"
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=attendance" className="flex items-center w-full">
-                                                <CalendarCheck className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Attendance</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                    <SidebarMenuItem>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={searchParams.get("tab") === "hardware"}
-                                            tooltip="Hardware Devices"
-                                            size="lg"
-                                            className={cn(
-                                                "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
-                                                searchParams.get("tab") === "hardware"
-                                                    ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
-                                                    : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
-                                            )}
-                                        >
-                                            <Link href="/librarian/dashboard?tab=hardware" className="flex items-center w-full">
-                                                <Settings className="!h-6 !w-6 shrink-0" />
-                                                {showLabels && <span className="ml-3 truncate">Hardware Devices</span>}
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                </>
+                                    <>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "home" || (!searchParams.get("tab") && isActive("/librarian/dashboard"))}
+                                                tooltip="Overview"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    (searchParams.get("tab") === "home" || (!searchParams.get("tab") && isActive("/librarian/dashboard")))
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=home" className="flex items-center w-full">
+                                                    <Home className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Library Home</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "seats"}
+                                                tooltip="Seat Plan"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    searchParams.get("tab") === "seats"
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=seats" className="flex items-center w-full">
+                                                    <LayoutGrid className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Live Seat Map</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "students"}
+                                                tooltip="Students"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    searchParams.get("tab") === "students"
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=students" className="flex items-center w-full">
+                                                    <Users className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Student Manager</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "queries"}
+                                                tooltip="Queries"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    searchParams.get("tab") === "queries"
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=queries" className="flex items-center w-full">
+                                                    <MessageSquareText className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Queries</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "bookings"}
+                                                tooltip="Bookings"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    searchParams.get("tab") === "bookings"
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=bookings" className="flex items-center w-full">
+                                                    <ClipboardList className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Bookings</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "transactions"}
+                                                tooltip="Transactions"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    searchParams.get("tab") === "transactions"
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=transactions" className="flex items-center w-full">
+                                                    <Banknote className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Transactions</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "plans"}
+                                                tooltip="Plans"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    searchParams.get("tab") === "plans"
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=plans" className="flex items-center w-full">
+                                                    <Settings2 className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Configuration</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "attendance"}
+                                                tooltip="Attendance"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    searchParams.get("tab") === "attendance"
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=attendance" className="flex items-center w-full">
+                                                    <CalendarCheck className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Attendance</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton
+                                                asChild
+                                                isActive={searchParams.get("tab") === "hardware"}
+                                                tooltip="Hardware Devices"
+                                                size="lg"
+                                                className={cn(
+                                                    "rounded-2xl transition-all duration-200 group flex items-center justify-start group-data-[state=collapsed]:justify-center",
+                                                    searchParams.get("tab") === "hardware"
+                                                        ? "bg-blue-600 text-white font-bold shadow-xl shadow-blue-100"
+                                                        : "text-gray-500 hover:bg-white hover:text-blue-600 hover:shadow-md"
+                                                )}
+                                            >
+                                                <Link href="/librarian/dashboard?tab=hardware" className="flex items-center w-full">
+                                                    <Settings className="!h-6 !w-6 shrink-0" />
+                                                    {showLabels && <span className="ml-3 truncate">Hardware Devices</span>}
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    </>
                                 ) : (
                                     <SidebarMenuItem>
                                         <SidebarMenuButton
