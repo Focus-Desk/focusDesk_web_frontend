@@ -64,11 +64,11 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
     const { data: rules, isLoading: isLoadingRules } = useGetPackageRulesByLibraryIdQuery(libraryId);
 
     // Mutations
-    const [createOffer] = useCreateOfferMutation();
-    const [updateOffer] = useUpdateOfferMutation();
+    const [createOffer, { isLoading: isCreatingOffer }] = useCreateOfferMutation();
+    const [updateOffer, { isLoading: isUpdatingOffer }] = useUpdateOfferMutation();
     const [deleteOffer] = useDeleteOfferMutation();
-    const [createRule] = useCreatePackageRuleMutation();
-    const [updateRule] = useUpdatePackageRuleMutation();
+    const [createRule, { isLoading: isCreatingRule }] = useCreatePackageRuleMutation();
+    const [updateRule, { isLoading: isUpdatingRule }] = useUpdatePackageRuleMutation();
     const [deleteRule] = useDeletePackageRuleMutation();
 
     // Dialog States
@@ -560,8 +560,11 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                     </div>
 
                     <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsOfferDialogOpen(false)} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
-                        <Button onClick={handleSaveOffer} className="h-11 sm:h-12 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
+                        <Button variant="ghost" onClick={() => setIsOfferDialogOpen(false)} disabled={isCreatingOffer || isUpdatingOffer} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
+                        <Button onClick={handleSaveOffer} disabled={isCreatingOffer || isUpdatingOffer} className="h-11 sm:h-12 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
+                            {(isCreatingOffer || isUpdatingOffer) ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
                             {editingItem ? "Update Promotion" : "Deploy Offer"}
                         </Button>
                     </div>
@@ -623,8 +626,11 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                     </div>
 
                     <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsRuleDialogOpen(false)} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
-                        <Button onClick={handleSaveRule} className="h-12 px-8 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
+                        <Button variant="ghost" onClick={() => setIsRuleDialogOpen(false)} disabled={isCreatingRule || isUpdatingRule} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
+                        <Button onClick={handleSaveRule} disabled={isCreatingRule || isUpdatingRule} className="h-12 px-8 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
+                            {(isCreatingRule || isUpdatingRule) ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
                             {editingItem ? "Update Bundle" : "Apply Rule"}
                         </Button>
                     </div>

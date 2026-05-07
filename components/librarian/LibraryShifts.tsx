@@ -58,13 +58,13 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
     const configs = configsRes?.data || [];
 
     // Mutations
-    const [createSlot] = useCreateSlotMutation();
-    const [updateSlot] = useUpdateSlotMutation();
+    const [createSlot, { isLoading: isCreatingSlot }] = useCreateSlotMutation();
+    const [updateSlot, { isLoading: isUpdatingSlot }] = useUpdateSlotMutation();
     const [deleteSlot] = useDeleteSlotMutation();
-    const [createConfig] = useCreateSlotConfigMutation();
-    const [updateConfig] = useUpdateSlotConfigMutation();
+    const [createConfig, { isLoading: isCreatingConfig }] = useCreateSlotConfigMutation();
+    const [updateConfig, { isLoading: isUpdatingConfig }] = useUpdateSlotConfigMutation();
     const [deleteConfig] = useDeleteSlotConfigMutation();
-    const [addSlotsToConfig] = useAddSlotsToConfigMutation();
+    const [addSlotsToConfig, { isLoading: isAddingSlots }] = useAddSlotsToConfigMutation();
 
     // Dialog States
     const [isSlotDialogOpen, setIsSlotDialogOpen] = useState(false);
@@ -396,8 +396,11 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                     </div>
 
                     <div className="p-8 sm:p-10 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsSlotDialogOpen(false)} className="h-12 px-8 rounded-2xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
-                        <Button onClick={handleSaveSlot} className="h-12 px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
+                        <Button variant="ghost" onClick={() => setIsSlotDialogOpen(false)} disabled={isCreatingSlot || isUpdatingSlot} className="h-12 px-8 rounded-2xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
+                        <Button onClick={handleSaveSlot} disabled={isCreatingSlot || isUpdatingSlot} className="h-12 px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
+                            {(isCreatingSlot || isUpdatingSlot) ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
                             {editingItem ? "Update Shift" : "Create Shift"}
                         </Button>
                     </div>
@@ -468,8 +471,11 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                     </div>
 
                     <div className="p-8 sm:p-10 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsConfigDialogOpen(false)} className="h-12 px-8 rounded-2xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
-                        <Button onClick={handleSaveConfig} className="h-12 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
+                        <Button variant="ghost" onClick={() => setIsConfigDialogOpen(false)} disabled={isCreatingConfig || isUpdatingConfig || isAddingSlots} className="h-12 px-8 rounded-2xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
+                        <Button onClick={handleSaveConfig} disabled={isCreatingConfig || isUpdatingConfig || isAddingSlots} className="h-12 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
+                            {(isCreatingConfig || isUpdatingConfig || isAddingSlots) ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
                             {editingItem ? "Update Pattern" : "Activate Pattern"}
                         </Button>
                     </div>

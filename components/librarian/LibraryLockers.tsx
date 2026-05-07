@@ -37,7 +37,7 @@ interface LibraryLockersProps {
 
 export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
     const { data: lockers, isLoading } = useGetLockersQuery(libraryId);
-    const [createLocker] = useCreateLockerMutation();
+    const [createLocker, { isLoading: isCreating }] = useCreateLockerMutation();
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -258,10 +258,11 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
                     </div>
 
                     <div className="p-8 sm:p-10 bg-gray-50 flex flex-col sm:flex-row justify-end gap-4 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsCreateModalOpen(false)} className="h-14 px-8 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 transition-all order-2 sm:order-1">
+                        <Button variant="ghost" onClick={() => setIsCreateModalOpen(false)} disabled={isCreating} className="h-14 px-8 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 transition-all order-2 sm:order-1">
                             Dismiss
                         </Button>
-                        <Button onClick={handleCreateLocker} className="h-14 px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 transition-all hover:scale-[1.02] order-1 sm:order-2">
+                        <Button onClick={handleCreateLocker} disabled={isCreating} className="h-14 px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 transition-all hover:scale-[1.02] order-1 sm:order-2">
+                            {isCreating ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
                             Initialize Batch
                         </Button>
                     </div>
