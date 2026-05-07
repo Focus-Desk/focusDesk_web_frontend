@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     Plus,
     Tag,
@@ -21,13 +22,23 @@ import {
     CheckCircle2,
     Sparkles,
     Zap,
-    TrendingUp
+    TrendingUp,
+    Check
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
     useGetPlansQuery,
     useUpdatePlanMutation,
     useDeletePlanMutation,
+    useCreatePlanMutation,
+    useGetSlotConfigsByLibraryIdQuery
 } from "@/state/api";
 import { toast } from "sonner";
 
@@ -46,8 +57,22 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
     const [activeActionPlanId, setActiveActionPlanId] = useState<string | null>(null);
 
     const { data: plans, isLoading: isLoadingPlans } = useGetPlansQuery(libraryId);
+    const { data: configsRes } = useGetSlotConfigsByLibraryIdQuery(libraryId);
     const [updatePlan, { isLoading: isUpdating }] = useUpdatePlanMutation();
     const [deletePlan, { isLoading: isDeleting }] = useDeletePlanMutation();
+    const [createPlan, { isLoading: isCreating }] = useCreatePlanMutation();
+
+    const configs = configsRes?.data || [];
+
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [planForm, setPlanForm] = useState({
+        planName: "",
+        planType: "Fixed" as "Fixed" | "Float",
+        price: "",
+        hours: "12",
+        selectedConfigIds: [] as string[],
+        description: ""
+    });
 
     const categorizedPlans = useMemo(() => {
         const groups = { Fixed: [] as any[], Float: [] as any[] };
@@ -107,6 +132,39 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
             toast.error(err.data?.message || "Failed to delete plan");
         } finally {
             setActiveActionPlanId(null);
+        }
+    };
+
+    const handleCreatePlan = async () => {
+        try {
+            if (!planForm.planName || !planForm.price || !planForm.hours || planForm.selectedConfigIds.length === 0) {
+                toast.error("Please fill in all required fields and select at least one shift pattern");
+                return;
+            }
+
+            const payload = {
+                libraryId,
+                planName: planForm.planName,
+                planType: planForm.planType,
+                price: parseFloat(planForm.price),
+                hours: parseInt(planForm.hours),
+                slotIds: planForm.selectedConfigIds,
+                description: planForm.description
+            };
+
+            await createPlan(payload).unwrap();
+            toast.success("Subscription plan created successfully!");
+            setIsCreateModalOpen(false);
+            setPlanForm({
+                planName: "",
+                planType: "Fixed",
+                price: "",
+                hours: "12",
+                selectedConfigIds: [],
+                description: ""
+            });
+        } catch (err: any) {
+            toast.error(err.data?.message || "Failed to create plan");
         }
     };
 
@@ -262,22 +320,184 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
 
     return (
         <div className="space-y-16 animate-in fade-in duration-1000">
-            {isLoadingPlans ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {[1, 2, 3].map(i => <div key={i} className="h-72 bg-gray-50 animate-pulse rounded-[3rem] border border-gray-100" />)}
+            {/* Header with Search and Create */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
+                <div>
+                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Revenue Models</h2>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{plans?.length || 0} active subscriptions</p>
                 </div>
-            ) : !plans || plans.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-gray-100 rounded-[3rem] p-16 text-center">
-                    <Tag className="h-16 w-16 text-gray-200 mx-auto mb-6" />
-                    <h3 className="text-xl font-black text-gray-900">No Revenue Models</h3>
-                    <p className="text-gray-500 mt-2 max-w-sm mx-auto text-sm">Design your first subscription plan to start accepting member bookings and revenue.</p>
-                </div>
-            ) : (
-                <>
-                    {categorizedPlans.Fixed.length > 0 && renderPlanSection("Fixed", categorizedPlans.Fixed, fixedSearch, setFixedSearch, fixedDuration, setFixedDuration)}
-                    {categorizedPlans.Float.length > 0 && renderPlanSection("Float", categorizedPlans.Float, floatSearch, setFloatSearch, floatDuration, setFloatDuration)}
-                </>
-            )}
+                <Button 
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-100 px-6 transition-all hover:scale-[1.02]"
+                >
+                    <Plus className="w-5 h-5" /> New Plan
+                </Button>
+            </div>
+
+            <div className="space-y-20">
+                {isLoadingPlans ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[1, 2, 3].map(i => <div key={i} className="h-72 bg-gray-50 animate-pulse rounded-[3rem] border border-gray-100" />)}
+                    </div>
+                ) : !plans || plans.length === 0 ? (
+                    <div className="bg-white border-2 border-dashed border-gray-100 rounded-[3rem] p-16 text-center">
+                        <Tag className="h-16 w-16 text-gray-200 mx-auto mb-6" />
+                        <h3 className="text-xl font-black text-gray-900">No Revenue Models</h3>
+                        <p className="text-gray-500 mt-2 max-w-sm mx-auto text-sm">Design your first subscription plan to start accepting member bookings and revenue.</p>
+                    </div>
+                ) : (
+                    <>
+                        {categorizedPlans.Fixed.length > 0 && renderPlanSection("Fixed", categorizedPlans.Fixed, fixedSearch, setFixedSearch, fixedDuration, setFixedDuration)}
+                        {categorizedPlans.Float.length > 0 && renderPlanSection("Float", categorizedPlans.Float, floatSearch, setFloatSearch, floatDuration, setFloatDuration)}
+                    </>
+                )}
+            </div>
+
+            {/* Creation Modal */}
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] rounded-[23px] sm:rounded-[23px] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
+                    <div className="bg-blue-600 p-8 sm:p-10 text-white relative shrink-0">
+                        <Sparkles className="absolute top-4 right-4 h-20 sm:h-24 w-20 sm:w-24 opacity-10 rotate-12" />
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tighter">
+                                Design New Plan
+                            </DialogTitle>
+                            <DialogDescription className="text-blue-100 font-medium mt-1">
+                                Create a tailored subscription model for your library members.
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
+
+                    <div className="p-8 sm:p-10 space-y-8 overflow-y-auto flex-1 custom-scrollbar">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Plan Identity</Label>
+                                <Input
+                                    value={planForm.planName}
+                                    onChange={e => setPlanForm({ ...planForm, planName: e.target.value })}
+                                    placeholder="e.g. Executive Full Day"
+                                    className="h-14 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5"
+                                />
+                            </div>
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Allocation Type</Label>
+                                <div className="flex p-1.5 bg-gray-100 rounded-2xl gap-1">
+                                    {(["Fixed", "Float"] as const).map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setPlanForm({ ...planForm, planType: type })}
+                                            className={cn(
+                                                "flex-1 h-11 rounded-xl text-xs font-black transition-all",
+                                                planForm.planType === type ? "bg-white text-blue-600 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                                            )}
+                                        >
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Monthly Pricing (₹)</Label>
+                                <div className="relative">
+                                    <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-gray-400">₹</span>
+                                    <Input
+                                        type="number"
+                                        value={planForm.price}
+                                        onChange={e => setPlanForm({ ...planForm, price: e.target.value })}
+                                        placeholder="1500"
+                                        className="h-14 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm pl-10 pr-5"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Usage Duration (Hrs)</Label>
+                                <select
+                                    value={planForm.hours}
+                                    onChange={e => setPlanForm({ ...planForm, hours: e.target.value })}
+                                    className="w-full h-14 rounded-2xl border border-gray-100 bg-gray-50 px-5 font-bold text-sm outline-none appearance-none cursor-pointer"
+                                >
+                                    <option value="6">6 Hours</option>
+                                    <option value="8">8 Hours</option>
+                                    <option value="10">10 Hours</option>
+                                    <option value="12">12 Hours (Standard)</option>
+                                    <option value="14">14 Hours</option>
+                                    <option value="24">24 Hours (Full Cycle)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Available Shift Patterns</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {configs.map((config: any) => (
+                                    <button
+                                        key={config.id}
+                                        onClick={() => {
+                                            const updated = planForm.selectedConfigIds.includes(config.id)
+                                                ? planForm.selectedConfigIds.filter(id => id !== config.id)
+                                                : [...planForm.selectedConfigIds, config.id];
+                                            setPlanForm({ ...planForm, selectedConfigIds: updated });
+                                        }}
+                                        className={cn(
+                                            "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
+                                            planForm.selectedConfigIds.includes(config.id)
+                                                ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 scale-[1.02]"
+                                                : "bg-white border-gray-100 text-gray-400 hover:border-blue-200"
+                                        )}
+                                    >
+                                        <div className="text-left">
+                                            <div className={cn("text-[10px] font-black uppercase tracking-widest", planForm.selectedConfigIds.includes(config.id) ? "text-blue-100" : "text-gray-900")}>
+                                                {config.name}
+                                            </div>
+                                            <div className={cn("text-[8px] font-bold", planForm.selectedConfigIds.includes(config.id) ? "text-blue-200" : "text-gray-400")}>
+                                                {config.slots?.length || 0} time windows linked
+                                            </div>
+                                        </div>
+                                        {planForm.selectedConfigIds.includes(config.id) && <Check className="h-5 w-5 text-white" />}
+                                    </button>
+                                ))}
+                                {configs.length === 0 && (
+                                    <p className="col-span-2 text-[10px] font-bold text-amber-600 bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                                        Warning: No shift patterns found. Please define shift configurations first in the Schedule tab.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Plan Highlights (Optional)</Label>
+                            <Input
+                                value={planForm.description}
+                                onChange={e => setPlanForm({ ...planForm, description: e.target.value })}
+                                placeholder="e.g. Complimentary Wi-Fi, Coffee, Dedicated Locker"
+                                className="h-14 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="p-8 sm:p-10 bg-gray-50 flex flex-col sm:flex-row justify-end gap-4 shrink-0">
+                        <Button 
+                            variant="ghost" 
+                            onClick={() => setIsCreateModalOpen(false)}
+                            disabled={isCreating}
+                            className="h-14 px-8 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 transition-all order-2 sm:order-1"
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleCreatePlan}
+                            disabled={isCreating}
+                            className="h-14 px-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-100 transition-all hover:scale-[1.02] order-1 sm:order-2"
+                        >
+                            {isCreating ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                            Deploy Plan
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
