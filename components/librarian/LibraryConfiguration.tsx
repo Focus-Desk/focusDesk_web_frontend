@@ -160,11 +160,13 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-1000">
             {/* Page Header */}
-            <div className="rounded-[23px] p-10 flex flex-col md:flex-row md:items-center justify-between gap-8 relative overflow-hidden group">
-
-                <div className="flex items-center gap-6 relative z-10">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
                     <div>
-                        <h2 className="text-3xl font-black text-gray-900 tracking-tighter">Library Configurations</h2>
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Library Configurations</h2>
+                        <p className="text-sm text-gray-500 font-medium mt-0.5">
+                            Manage your seating, shifts, lockers, and revenue models from one hub
+                        </p>
                     </div>
                 </div>
             </div>
