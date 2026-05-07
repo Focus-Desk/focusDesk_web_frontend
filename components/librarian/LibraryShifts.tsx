@@ -209,7 +209,7 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                     {[1, 2, 3].map(i => <div key={i} className="h-48 bg-gray-50 animate-pulse rounded-[2.5rem]" />)}
                 </div>
             ) : slots.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-gray-100 rounded-[3rem] p-16 text-center">
+                <div className="bg-white border-2 border-dashed border-gray-100 rounded-[1rem] p-16 text-center">
                     <Clock className="h-12 w-12 text-gray-200 mx-auto mb-4" />
                     <h4 className="text-lg font-bold text-gray-900">No shifts defined</h4>
                     <p className="text-gray-500 text-sm mt-2">Define your library's raw operational hours first.</p>
@@ -275,7 +275,7 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                     {[1, 2, 3].map(i => <div key={i} className="h-48 bg-gray-50 animate-pulse rounded-[2.5rem]" />)}
                 </div>
             ) : configs.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-gray-100 rounded-[3rem] p-16 text-center">
+                <div className="bg-white border-2 border-dashed border-gray-100 rounded-[1rem] p-16 text-center">
                     <Layers className="h-12 w-12 text-gray-200 mx-auto mb-4" />
                     <h4 className="text-lg font-bold text-gray-900">No patterns created</h4>
                     <p className="text-gray-500 text-sm mt-2">Combine master shifts to create booking options (e.g. "Full Day", "Standard Shift").</p>
@@ -349,7 +349,7 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
 
             {/* Slot Dialog */}
             <Dialog open={isSlotDialogOpen} onOpenChange={setIsSlotDialogOpen}>
-                <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] rounded-[2rem] sm:rounded-[3rem] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
+                <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] rounded-[2rem] sm:rounded-[20px] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
                     <div className="bg-amber-600 p-8 sm:p-10 text-white relative shrink-0">
                         <Sparkles className="absolute top-4 right-4 h-20 sm:h-24 w-20 sm:w-24 opacity-10 rotate-12" />
                         <DialogHeader>
@@ -393,6 +393,14 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                                 />
                             </div>
                         </div>
+
+                        <div className="p-5 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3">
+                            <Info className="h-5 w-5 text-amber-600 shrink-0" />
+                            <p className="text-[11px] font-bold text-amber-900 leading-relaxed">
+                                <span className="uppercase tracking-widest text-[9px] block mb-1 text-amber-700">Important Reminder</span>
+                                Do not forget to create a config of continuous slots to avoid discrepancies in student bookings.
+                            </p>
+                        </div>
                     </div>
 
                     <div className="p-8 sm:p-10 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
@@ -409,7 +417,7 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
 
             {/* Config Dialog */}
             <Dialog open={isConfigDialogOpen} onOpenChange={setIsConfigDialogOpen}>
-                <DialogContent className="w-[95vw] sm:max-w-xl max-h-[90vh] rounded-[2rem] sm:rounded-[3rem] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
+                <DialogContent className="w-[95vw] sm:max-w-xl max-h-[90vh] rounded-[2rem] sm:rounded-[23px] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
                     <div className="bg-indigo-600 p-8 sm:p-10 text-white relative shrink-0">
                         <Sparkles className="absolute top-4 right-4 h-20 sm:h-24 w-20 sm:w-24 opacity-10 -rotate-12" />
                         <DialogHeader>

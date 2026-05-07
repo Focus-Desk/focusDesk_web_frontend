@@ -420,12 +420,12 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                 {activeSection === "offers" ? renderOffers() : renderRules()}
             </div>            {/* Offer Dialog */}
             <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
-                <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] rounded-[2rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
+                <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] rounded-[23px] sm:rounded-[23px] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
                     <div className="bg-indigo-600 p-6 sm:p-8 text-white relative shrink-0">
                         <Sparkles className="absolute top-4 right-4 h-16 sm:h-24 w-16 sm:w-24 opacity-10 -rotate-12" />
                         <DialogHeader>
                             <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tighter">
-                                {editingItem ? "Refine Promotion" : "Craft New Offer"}
+                                {editingItem ? "Refine Promotion" : "New Offer"}
                             </DialogTitle>
                             <DialogDescription className="text-indigo-100 font-medium text-xs sm:text-sm">
                                 Configure your promotional discount to boost library engagement.
@@ -573,12 +573,12 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
 
             {/* Rule Dialog */}
             <Dialog open={isRuleDialogOpen} onOpenChange={setIsRuleDialogOpen}>
-                <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] rounded-[2rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
+                <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] rounded-[23px] sm:rounded-[23px] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
                     <div className="bg-amber-600 p-6 sm:p-8 text-white relative shrink-0">
                         <Zap className="absolute top-4 right-4 h-16 sm:h-20 w-16 sm:w-20 opacity-10 rotate-12" />
                         <DialogHeader>
                             <DialogTitle className="text-xl sm:text-2xl font-black tracking-tighter">
-                                {editingItem ? "Modify Bundle" : "New Bundle Rule"}
+                                {editingItem ? "Modify Bundle" : "Bundle Discount"}
                             </DialogTitle>
                             <DialogDescription className="text-amber-100 font-medium text-xs sm:text-sm">
                                 Incentivize long-term commitments with smart bundle pricing.
