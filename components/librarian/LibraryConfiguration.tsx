@@ -24,109 +24,11 @@ import { Badge } from "@/components/ui/badge";
 import LibraryPlans from "./LibraryPlans";
 import LibraryPromotions from "./LibraryPromotions";
 import LibraryLockers from "./LibraryLockers";
+import LibraryShifts from "./LibraryShifts";
 import { useGetTimeSlotsByLibraryIdQuery, useGetLockersQuery, useGetSeatsByLibraryQuery } from "@/state/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-
-// --- SLOT MANAGEMENT (TIMELINE STYLE) ---
-const SlotManagement = ({ libraryId }: { libraryId: string }) => {
-    const { data: response, isLoading } = useGetTimeSlotsByLibraryIdQuery(libraryId);
-    const slots = response?.success ? response.data : [];
-
-    return (
-        <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
-                <div className="flex items-center gap-4">
-                    <div>
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Shift Schedule</h3>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{slots.length} Operation windows</p>
-                    </div>
-                </div>
-                <Button className="h-11 bg-gray-900 hover:bg-black text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-gray-200 transition-all hover:scale-[1.02]">
-                    <Plus className="w-4 h-4" /> New Shift
-                </Button>
-            </div>
-
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="h-48 bg-gray-50 animate-pulse rounded-[2.5rem] border border-gray-100" />
-                    ))}
-                </div>
-            ) : slots.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-gray-100 rounded-[3rem] p-16 text-center">
-                    <div className="h-20 w-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                        <Clock className="h-10 w-10 text-gray-200" />
-                    </div>
-                    <h4 className="text-lg font-bold text-gray-900">No shifts defined</h4>
-                    <p className="text-gray-500 mt-2 max-w-xs mx-auto text-sm">Define your library's operational hours to enable member bookings.</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {slots.map((slot: any) => (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            key={slot.id}
-                            className="relative bg-white border border-gray-100 rounded-[2.5rem] p-7 shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden"
-                        >
-                            {/* Accent Background */}
-                            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500">
-                                <Clock className="h-32 w-32 -rotate-12" />
-                            </div>
-
-                            <div className="relative z-10 flex flex-col h-full">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
-                                            {slot.tag} Shift
-                                        </span>
-                                    </div>
-                                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl text-gray-400 hover:text-amber-600 hover:bg-amber-50">
-                                        <Edit3 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-
-                                <div className="mb-8">
-                                    <div className="text-3xl font-black text-gray-900 tracking-tighter flex items-center gap-3">
-                                        {slot.startTime}
-                                        <ArrowUpRight className="h-5 w-5 text-gray-200 group-hover:text-amber-500 transition-colors" />
-                                        {slot.endTime}
-                                    </div>
-                                </div>
-
-                                {/* <div className="mt-auto space-y-4">
-                                    <div className="flex justify-between items-end">
-                                        <div className="space-y-1">
-                                            <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest">Capacity</span>
-                                            <span className="text-sm font-black text-gray-900">{slot.bookedCount} / {slot.capacity || "Unlimited"}</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Load</span>
-                                            <div className="flex gap-0.5">
-                                                {Array.from({ length: 5 }).map((_, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className={cn(
-                                                            "h-1 w-4 rounded-full transition-all duration-500",
-                                                            i < (slot.bookedCount / (slot.capacity || 1)) * 5 ? "bg-amber-500" : "bg-gray-100"
-                                                        )}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div> */}
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
 
 // --- SEAT MANAGEMENT (GRID/DASHBOARD STYLE) ---
 const SeatManagement = ({ libraryId }: { libraryId: string }) => {
@@ -298,7 +200,7 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
             {/* Dynamic Content Section */}
             <div className="min-h-[600px] animate-in fade-in duration-700">
                 {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
-                {activeTab === "slots" && <SlotManagement libraryId={libraryId} />}
+                {activeTab === "slots" && <LibraryShifts libraryId={libraryId} />}
                 {activeTab === "lockers" && <LibraryLockers libraryId={libraryId} />}
                 {activeTab === "seats" && <SeatManagement libraryId={libraryId} />}
                 {activeTab === "promotions" && <LibraryPromotions libraryId={libraryId} />}
