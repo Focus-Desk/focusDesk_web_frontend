@@ -417,12 +417,12 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
 
             {/* Config Dialog */}
             <Dialog open={isConfigDialogOpen} onOpenChange={setIsConfigDialogOpen}>
-                <DialogContent className="w-[95vw] sm:max-w-xl max-h-[90vh] rounded-[2rem] sm:rounded-[23px] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
+                <DialogContent className="w-[95vw] sm:max-w-xl max-h-[90vh] rounded-[23px] sm:rounded-[23px] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
                     <div className="bg-indigo-600 p-8 sm:p-10 text-white relative shrink-0">
                         <Sparkles className="absolute top-4 right-4 h-20 sm:h-24 w-20 sm:w-24 opacity-10 -rotate-12" />
                         <DialogHeader>
                             <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tighter">
-                                {editingItem ? "Update Pattern" : "Compose Pattern"}
+                                {editingItem ? "Update Config" : "Add Config"}
                             </DialogTitle>
                             <DialogDescription className="text-indigo-100 font-medium">
                                 Group shifts to create a logical schedule option.
