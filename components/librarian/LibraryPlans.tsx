@@ -183,11 +183,15 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                         )}
                                     </div>
                                 </div>
-                                <Switch
-                                    checked={plan.isActive}
-                                    onCheckedChange={() => handleToggleStatus(plan.id, plan.isActive)}
-                                    className="data-[state=checked]:bg-blue-600"
-                                />
+                                <div className="flex items-center gap-2">
+                                    {(isUpdating && activeActionPlanId === plan.id) && <Loader2 className="h-3 w-3 animate-spin text-blue-600" />}
+                                    <Switch
+                                        checked={plan.isActive}
+                                        onCheckedChange={() => handleToggleStatus(plan.id, plan.isActive)}
+                                        disabled={isUpdating && activeActionPlanId === plan.id}
+                                        className="data-[state=checked]:bg-blue-600"
+                                    />
+                                </div>
                             </div>
                             <div className="mt-auto pt-8 border-t border-gray-50">
                                 <div className="flex items-end justify-between">
@@ -204,10 +208,14 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                                         autoFocus
                                                     />
                                                 </div>
-                                                <Button size="sm" onClick={() => handleSavePrice(plan.id)} className="h-11 w-11 p-0 bg-blue-600 rounded-xl shadow-lg shadow-blue-100">
-                                                    <CheckCircle2 className="h-5 w-5" />
+                                                <Button size="sm" onClick={() => handleSavePrice(plan.id)} disabled={isUpdating && activeActionPlanId === plan.id} className="h-11 w-11 p-0 bg-blue-600 rounded-xl shadow-lg shadow-blue-100">
+                                                    {(isUpdating && activeActionPlanId === plan.id) ? (
+                                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                                    ) : (
+                                                        <CheckCircle2 className="h-5 w-5" />
+                                                    )}
                                                 </Button>
-                                                <Button variant="ghost" onClick={() => setEditingPlanId(null)} className="h-11 w-11 p-0 text-gray-400">
+                                                <Button variant="ghost" onClick={() => setEditingPlanId(null)} disabled={isUpdating && activeActionPlanId === plan.id} className="h-11 w-11 p-0 text-gray-400">
                                                     <X className="h-5 w-5" />
                                                 </Button>
                                             </div>
@@ -224,6 +232,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                             <Button
                                                 variant="ghost"
                                                 onClick={() => { setEditingPlanId(plan.id); setEditPrice(plan.price.toString()); }}
+                                                disabled={(isUpdating || isDeleting) && activeActionPlanId === plan.id}
                                                 className="h-11 w-11 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl"
                                             >
                                                 <Edit3 className="h-5 w-5" />
@@ -231,9 +240,14 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                             <Button
                                                 variant="ghost"
                                                 onClick={() => handleDelete(plan.id)}
+                                                disabled={(isUpdating || isDeleting) && activeActionPlanId === plan.id}
                                                 className="h-11 w-11 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
                                             >
-                                                <Trash2 className="h-5 w-5" />
+                                                {(isDeleting && activeActionPlanId === plan.id) ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="h-5 w-5" />
+                                                )}
                                             </Button>
                                         </div>
                                     )}
