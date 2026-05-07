@@ -278,10 +278,6 @@
   font-weight: bold;
 } */
 
-div {
-  border-radius: 15px;
-}
-
 button {
   transition: all ease-in-out 300ms;
 }
