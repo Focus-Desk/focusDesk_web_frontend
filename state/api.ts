@@ -668,6 +668,35 @@ export const api = createApi({
       },
     }),
 
+    updateSlotConfig: build.mutation<{ success: boolean, data: any }, { id: string, data: Partial<CreateSlotConfigArgs> }>({
+      query: ({ id, data }) => ({
+        url: `slot-configs/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Slot configuration updated!",
+          error: "Failed to update slot configuration.",
+        });
+      },
+    }),
+
+    deleteSlotConfig: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({
+        url: `slot-configs/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Slot configuration deleted!",
+          error: "Failed to delete slot configuration.",
+        });
+      },
+    }),
+
     createSlot: build.mutation<{ success: boolean, data: Slot }, CreateSlotArgs>({
       query: (body) => ({
         url: "slot-configs/slots",
@@ -679,6 +708,35 @@ export const api = createApi({
         await withToast(queryFulfilled, {
           success: "Master slot created!",
           error: "Failed to create master slot.",
+        });
+      },
+    }),
+
+    updateSlot: build.mutation<{ success: boolean, data: Slot }, { id: string, data: Partial<CreateSlotArgs> }>({
+      query: ({ id, data }) => ({
+        url: `slot-configs/slots/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Master slot updated!",
+          error: "Failed to update master slot.",
+        });
+      },
+    }),
+
+    deleteSlot: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({
+        url: `slot-configs/slots/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Master slot deleted!",
+          error: "Failed to delete master slot.",
         });
       },
     }),
@@ -1560,6 +1618,10 @@ export const {
   useCreateSlotConfigMutation,
   useAddSlotsToConfigMutation,
   useGetSlotConfigsByLibraryIdQuery,
+  useUpdateSlotMutation,
+  useDeleteSlotMutation,
+  useUpdateSlotConfigMutation,
+  useDeleteSlotConfigMutation,
   useGetDetailedLibrarySeatsQuery,
   useSearchStudentByMobileQuery,
   useLazySearchStudentByMobileQuery,
