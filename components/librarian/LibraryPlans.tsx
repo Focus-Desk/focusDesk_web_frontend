@@ -154,7 +154,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                             key={plan.id}
                             layout
                             className={cn(
-                                "group relative bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-500 p-8 flex flex-col gap-6 overflow-hidden",
+                                "group relative bg-white rounded-[1rem] border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-500 p-8 flex flex-col gap-6 overflow-hidden",
                                 !plan.isActive && "opacity-60 grayscale-[0.5]"
                             )}
                         >
