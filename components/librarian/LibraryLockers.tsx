@@ -197,7 +197,7 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
                         <Sparkles className="absolute top-4 right-4 h-20 sm:h-24 w-20 sm:w-24 opacity-10 -rotate-12" />
                         <DialogHeader>
                             <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tighter">
-                                Expand Storage
+                                Add Lockers
                             </DialogTitle>
                             <DialogDescription className="text-emerald-100 font-medium mt-1">
                                 Add a new batch of lockers to your library inventory.
