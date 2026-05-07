@@ -42,6 +42,8 @@ import {
 } from "@/state/api";
 import { toast } from "sonner";
 
+const SLOT_POOLS = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'];
+
 interface LibraryPlansProps {
     libraryId: string;
 }
@@ -69,10 +71,21 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
         planName: "",
         planType: "Fixed" as "Fixed" | "Float",
         price: "",
-        hours: "12",
-        selectedConfigIds: [] as string[],
+        hours: "0",
+        selectedConfigId: "",
+        selectedSlotIds: [] as string[],
+        slotPools: [] as string[],
         description: ""
     });
+
+    const calculateHours = (start: string, end: string) => {
+        if (!start || !end) return 0;
+        const [h1, m1] = start.split(':').map(Number);
+        const [h2, m2] = end.split(':').map(Number);
+        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (diff < 0) diff += 24 * 60;
+        return diff / 60;
+    };
 
     const categorizedPlans = useMemo(() => {
         const groups = { Fixed: [] as any[], Float: [] as any[] };
@@ -137,7 +150,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
 
     const handleCreatePlan = async () => {
         try {
-            if (!planForm.planName || !planForm.price || !planForm.hours || planForm.selectedConfigIds.length === 0) {
+            if (!planForm.planName || !planForm.price || !planForm.hours || planForm.selectedSlotIds.length === 0) {
                 toast.error("Please fill in all required fields and select at least one shift pattern");
                 return;
             }
@@ -147,8 +160,9 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 planName: planForm.planName,
                 planType: planForm.planType,
                 price: parseFloat(planForm.price),
-                hours: parseInt(planForm.hours),
-                slotIds: planForm.selectedConfigIds,
+                hours: Math.ceil(parseFloat(planForm.hours)),
+                slotIds: planForm.selectedSlotIds,
+                slotPools: planForm.slotPools,
                 description: planForm.description
             };
 
@@ -159,8 +173,10 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 planName: "",
                 planType: "Fixed",
                 price: "",
-                hours: "12",
-                selectedConfigIds: [],
+                hours: "0",
+                selectedConfigId: "",
+                selectedSlotIds: [],
+                slotPools: [],
                 description: ""
             });
         } catch (err: any) {
@@ -414,56 +430,99 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                             </div>
                             <div className="space-y-3">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Usage Duration (Hrs)</Label>
-                                <select
-                                    value={planForm.hours}
-                                    onChange={e => setPlanForm({ ...planForm, hours: e.target.value })}
-                                    className="w-full h-14 rounded-2xl border border-gray-100 bg-gray-50 px-5 font-bold text-sm outline-none appearance-none cursor-pointer"
-                                >
-                                    <option value="6">6 Hours</option>
-                                    <option value="8">8 Hours</option>
-                                    <option value="10">10 Hours</option>
-                                    <option value="12">12 Hours (Standard)</option>
-                                    <option value="14">14 Hours</option>
-                                    <option value="24">24 Hours (Full Cycle)</option>
-                                </select>
+                                <div className="h-14 flex items-center px-5 rounded-2xl bg-gray-100 border border-gray-100 text-sm font-black text-blue-600">
+                                    {planForm.hours} Hours {planForm.planType === 'Fixed' && <span className="ml-2 text-[8px] text-gray-400 uppercase tracking-widest font-bold">(Auto-calculated)</span>}
+                                </div>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Available Shift Patterns</Label>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Select Shift Configuration</Label>
+                            <select
+                                value={planForm.selectedConfigId}
+                                onChange={e => {
+                                    setPlanForm({ 
+                                        ...planForm, 
+                                        selectedConfigId: e.target.value,
+                                        selectedSlotIds: [],
+                                        hours: "0"
+                                    });
+                                }}
+                                className="w-full h-14 rounded-2xl border border-gray-100 bg-gray-50 px-5 font-bold text-sm outline-none appearance-none cursor-pointer"
+                            >
+                                <option value="">Select a configuration</option>
                                 {configs.map((config: any) => (
+                                    <option key={config.id} value={config.id}>{config.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {planForm.selectedConfigId && (
+                            <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Included Slot Segments</Label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {(configs.find((c: any) => c.id === planForm.selectedConfigId)?.slots || []).map((slot: any) => {
+                                        const isSelected = planForm.selectedSlotIds.includes(slot.id);
+                                        return (
+                                            <button
+                                                key={slot.id}
+                                                onClick={() => {
+                                                    const updatedIds = isSelected
+                                                        ? planForm.selectedSlotIds.filter(id => id !== slot.id)
+                                                        : [...planForm.selectedSlotIds, slot.id];
+                                                    
+                                                    // Calculate total hours
+                                                    const selectedSlots = (configs.find((c: any) => c.id === planForm.selectedConfigId)?.slots || []).filter((s: any) => updatedIds.includes(s.id));
+                                                    const totalHours = selectedSlots.reduce((acc: number, s: any) => acc + calculateHours(s.startTime, s.endTime), 0);
+                                                    
+                                                    setPlanForm({ 
+                                                        ...planForm, 
+                                                        selectedSlotIds: updatedIds,
+                                                        hours: totalHours.toFixed(1)
+                                                    });
+                                                }}
+                                                className={cn(
+                                                    "flex flex-col p-4 rounded-2xl border transition-all duration-300 text-left",
+                                                    isSelected
+                                                        ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 scale-[1.02]"
+                                                        : "bg-white border-gray-100 text-gray-400 hover:border-blue-200"
+                                                )}
+                                            >
+                                                <div className={cn("text-[10px] font-black uppercase tracking-widest", isSelected ? "text-blue-100" : "text-gray-900")}>
+                                                    {slot.tag}
+                                                </div>
+                                                <div className={cn("text-[8px] font-bold", isSelected ? "text-blue-200" : "text-gray-400")}>
+                                                    {slot.startTime} - {slot.endTime}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Plan Tags (Slot Pools)</Label>
+                            <div className="flex flex-wrap gap-3">
+                                {SLOT_POOLS.map(pool => (
                                     <button
-                                        key={config.id}
+                                        key={pool}
                                         onClick={() => {
-                                            const updated = planForm.selectedConfigIds.includes(config.id)
-                                                ? planForm.selectedConfigIds.filter(id => id !== config.id)
-                                                : [...planForm.selectedConfigIds, config.id];
-                                            setPlanForm({ ...planForm, selectedConfigIds: updated });
+                                            const updatedPools = planForm.slotPools.includes(pool)
+                                                ? planForm.slotPools.filter(p => p !== pool)
+                                                : [...planForm.slotPools, pool];
+                                            setPlanForm({ ...planForm, slotPools: updatedPools });
                                         }}
                                         className={cn(
-                                            "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
-                                            planForm.selectedConfigIds.includes(config.id)
-                                                ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 scale-[1.02]"
-                                                : "bg-white border-gray-100 text-gray-400 hover:border-blue-200"
+                                            "px-5 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all",
+                                            planForm.slotPools.includes(pool)
+                                                ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm"
+                                                : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
                                         )}
                                     >
-                                        <div className="text-left">
-                                            <div className={cn("text-[10px] font-black uppercase tracking-widest", planForm.selectedConfigIds.includes(config.id) ? "text-blue-100" : "text-gray-900")}>
-                                                {config.name}
-                                            </div>
-                                            <div className={cn("text-[8px] font-bold", planForm.selectedConfigIds.includes(config.id) ? "text-blue-200" : "text-gray-400")}>
-                                                {config.slots?.length || 0} time windows linked
-                                            </div>
-                                        </div>
-                                        {planForm.selectedConfigIds.includes(config.id) && <Check className="h-5 w-5 text-white" />}
+                                        {pool}
                                     </button>
                                 ))}
-                                {configs.length === 0 && (
-                                    <p className="col-span-2 text-[10px] font-bold text-amber-600 bg-amber-50 p-4 rounded-2xl border border-amber-100">
-                                        Warning: No shift patterns found. Please define shift configurations first in the Schedule tab.
-                                    </p>
-                                )}
                             </div>
                         </div>
 
