@@ -352,7 +352,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 <div className="relative">
                     <Button
                         onClick={() => setIsTypeSelectorOpen(!isTypeSelectorOpen)}
-                        className="h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-100 px-6 transition-all hover:scale-[1.02]"
+                        className="h-12 bg-white text-gray-900 border-2 border-gray-400 hover:border-gray-600 hover:text-white bg-gray-50 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-100 px-6 transition-all hover:scale-[1.02]"
                     >
                         <Plus className="w-5 h-5" /> New Plan
                     </Button>
@@ -376,9 +376,6 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                             }}
                                             className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 transition-all text-left group"
                                         >
-                                            <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                                                <LayoutGrid className="h-5 w-5 text-blue-600 group-hover:text-white" />
-                                            </div>
                                             <div>
                                                 <div className="text-sm font-black text-gray-900">Fixed Plan</div>
                                                 <div className="text-[10px] text-gray-400 font-bold uppercase">Dedicated Seating</div>
@@ -392,9 +389,6 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                             }}
                                             className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-amber-50 transition-all text-left group"
                                         >
-                                            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
-                                                <Zap className="h-5 w-5 text-amber-600 group-hover:text-white" />
-                                            </div>
                                             <div>
                                                 <div className="text-sm font-black text-gray-900">Float Plan</div>
                                                 <div className="text-[10px] text-gray-400 font-bold uppercase">Flexible Seating</div>
@@ -431,19 +425,13 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
             <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
                 <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] rounded-[23px] sm:rounded-[23px] p-0 overflow-hidden border-none shadow-2xl bg-white focus:outline-none flex flex-col">
                     <div className={cn(
-                        "p-8 sm:p-10 text-white relative shrink-0 transition-colors duration-500",
-                        planForm.planType === "Fixed" ? "bg-blue-600" : "bg-amber-500"
+                        "p-6 pb-0! sm:p-8 sm:pb-0! relative shrink-0 transition-colors duration-500"
                     )}>
-                        {planForm.planType === "Fixed" ? (
-                            <Sparkles className="absolute top-4 right-4 h-20 sm:h-24 w-20 sm:w-24 opacity-10 rotate-12" />
-                        ) : (
-                            <Zap className="absolute top-4 right-4 h-20 sm:h-24 w-20 sm:w-24 opacity-10 rotate-12" />
-                        )}
                         <DialogHeader>
                             <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tighter">
-                                {planForm.planType} Subscription
+                                New {planForm.planType} Plan
                             </DialogTitle>
-                            <DialogDescription className="text-blue-100 font-medium mt-1">
+                            <DialogDescription className="text-gray-900 font-medium mt-1">
                                 {planForm.planType === "Fixed"
                                     ? "Design a dedicated seating model with fixed shift segments."
                                     : "Create a flexible seating plan with custom hour allocations."}
@@ -451,10 +439,10 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                         </DialogHeader>
                     </div>
 
-                    <div className="p-8 sm:p-10 space-y-8 overflow-y-auto flex-1 custom-scrollbar">
+                    <div className="p-6 pt-2! space-y-6 sm:p-8 overflow-y-auto flex-1 custom-scrollbar">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Plan Identity</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Plan Name</Label>
                                 <Input
                                     value={planForm.planName}
                                     onChange={e => setPlanForm({ ...planForm, planName: e.target.value })}
@@ -479,10 +467,10 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Usage Duration (Hrs)</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Total Duration (Hrs)</Label>
                                 {planForm.planType === 'Fixed' ? (
                                     <div className="h-14 flex items-center px-5 rounded-2xl bg-gray-100 border border-gray-100 text-sm font-black text-blue-600">
-                                        {planForm.hours} Hours <span className="ml-2 text-[8px] text-gray-400 uppercase tracking-widest font-bold">(Auto-calculated)</span>
+                                        {planForm.hours} Hours
                                     </div>
                                 ) : (
                                     <div className="relative">
@@ -569,7 +557,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                         )}
 
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Plan Tags (Slot Pools)</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Slot Pools</Label>
                             <div className="flex flex-wrap gap-3">
                                 {SLOT_POOLS.map(pool => (
                                     <button
@@ -624,11 +612,11 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                             )}
                         >
                             {isCreating ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
-                            Deploy {planForm.planType} Plan
+                            Create {planForm.planType} Plan
                         </Button>
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
