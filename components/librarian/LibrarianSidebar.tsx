@@ -32,7 +32,8 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarGroupContent,
-    useSidebar
+    useSidebar,
+    SidebarRail
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -84,12 +85,6 @@ export function LibrarianSidebar() {
         <Sidebar collapsible="icon" className="top-20 h-[calc(100vh-5rem)] border-r bg-white shadow-xl">
             <SidebarContent className="p-0 py-4 overflow-x-hidden">
                 <SidebarGroup className="p-0 group-data-[collapsible=icon]:items-center">
-                    <SidebarGroupLabel className={cn(
-                        "text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 px-6 transition-all duration-300",
-                        state === "collapsed" ? "opacity-0 invisible h-0 m-0 p-0" : "opacity-100 visible h-auto mb-4"
-                    )}>
-                        Library Control
-                    </SidebarGroupLabel>
                     <SidebarGroupContent className="p-0 w-full">
                         <SidebarMenu className="gap-1.5 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:items-center">
                             {hasLibrary ? (
@@ -374,6 +369,7 @@ export function LibrarianSidebar() {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarFooter>
+            <SidebarRail />
         </Sidebar >
     );
 }

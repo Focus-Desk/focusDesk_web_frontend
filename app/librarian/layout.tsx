@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { LibrarianSidebar } from "@/components/librarian/LibrarianSidebar";
 import LibrarySSEProvider from "@/components/librarian/LibrarySSEProvider";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -41,7 +41,7 @@ export default function LibrarianLayout({
     };
 
     return (
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={true}>
             <LibrarySSEProvider>
                 <div className="flex flex-col h-screen w-full bg-white overflow-hidden">
                     {/* Full-width Navbar */}
