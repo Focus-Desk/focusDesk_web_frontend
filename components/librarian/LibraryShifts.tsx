@@ -191,16 +191,13 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
         <div className="space-y-8">
             <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm border border-amber-100">
-                        <Clock className="h-6 w-6" />
-                    </div>
                     <div>
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Master Shifts</h3>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{slots.length} raw time windows</p>
+                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Time Slots</h3>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{slots.length} slots found</p>
                     </div>
                 </div>
                 <Button onClick={() => handleOpenSlotDialog()} className="h-11 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-amber-100 transition-all hover:scale-[1.02]">
-                    <Plus className="w-4 h-4" /> New Window
+                    <Plus className="w-4 h-4" /> Create Slot
                 </Button>
             </div>
 
@@ -221,11 +218,11 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             key={slot.id}
-                            className="group relative bg-white border border-gray-100 rounded-[2.5rem] p-7 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
+                            className="group relative bg-white border border-gray-100 rounded-2xl p-7 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
                         >
                             <div className="flex items-center justify-between mb-8">
                                 <Badge className="bg-amber-50 text-amber-600 border-amber-100 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
-                                    {slot.tag} Window
+                                    {slot.tag}
                                 </Badge>
                                 <div className="flex gap-1">
                                     <Button onClick={() => handleOpenSlotDialog(slot)} variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl text-gray-400 hover:text-amber-600 hover:bg-amber-50">
@@ -257,16 +254,13 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
         <div className="space-y-8">
             <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm border border-indigo-100">
-                        <Layers className="h-6 w-6" />
-                    </div>
                     <div>
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Shift Patterns</h3>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{configs.length} active configurations</p>
+                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Shift Configurations</h3>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{configs.length} unique configs of continuous time slots</p>
                     </div>
                 </div>
                 <Button onClick={() => handleOpenConfigDialog()} className="h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-100 transition-all hover:scale-[1.02]">
-                    <Plus className="w-4 h-4" /> New Pattern
+                    <Plus className="w-4 h-4" /> Create Config
                 </Button>
             </div>
 
@@ -330,7 +324,7 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                         activeSection === "slots" ? "bg-white text-amber-600 shadow-md ring-1 ring-gray-200" : "text-gray-400 hover:text-gray-600"
                     )}
                 >
-                    <Clock className="h-3.5 w-3.5" /> Windows
+                    Slots
                 </button>
                 <button
                     onClick={() => setActiveSection("configs")}
@@ -339,7 +333,7 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                         activeSection === "configs" ? "bg-white text-indigo-600 shadow-md ring-1 ring-gray-200" : "text-gray-400 hover:text-gray-600"
                     )}
                 >
-                    <Layers className="h-3.5 w-3.5" /> Patterns
+                    Configs
                 </button>
             </div>
 

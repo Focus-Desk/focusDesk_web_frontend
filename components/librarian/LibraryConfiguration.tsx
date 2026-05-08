@@ -184,7 +184,6 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
                                 : "text-gray-400 hover:text-gray-600 hover:bg-white/50"
                         )}
                     >
-                        <tab.icon className={cn("w-4.5 h-4.5 transition-colors duration-500", activeTab === tab.id ? tab.color : "text-gray-300")} />
                         {tab.label}
                         {activeTab === tab.id && (
                             <motion.div

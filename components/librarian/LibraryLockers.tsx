@@ -120,8 +120,8 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
                     ))}
                 </div>
             ) : Object.keys(groupedLockers).length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-gray-100 rounded-[3rem] p-20 text-center">
-                    <div className="h-24 w-24 bg-gray-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8">
+                <div className="bg-white border-2 border-dashed border-gray-100 rounded-2xl p-20 text-center">
+                    <div className="h-24 w-24 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-8">
                         <Shield className="h-12 w-12 text-gray-200" />
                     </div>
                     <h4 className="text-xl font-bold text-gray-900">No lockers configured yet</h4>
@@ -148,7 +148,7 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
                                         initial={{ opacity: 0, scale: 0.98 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         key={locker.id}
-                                        className="group relative bg-white border border-gray-100 rounded-[2.5rem] p-7 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
+                                        className="group relative bg-white border border-gray-100 rounded-2xl p-7 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
                                     >
                                         <div className="flex items-center justify-between mb-8">
                                             <div className="h-14 w-14 rounded-2xl bg-gray-900 text-white flex items-center justify-center font-black text-xl shadow-xl group-hover:bg-emerald-600 transition-colors duration-500">
