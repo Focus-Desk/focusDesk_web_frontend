@@ -266,7 +266,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             key={offer.id}
-                            className="group relative bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
+                            className="group relative bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
                         >
                             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500">
                                 <Ticket className="h-32 w-32 -rotate-12" />
@@ -356,7 +356,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 key={rule.id}
-                                className="group relative bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm hover:shadow-2xl transition-all duration-500"
+                                className="group relative bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-2xl transition-all duration-500"
                             >
                                 <div className="flex justify-between items-start mb-6">
                                     <div>

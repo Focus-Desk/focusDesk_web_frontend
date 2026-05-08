@@ -281,7 +281,7 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             key={config.id}
-                            className="group relative bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
+                            className="group relative bg-white border border-gray-100 rounded-2xl p-8 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col"
                         >
                             <div className="flex items-center justify-between mb-6">
                                 <h4 className="text-xl font-black text-gray-900 tracking-tight">{config.name}</h4>
