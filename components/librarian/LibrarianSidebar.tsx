@@ -83,7 +83,7 @@ export function LibrarianSidebar() {
 
     return (
         <Sidebar collapsible="icon" className="top-20 h-[calc(100vh-5rem)] border-r bg-white shadow-xl">
-            <SidebarContent className="p-0 py-4 overflow-x-hidden">
+            <SidebarContent className="p-0 py-4 overflow-y-auto no-scrollbar">
                 <SidebarGroup className="p-0 group-data-[collapsible=icon]:items-center">
                     <SidebarGroupContent className="p-0 w-full">
                         <SidebarMenu className="gap-1.5 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:items-center">

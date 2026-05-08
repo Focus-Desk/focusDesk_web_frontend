@@ -67,6 +67,15 @@
   animation: pulse-slow 8s ease-in-out infinite;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @keyframes gradient-x {
   0% {
     background-position: 0% 50%;
