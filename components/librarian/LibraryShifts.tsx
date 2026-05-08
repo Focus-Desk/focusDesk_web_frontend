@@ -83,6 +83,18 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
         selectedSlotIds: [] as string[],
     });
 
+    const toMinutes = (t: string) => {
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + m;
+    };
+
+    const calculateHours = (start: string, end: string) => {
+        if (!start || !end) return 0;
+        const diff = toMinutes(end) - toMinutes(start);
+        const result = diff < 0 ? diff + 1440 : diff;
+        return (result / 60).toFixed(1);
+    };
+
     // Handlers
     const handleOpenSlotDialog = (item: any = null) => {
         if (item) {
@@ -435,39 +447,92 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                             />
                         </div>
 
+                        <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100 flex gap-3">
+                            <Info className="h-5 w-5 text-indigo-600 shrink-0" />
+                            <p className="text-[11px] font-bold text-indigo-900 leading-relaxed">
+                                <span className="uppercase tracking-widest text-[9px] block mb-1 text-indigo-700">Contiguous Selection Rule</span>
+                                Shift configurations must consist of continuous time blocks. You can only select segments that touch the start or end of your current selection.
+                            </p>
+                        </div>
+
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Included Windows</Label>
                                 <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{configForm.selectedSlotIds.length} Selected</span>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {slots.map((slot: any) => (
-                                    <button
-                                        key={slot.id}
-                                        onClick={() => {
-                                            const updated = configForm.selectedSlotIds.includes(slot.id)
-                                                ? configForm.selectedSlotIds.filter(id => id !== slot.id)
-                                                : [...configForm.selectedSlotIds, slot.id];
-                                            setConfigForm({ ...configForm, selectedSlotIds: updated });
-                                        }}
-                                        className={cn(
-                                            "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
-                                            configForm.selectedSlotIds.includes(slot.id)
-                                                ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100 scale-[1.02]"
-                                                : "bg-white border-gray-100 text-gray-400 hover:border-indigo-200"
-                                        )}
-                                    >
-                                        <div className="text-left">
-                                            <div className={cn("text-[10px] font-black uppercase tracking-widest", configForm.selectedSlotIds.includes(slot.id) ? "text-indigo-100" : "text-gray-900")}>
-                                                {slot.tag}
+                                {slots.map((slot: any) => {
+                                    const isSelected = configForm.selectedSlotIds.includes(slot.id);
+                                    const selectedSlots = slots.filter((s: any) => configForm.selectedSlotIds.includes(s.id));
+                                    
+                                    let isSelectable = true;
+                                    if (!isSelected && selectedSlots.length > 0) {
+                                        const minStart = Math.min(...selectedSlots.map((s: any) => toMinutes(s.startTime)));
+                                        const maxEnd = Math.max(...selectedSlots.map((s: any) => toMinutes(s.endTime)));
+                                        const slotStart = toMinutes(slot.startTime);
+                                        const slotEnd = toMinutes(slot.endTime);
+                                        isSelectable = slotEnd === minStart || slotStart === maxEnd;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={slot.id}
+                                            disabled={!isSelected && !isSelectable}
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    const remainingIds = configForm.selectedSlotIds.filter(id => id !== slot.id);
+                                                    if (remainingIds.length > 0) {
+                                                        const sortedRemaining = slots
+                                                            .filter((s: any) => remainingIds.includes(s.id))
+                                                            .sort((a: any, b: any) => toMinutes(a.startTime) - toMinutes(b.startTime));
+
+                                                        let isContig = true;
+                                                        for (let i = 0; i < sortedRemaining.length - 1; i++) {
+                                                            if (toMinutes(sortedRemaining[i].endTime) !== toMinutes(sortedRemaining[i + 1].startTime)) {
+                                                                isContig = false;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (!isContig) {
+                                                            toast.error("You can only remove segments from the start or end of the shift pattern");
+                                                            return;
+                                                        }
+                                                    }
+                                                    setConfigForm({ ...configForm, selectedSlotIds: remainingIds });
+                                                } else if (isSelectable) {
+                                                    setConfigForm({ ...configForm, selectedSlotIds: [...configForm.selectedSlotIds, slot.id] });
+                                                }
+                                            }}
+                                            className={cn(
+                                                "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
+                                                isSelected
+                                                    ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100 scale-[1.02]"
+                                                    : isSelectable
+                                                        ? "bg-white border-gray-100 text-gray-900 hover:border-indigo-200"
+                                                        : "bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed opacity-60"
+                                            )}
+                                            title={!isSelected && !isSelectable ? "Only contiguous segments can be selected" : ""}
+                                        >
+                                            <div className="text-left">
+                                                <div className={cn("text-[10px] font-black uppercase tracking-widest", isSelected ? "text-indigo-100" : "text-gray-900")}>
+                                                    {slot.tag}
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <div className={cn("text-[9px] font-bold", isSelected ? "text-indigo-200" : "text-gray-400")}>
+                                                        {slot.startTime} - {slot.endTime}
+                                                    </div>
+                                                    <Badge variant="outline" className={cn(
+                                                        "text-[7px] font-black h-3.5 px-1 border-none",
+                                                        isSelected ? "bg-indigo-500/50 text-white" : "bg-gray-100 text-gray-400"
+                                                    )}>
+                                                        {calculateHours(slot.startTime, slot.endTime)}h
+                                                    </Badge>
+                                                </div>
                                             </div>
-                                            <div className={cn("text-[9px] font-bold", configForm.selectedSlotIds.includes(slot.id) ? "text-indigo-200" : "text-gray-400")}>
-                                                {slot.startTime} - {slot.endTime}
-                                            </div>
-                                        </div>
-                                        {configForm.selectedSlotIds.includes(slot.id) && <CheckCircle2 className="h-5 w-5 text-white" />}
-                                    </button>
-                                ))}
+                                            {isSelected && <CheckCircle2 className="h-5 w-5 text-white" />}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
