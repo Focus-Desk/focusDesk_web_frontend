@@ -13,42 +13,68 @@ const formatKey = (key: string) => {
         .trim();
 };
 
-const PayloadRenderer = ({ payload }: { payload: any }) => {
+const renderValue = (value: any) => {
+    let displayValue = value;
+    if (Array.isArray(value)) {
+        if (value.length === 0) displayValue = "None";
+        else if (typeof value[0] === 'object') {
+            displayValue = `${value.length} items`;
+        } else {
+            displayValue = value.join(', ');
+        }
+    } else if (typeof value === 'boolean') {
+        displayValue = value ? "Yes" : "No";
+    } else if (typeof value === 'object' && value !== null) {
+        displayValue = "Complex Object";
+    } else if (value === null || value === undefined) {
+        displayValue = "N/A";
+    }
+    return String(displayValue);
+};
+
+const PayloadRenderer = ({ payload, oldPayload, actionType }: { payload: any, oldPayload?: any, actionType: string }) => {
     if (!payload || typeof payload !== 'object') return null;
 
     const entries = Object.entries(payload).filter(([key]) => key !== 'libraryId');
-
     if (entries.length === 0) return <div className="text-sm text-gray-500">No details provided.</div>;
+
+    const isUpdate = actionType === 'UPDATE' && oldPayload;
 
     return (
         <div className="border border-gray-200 rounded-lg overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
+                {isUpdate && (
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th className="py-2 px-4 text-left font-semibold text-gray-600 w-1/3 border-r border-gray-200">Field</th>
+                            <th className="py-2 px-4 text-left font-semibold text-gray-600 w-1/3 border-r border-gray-200">Current Value</th>
+                            <th className="py-2 px-4 text-left font-semibold text-gray-600 w-1/3">Proposed Value</th>
+                        </tr>
+                    </thead>
+                )}
                 <tbody className="divide-y divide-gray-200 bg-white">
                     {entries.map(([key, value]) => {
-                        let displayValue = value;
-
-                        if (Array.isArray(value)) {
-                            if (value.length === 0) displayValue = "None";
-                            else if (typeof value[0] === 'object') {
-                                displayValue = `${value.length} items`;
-                            } else {
-                                displayValue = value.join(', ');
-                            }
-                        } else if (typeof value === 'boolean') {
-                            displayValue = value ? "Yes" : "No";
-                        } else if (typeof value === 'object' && value !== null) {
-                            displayValue = "Complex Object";
-                        } else if (value === null || value === undefined) {
-                            displayValue = "N/A";
-                        }
+                        const newStr = renderValue(value);
+                        const oldStr = isUpdate ? renderValue(oldPayload[key]) : null;
+                        
+                        const hasChanged = isUpdate && newStr !== oldStr && oldPayload[key] !== undefined;
 
                         return (
-                            <tr key={key}>
+                            <tr key={key} className={hasChanged ? "bg-blue-50/30" : ""}>
                                 <td className="py-2 px-4 bg-gray-50 font-medium text-gray-600 w-1/3 border-r border-gray-200">
                                     {formatKey(key)}
                                 </td>
-                                <td className="py-2 px-4 text-gray-900 truncate max-w-xs" title={String(displayValue)}>
-                                    {String(displayValue)}
+                                {isUpdate && (
+                                    <td className="py-2 px-4 text-gray-500 truncate max-w-xs border-r border-gray-200" title={oldStr || ""}>
+                                        {oldPayload[key] !== undefined ? (
+                                            <span className={hasChanged ? "line-through decoration-red-300 text-gray-400" : ""}>{oldStr}</span>
+                                        ) : (
+                                            <span className="text-gray-300 italic">Not set</span>
+                                        )}
+                                    </td>
+                                )}
+                                <td className={`py-2 px-4 truncate max-w-xs ${hasChanged ? "text-green-700 font-medium" : "text-gray-900"}`} title={newStr}>
+                                    {newStr}
                                 </td>
                             </tr>
                         );
@@ -130,9 +156,9 @@ export default function LibraryRequests({ libraryId }: { libraryId: string }) {
 
                                 <div className="mb-4">
                                     <h5 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                                        Request Details
+                                        Payload Details
                                     </h5>
-                                    <PayloadRenderer payload={req.payload} />
+                                    <PayloadRenderer payload={req.payload} oldPayload={req.oldPayload} actionType={req.actionType} />
                                 </div>
 
                                 {(req.resolvedAt || req.rejectionReason) && (
