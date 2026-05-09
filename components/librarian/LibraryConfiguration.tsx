@@ -18,13 +18,15 @@ import {
     Lock,
     Shield,
     CheckCircle2,
-    Info
+    Info,
+    ClipboardList
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import LibraryPlans from "./LibraryPlans";
 import LibraryPromotions from "./LibraryPromotions";
 import LibraryLockers from "./LibraryLockers";
 import LibraryShifts from "./LibraryShifts";
+import LibraryRequests from "./LibraryRequests";
 import { useGetTimeSlotsByLibraryIdQuery, useGetLockersQuery, useGetSeatsByLibraryQuery } from "@/state/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -155,6 +157,7 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
         { id: "lockers", label: "Lockers", icon: Box, color: "text-emerald-600", bg: "bg-emerald-50" },
         { id: "seats", label: "Inventory", icon: LayoutGrid, color: "text-indigo-600", bg: "bg-indigo-50" },
         { id: "promotions", label: "Offers", icon: Gift, color: "text-purple-600", bg: "bg-purple-50" },
+        { id: "requests", label: "Requests", icon: ClipboardList, color: "text-rose-600", bg: "bg-rose-50" },
     ];
 
     return (
@@ -197,11 +200,12 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
 
             {/* Dynamic Content Section */}
             <div className="min-h-[600px] animate-in fade-in duration-700">
-                {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
-                {activeTab === "slots" && <LibraryShifts libraryId={libraryId} />}
-                {activeTab === "lockers" && <LibraryLockers libraryId={libraryId} />}
-                {activeTab === "seats" && <SeatManagement libraryId={libraryId} />}
-                {activeTab === "promotions" && <LibraryPromotions libraryId={libraryId} />}
+                { activeTab === "plans" && <LibraryPlans libraryId={libraryId} /> }
+                { activeTab === "slots" && <LibraryShifts libraryId={libraryId} /> }
+                { activeTab === "lockers" && <LibraryLockers libraryId={libraryId} /> }
+                { activeTab === "seats" && <SeatManagement libraryId={libraryId} /> }
+                { activeTab === "promotions" && <LibraryPromotions libraryId={libraryId} /> }
+                { activeTab === "requests" && <LibraryRequests libraryId={libraryId} /> }
             </div>
 
             {/* Footer Quick Info */}
