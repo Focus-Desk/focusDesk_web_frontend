@@ -130,7 +130,7 @@ export default function LibraryRequests({ libraryId }: { libraryId: string }) {
 
                                 <div className="mb-4">
                                     <h5 className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                                        Payload Details
+                                        Request Details
                                     </h5>
                                     <PayloadRenderer payload={req.payload} />
                                 </div>
