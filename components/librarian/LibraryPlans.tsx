@@ -35,10 +35,8 @@ import {
 import { Label } from "@/components/ui/label";
 import {
     useGetPlansQuery,
-    useUpdatePlanMutation,
-    useDeletePlanMutation,
-    useCreatePlanMutation,
-    useGetSlotConfigsByLibraryIdQuery
+    useGetSlotConfigsByLibraryIdQuery,
+    useSubmitChangeRequestMutation
 } from "@/state/api";
 import { toast } from "sonner";
 
@@ -60,9 +58,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
 
     const { data: plans, isLoading: isLoadingPlans } = useGetPlansQuery(libraryId);
     const { data: configsRes } = useGetSlotConfigsByLibraryIdQuery(libraryId);
-    const [updatePlan, { isLoading: isUpdating }] = useUpdatePlanMutation();
-    const [deletePlan, { isLoading: isDeleting }] = useDeletePlanMutation();
-    const [createPlan, { isLoading: isCreating }] = useCreatePlanMutation();
+    const [submitChangeRequest, { isLoading: isSubmitting }] = useSubmitChangeRequestMutation();
 
     const configs = configsRes?.data || [];
 
@@ -109,10 +105,15 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
     const handleToggleStatus = async (planId: string, currentStatus: boolean) => {
         try {
             setActiveActionPlanId(planId);
-            await updatePlan({ id: planId, data: { isActive: !currentStatus } }).unwrap();
-            toast.success(`Plan ${!currentStatus ? "activated" : "deactivated"} successfully`);
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'LibraryPlan',
+                actionType: 'UPDATE',
+                recordId: planId,
+                payload: { isActive: !currentStatus },
+            }).unwrap();
         } catch (err: any) {
-            toast.error(err.data?.message || "Failed to update status");
+            toast.error(err.data?.message || "Failed to submit status change request");
         } finally {
             setActiveActionPlanId(null);
         }
@@ -126,24 +127,34 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 return;
             }
             setActiveActionPlanId(planId);
-            await updatePlan({ id: planId, data: { price: priceNum } }).unwrap();
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'LibraryPlan',
+                actionType: 'UPDATE',
+                recordId: planId,
+                payload: { price: priceNum },
+            }).unwrap();
             setEditingPlanId(null);
-            toast.success("Price updated successfully");
         } catch (err: any) {
-            toast.error(err.data?.message || "Failed to update price");
+            toast.error(err.data?.message || "Failed to submit price change request");
         } finally {
             setActiveActionPlanId(null);
         }
     };
 
     const handleDelete = async (planId: string) => {
-        if (!confirm("Are you sure you want to delete this plan?")) return;
+        if (!confirm("Are you sure you want to request deletion of this plan?")) return;
         try {
             setActiveActionPlanId(planId);
-            await deletePlan(planId).unwrap();
-            toast.success("Plan deleted successfully");
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'LibraryPlan',
+                actionType: 'DELETE',
+                recordId: planId,
+                payload: {},
+            }).unwrap();
         } catch (err: any) {
-            toast.error(err.data?.message || "Failed to delete plan");
+            toast.error(err.data?.message || "Failed to submit delete request");
         } finally {
             setActiveActionPlanId(null);
         }
@@ -173,8 +184,13 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 description: planForm.description
             };
 
-            await createPlan(payload).unwrap();
-            toast.success("Subscription plan created successfully!");
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'LibraryPlan',
+                actionType: 'CREATE',
+                payload,
+            }).unwrap();
+
             setIsCreateModalOpen(false);
             setPlanForm({
                 planName: "",
@@ -187,7 +203,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 description: ""
             });
         } catch (err: any) {
-            toast.error(err.data?.message || "Failed to create plan");
+            toast.error(err.data?.message || "Failed to submit plan request");
         }
     };
 
@@ -265,11 +281,11 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {(isUpdating && activeActionPlanId === plan.id) && <Loader2 className="h-3 w-3 animate-spin text-blue-600" />}
+                                    {(isSubmitting && activeActionPlanId === plan.id) && <Loader2 className="h-3 w-3 animate-spin text-blue-600" />}
                                     <Switch
                                         checked={plan.isActive}
                                         onCheckedChange={() => handleToggleStatus(plan.id, plan.isActive)}
-                                        disabled={isUpdating && activeActionPlanId === plan.id}
+                                        disabled={isSubmitting && activeActionPlanId === plan.id}
                                         className="data-[state=checked]:bg-blue-600"
                                     />
                                 </div>
@@ -289,14 +305,14 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                                         autoFocus
                                                     />
                                                 </div>
-                                                <Button size="sm" onClick={() => handleSavePrice(plan.id)} disabled={isUpdating && activeActionPlanId === plan.id} className="h-11 w-11 p-0 bg-blue-600 rounded-xl shadow-lg shadow-blue-100">
-                                                    {(isUpdating && activeActionPlanId === plan.id) ? (
+                                                <Button size="sm" onClick={() => handleSavePrice(plan.id)} disabled={isSubmitting && activeActionPlanId === plan.id} className="h-11 w-11 p-0 bg-blue-600 rounded-xl shadow-lg shadow-blue-100">
+                                                    {(isSubmitting && activeActionPlanId === plan.id) ? (
                                                         <Loader2 className="h-5 w-5 animate-spin" />
                                                     ) : (
                                                         <CheckCircle2 className="h-5 w-5" />
                                                     )}
                                                 </Button>
-                                                <Button variant="ghost" onClick={() => setEditingPlanId(null)} disabled={isUpdating && activeActionPlanId === plan.id} className="h-11 w-11 p-0 text-gray-400">
+                                                <Button variant="ghost" onClick={() => setEditingPlanId(null)} disabled={isSubmitting && activeActionPlanId === plan.id} className="h-11 w-11 p-0 text-gray-400">
                                                     <X className="h-5 w-5" />
                                                 </Button>
                                             </div>
@@ -313,7 +329,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                             <Button
                                                 variant="ghost"
                                                 onClick={() => { setEditingPlanId(plan.id); setEditPrice(plan.price.toString()); }}
-                                                disabled={(isUpdating || isDeleting) && activeActionPlanId === plan.id}
+                                                disabled={isSubmitting && activeActionPlanId === plan.id}
                                                 className="h-11 w-11 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl"
                                             >
                                                 <Edit3 className="h-5 w-5" />
@@ -321,10 +337,10 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                             <Button
                                                 variant="ghost"
                                                 onClick={() => handleDelete(plan.id)}
-                                                disabled={(isUpdating || isDeleting) && activeActionPlanId === plan.id}
+                                                disabled={isSubmitting && activeActionPlanId === plan.id}
                                                 className="h-11 w-11 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
                                             >
-                                                {(isDeleting && activeActionPlanId === plan.id) ? (
+                                                {(isSubmitting && activeActionPlanId === plan.id) ? (
                                                     <Loader2 className="h-4 w-4 animate-spin" />
                                                 ) : (
                                                     <Trash2 className="h-5 w-5" />
@@ -596,14 +612,14 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setIsCreateModalOpen(false)}
-                            disabled={isCreating}
+                            disabled={isSubmitting}
                             className="h-14 px-8 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 transition-all order-2 sm:order-1"
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={handleCreatePlan}
-                            disabled={isCreating}
+                            disabled={isSubmitting}
                             className={cn(
                                 "h-14 px-10 rounded-2xl text-white font-bold transition-all hover:scale-[1.02] order-1 sm:order-2",
                                 planForm.planType === "Fixed"
@@ -611,7 +627,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                     : "bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-100"
                             )}
                         >
-                            {isCreating ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                            {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
                             Create {planForm.planType} Plan
                         </Button>
                     </div>

@@ -38,12 +38,7 @@ import {
     useGetOffersQuery,
     useGetPackageRulesByLibraryIdQuery,
     useGetPlansQuery,
-    useCreateOfferMutation,
-    useUpdateOfferMutation,
-    useDeleteOfferMutation,
-    useCreatePackageRuleMutation,
-    useUpdatePackageRuleMutation,
-    useDeletePackageRuleMutation,
+    useSubmitChangeRequestMutation,
 } from "@/state/api";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,13 +58,8 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
     const { data: offers, isLoading: isLoadingOffers } = useGetOffersQuery(libraryId);
     const { data: rules, isLoading: isLoadingRules } = useGetPackageRulesByLibraryIdQuery(libraryId);
 
-    // Mutations
-    const [createOffer, { isLoading: isCreatingOffer }] = useCreateOfferMutation();
-    const [updateOffer, { isLoading: isUpdatingOffer }] = useUpdateOfferMutation();
-    const [deleteOffer] = useDeleteOfferMutation();
-    const [createRule, { isLoading: isCreatingRule }] = useCreatePackageRuleMutation();
-    const [updateRule, { isLoading: isUpdatingRule }] = useUpdatePackageRuleMutation();
-    const [deleteRule] = useDeletePackageRuleMutation();
+    // Mutation (Maker-Checker)
+    const [submitChangeRequest, { isLoading: isSubmitting }] = useSubmitChangeRequestMutation();
 
     // Dialog States
     const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
@@ -173,16 +163,18 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                 payload.flatAmount = parseFloat(offerForm.discountValue);
             }
 
-            if (editingItem) {
-                await updateOffer({ id: editingItem.id, data: payload }).unwrap();
-                toast.success("Offer updated successfully");
-            } else {
-                await createOffer(payload).unwrap();
-                toast.success("Offer created successfully");
-            }
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'Offer',
+                actionType: editingItem ? 'UPDATE' : 'CREATE',
+                recordId: editingItem?.id,
+                payload,
+            }).unwrap();
+
+            toast.success("Offer request submitted for approval");
             setIsOfferDialogOpen(false);
         } catch (err: any) {
-            toast.error(err.data?.message || "Failed to save offer");
+            toast.error(err.data?.message || "Failed to submit offer request");
         }
     };
 
@@ -200,36 +192,48 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                 percentOff: ruleForm.percentOff,
             };
 
-            if (editingItem) {
-                await updateRule({ id: editingItem.id, data: payload }).unwrap();
-                toast.success("Package rule updated successfully");
-            } else {
-                await createRule(payload).unwrap();
-                toast.success("Package rule created successfully");
-            }
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'PackageRule',
+                actionType: editingItem ? 'UPDATE' : 'CREATE',
+                recordId: editingItem?.id,
+                payload,
+            }).unwrap();
+            
+            toast.success("Package rule request submitted for approval");
             setIsRuleDialogOpen(false);
         } catch (err: any) {
-            toast.error(err.data?.message || "Failed to save rule");
+            toast.error(err.data?.message || "Failed to submit rule request");
         }
     };
 
     const handleDeleteOffer = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this offer?")) return;
+        if (!confirm("Are you sure you want to request deletion of this offer?")) return;
         try {
-            await deleteOffer(id).unwrap();
-            toast.success("Offer deleted");
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'Offer',
+                actionType: 'DELETE',
+                recordId: id,
+                payload: {}
+            }).unwrap();
         } catch (err: any) {
-            toast.error("Failed to delete offer");
+            toast.error(err.data?.message || "Failed to submit delete request");
         }
     };
 
     const handleDeleteRule = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this rule?")) return;
+        if (!confirm("Are you sure you want to request deletion of this rule?")) return;
         try {
-            await deleteRule(id).unwrap();
-            toast.success("Rule deleted");
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'PackageRule',
+                actionType: 'DELETE',
+                recordId: id,
+                payload: {}
+            }).unwrap();
         } catch (err: any) {
-            toast.error("Failed to delete rule");
+            toast.error(err.data?.message || "Failed to submit delete request");
         }
     };
 
@@ -560,12 +564,12 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                     </div>
 
                     <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsOfferDialogOpen(false)} disabled={isCreatingOffer || isUpdatingOffer} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
-                        <Button onClick={handleSaveOffer} disabled={isCreatingOffer || isUpdatingOffer} className="h-11 sm:h-12 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
-                            {(isCreatingOffer || isUpdatingOffer) ? (
+                        <Button variant="ghost" onClick={() => setIsOfferDialogOpen(false)} disabled={isSubmitting} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
+                        <Button onClick={handleSaveOffer} disabled={isSubmitting} className="h-11 sm:h-12 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
+                            {isSubmitting ? (
                                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             ) : null}
-                            {editingItem ? "Update Promotion" : "Deploy Offer"}
+                            {editingItem ? "Submit Update Request" : "Submit for Approval"}
                         </Button>
                     </div>
                 </DialogContent>
@@ -626,12 +630,12 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                     </div>
 
                     <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsRuleDialogOpen(false)} disabled={isCreatingRule || isUpdatingRule} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
-                        <Button onClick={handleSaveRule} disabled={isCreatingRule || isUpdatingRule} className="h-12 px-8 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
-                            {(isCreatingRule || isUpdatingRule) ? (
+                        <Button variant="ghost" onClick={() => setIsRuleDialogOpen(false)} disabled={isSubmitting} className="h-11 sm:h-12 px-8 rounded-xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
+                        <Button onClick={handleSaveRule} disabled={isSubmitting} className="h-12 px-8 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
+                            {isSubmitting ? (
                                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             ) : null}
-                            {editingItem ? "Update Bundle" : "Apply Rule"}
+                            {editingItem ? "Submit Update Request" : "Submit for Approval"}
                         </Button>
                     </div>
                 </DialogContent>

@@ -31,13 +31,7 @@ import {
 import {
     useGetSlotsByLibraryIdQuery,
     useGetSlotConfigsByLibraryIdQuery,
-    useCreateSlotMutation,
-    useUpdateSlotMutation,
-    useDeleteSlotMutation,
-    useCreateSlotConfigMutation,
-    useUpdateSlotConfigMutation,
-    useDeleteSlotConfigMutation,
-    useAddSlotsToConfigMutation
+    useSubmitChangeRequestMutation
 } from "@/state/api";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -57,14 +51,8 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
     const slots = slotsRes?.data || [];
     const configs = configsRes?.data || [];
 
-    // Mutations
-    const [createSlot, { isLoading: isCreatingSlot }] = useCreateSlotMutation();
-    const [updateSlot, { isLoading: isUpdatingSlot }] = useUpdateSlotMutation();
-    const [deleteSlot] = useDeleteSlotMutation();
-    const [createConfig, { isLoading: isCreatingConfig }] = useCreateSlotConfigMutation();
-    const [updateConfig, { isLoading: isUpdatingConfig }] = useUpdateSlotConfigMutation();
-    const [deleteConfig] = useDeleteSlotConfigMutation();
-    const [addSlotsToConfig, { isLoading: isAddingSlots }] = useAddSlotsToConfigMutation();
+    // Mutation (Maker-Checker)
+    const [submitChangeRequest, { isLoading: isSubmitting }] = useSubmitChangeRequestMutation();
 
     // Dialog States
     const [isSlotDialogOpen, setIsSlotDialogOpen] = useState(false);
@@ -134,16 +122,24 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                 return;
             }
 
-            if (editingItem) {
-                await updateSlot({ id: editingItem.id, data: slotForm }).unwrap();
-                toast.success("Shift updated successfully");
-            } else {
-                await createSlot({ libraryId, ...slotForm }).unwrap();
-                toast.success("New shift window created");
-            }
+            const payload = {
+                libraryId,
+                tag: slotForm.tag,
+                startTime: slotForm.startTime,
+                endTime: slotForm.endTime,
+            };
+
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'Slot',
+                actionType: editingItem ? 'UPDATE' : 'CREATE',
+                recordId: editingItem?.id,
+                payload,
+            }).unwrap();
+
             setIsSlotDialogOpen(false);
         } catch (err: any) {
-            toast.error(err.data?.message || "Failed to save shift");
+            toast.error(err.data?.message || "Failed to submit slot request");
         }
     };
 
@@ -153,49 +149,58 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                 toast.error("Configuration name is required");
                 return;
             }
-
-            let configId = editingItem?.id;
-
-            if (editingItem) {
-                await updateConfig({ id: editingItem.id, data: { name: configForm.name, libraryId } }).unwrap();
-                toast.success("Configuration updated");
-            } else {
-                const res = await createConfig({ libraryId, name: configForm.name }).unwrap();
-                configId = res.data.id;
-                toast.success("New configuration created");
+            if (configForm.selectedSlotIds.length === 0) {
+                toast.error("Please select at least one slot");
+                return;
             }
 
-            // Sync slot associations if changed
-            if (configId && configForm.selectedSlotIds.length > 0) {
-                await addSlotsToConfig({
-                    configId,
-                    slotIds: configForm.selectedSlotIds
-                }).unwrap();
-            }
+            const payload = {
+                libraryId,
+                name: configForm.name,
+                slotIds: configForm.selectedSlotIds,
+            };
+
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'SlotConfiguration',
+                actionType: editingItem ? 'UPDATE' : 'CREATE',
+                recordId: editingItem?.id,
+                payload,
+            }).unwrap();
 
             setIsConfigDialogOpen(false);
         } catch (err: any) {
-            toast.error(err.data?.message || "Failed to save configuration");
+            toast.error(err.data?.message || "Failed to submit config request");
         }
     };
 
     const handleDeleteSlot = async (id: string) => {
-        if (!confirm("Delete this master shift? This may affect linked configurations.")) return;
+        if (!confirm("Delete this slot? This may affect linked configurations.")) return;
         try {
-            await deleteSlot(id).unwrap();
-            toast.success("Shift deleted");
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'Slot',
+                actionType: 'DELETE',
+                recordId: id,
+                payload: {},
+            }).unwrap();
         } catch (err: any) {
-            toast.error("Failed to delete shift");
+            toast.error(err.data?.message || "Failed to submit delete request");
         }
     };
 
     const handleDeleteConfig = async (id: string) => {
         if (!confirm("Delete this shift configuration?")) return;
         try {
-            await deleteConfig(id).unwrap();
-            toast.success("Configuration deleted");
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'SlotConfiguration',
+                actionType: 'DELETE',
+                recordId: id,
+                payload: {},
+            }).unwrap();
         } catch (err: any) {
-            toast.error("Failed to delete configuration");
+            toast.error(err.data?.message || "Failed to submit delete request");
         }
     };
 
@@ -410,12 +415,12 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                     </div>
 
                     <div className="p-8 sm:p-10 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsSlotDialogOpen(false)} disabled={isCreatingSlot || isUpdatingSlot} className="h-12 px-8 rounded-2xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
-                        <Button onClick={handleSaveSlot} disabled={isCreatingSlot || isUpdatingSlot} className="h-12 px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
-                            {(isCreatingSlot || isUpdatingSlot) ? (
+                        <Button variant="ghost" onClick={() => setIsSlotDialogOpen(false)} disabled={isSubmitting} className="h-12 px-8 rounded-2xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
+                        <Button onClick={handleSaveSlot} disabled={isSubmitting} className="h-12 px-10 rounded-2xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-100 order-1 sm:order-2">
+                            {isSubmitting ? (
                                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             ) : null}
-                            {editingItem ? "Update Shift" : "Create Shift"}
+                            {editingItem ? "Submit Update Request" : "Submit for Approval"}
                         </Button>
                     </div>
                 </DialogContent>
@@ -538,12 +543,12 @@ export default function LibraryShifts({ libraryId }: LibraryShiftsProps) {
                     </div>
 
                     <div className="p-8 sm:p-10 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsConfigDialogOpen(false)} disabled={isCreatingConfig || isUpdatingConfig || isAddingSlots} className="h-12 px-8 rounded-2xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
-                        <Button onClick={handleSaveConfig} disabled={isCreatingConfig || isUpdatingConfig || isAddingSlots} className="h-12 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
-                            {(isCreatingConfig || isUpdatingConfig || isAddingSlots) ? (
+                        <Button variant="ghost" onClick={() => setIsConfigDialogOpen(false)} disabled={isSubmitting} className="h-12 px-8 rounded-2xl font-bold text-gray-500 order-2 sm:order-1">Cancel</Button>
+                        <Button onClick={handleSaveConfig} disabled={isSubmitting} className="h-12 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-100 order-1 sm:order-2">
+                            {isSubmitting ? (
                                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             ) : null}
-                            {editingItem ? "Update Pattern" : "Activate Pattern"}
+                            {editingItem ? "Submit Update Request" : "Submit for Approval"}
                         </Button>
                     </div>
                 </DialogContent>

@@ -26,7 +26,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
-import { useGetLockersQuery, useCreateLockerMutation } from "@/state/api";
+import { useGetLockersQuery, useSubmitChangeRequestMutation } from "@/state/api";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ interface LibraryLockersProps {
 
 export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
     const { data: lockers, isLoading } = useGetLockersQuery(libraryId);
-    const [createLocker, { isLoading: isCreating }] = useCreateLockerMutation();
+    const [submitChangeRequest, { isLoading: isSubmitting }] = useSubmitChangeRequestMutation();
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -77,8 +77,13 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
                 }]
             };
 
-            await createLocker(payload as any).unwrap();
-            toast.success(`${formData.numberOfLockers} ${formData.lockerType} lockers created!`);
+            await submitChangeRequest({
+                libraryId,
+                targetTable: 'Locker',
+                actionType: 'CREATE',
+                payload,
+            }).unwrap();
+            toast.success(`Change request submitted for ${formData.numberOfLockers} ${formData.lockerType} lockers!`);
             setIsCreateModalOpen(false);
             setFormData({ lockerType: "Standard", numberOfLockers: "", charge: "", description: "" });
         } catch (err: any) {
@@ -258,12 +263,12 @@ export default function LibraryLockers({ libraryId }: LibraryLockersProps) {
                     </div>
 
                     <div className="p-8 sm:p-10 bg-gray-50 flex flex-col sm:flex-row justify-end gap-4 shrink-0">
-                        <Button variant="ghost" onClick={() => setIsCreateModalOpen(false)} disabled={isCreating} className="h-14 px-8 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 transition-all order-2 sm:order-1">
+                        <Button variant="ghost" onClick={() => setIsCreateModalOpen(false)} disabled={isSubmitting} className="h-14 px-8 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 transition-all order-2 sm:order-1">
                             Dismiss
                         </Button>
-                        <Button onClick={handleCreateLocker} disabled={isCreating} className="h-14 px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 transition-all hover:scale-[1.02] order-1 sm:order-2">
-                            {isCreating ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
-                            Initialize Batch
+                        <Button onClick={handleCreateLocker} disabled={isSubmitting} className="h-14 px-10 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-100 transition-all hover:scale-[1.02] order-1 sm:order-2">
+                            {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                            Submit for Approval
                         </Button>
                     </div>
                 </DialogContent>

@@ -392,6 +392,7 @@ export const api = createApi({
     "LibrarySeats",
     "AuthUser",
     "Machines",
+    "ChangeRequests",
   ],
   endpoints: (build) => ({
     getAuthUser: build.query<
@@ -1553,6 +1554,38 @@ export const api = createApi({
       }),
       invalidatesTags: ["Machines"],
     }),
+
+    // ── Change Requests (Maker-Checker) ──
+    submitChangeRequest: build.mutation<any, {
+      libraryId: string;
+      targetTable: string;
+      actionType: 'CREATE' | 'UPDATE' | 'DELETE';
+      recordId?: string;
+      payload?: any;
+    }>({
+      query: (body) => ({
+        url: "change-requests/submit",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["ChangeRequests"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Change request submitted for approval!",
+          error: "Failed to submit change request.",
+        });
+      },
+    }),
+
+    getChangeRequestsByLibrary: build.query<{ success: boolean; data: any[] }, { libraryId: string; status?: string; targetTable?: string }>({
+      query: ({ libraryId, status, targetTable }) => {
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (targetTable) params.append('targetTable', targetTable);
+        return `change-requests/library/${libraryId}?${params.toString()}`;
+      },
+      providesTags: ["ChangeRequests"],
+    }),
   }),
 });
 
@@ -1654,4 +1687,6 @@ export const {
   useGetLibraryAttendanceQuery,
   useGetLibraryMachinesQuery,
   useToggleMachineStatusMutation,
+  useSubmitChangeRequestMutation,
+  useGetChangeRequestsByLibraryQuery,
 } = api;
