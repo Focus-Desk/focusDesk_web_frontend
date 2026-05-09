@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
 export default function LibraryRequests({ libraryId }: { libraryId: string }) {
-    const { data: requestsRes, isLoading } = useGetChangeRequestsByLibraryQuery(libraryId);
+    const { data: requestsRes, isLoading } = useGetChangeRequestsByLibraryQuery({ libraryId });
     const requests = requestsRes?.data || [];
 
     const getStatusColor = (status: string) => {
