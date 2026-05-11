@@ -200,20 +200,19 @@ export default function LibraryConfiguration({ libraryId }: LibraryConfiguration
 
             {/* Dynamic Content Section */}
             <div className="min-h-[600px] animate-in fade-in duration-700">
-                { activeTab === "plans" && <LibraryPlans libraryId={libraryId} /> }
-                { activeTab === "slots" && <LibraryShifts libraryId={libraryId} /> }
-                { activeTab === "lockers" && <LibraryLockers libraryId={libraryId} /> }
-                { activeTab === "seats" && <SeatManagement libraryId={libraryId} /> }
-                { activeTab === "promotions" && <LibraryPromotions libraryId={libraryId} /> }
-                { activeTab === "requests" && <LibraryRequests libraryId={libraryId} /> }
+                {activeTab === "plans" && <LibraryPlans libraryId={libraryId} />}
+                {activeTab === "slots" && <LibraryShifts libraryId={libraryId} />}
+                {activeTab === "lockers" && <LibraryLockers libraryId={libraryId} />}
+                {activeTab === "seats" && <SeatManagement libraryId={libraryId} />}
+                {activeTab === "promotions" && <LibraryPromotions libraryId={libraryId} />}
+                {activeTab === "requests" && <LibraryRequests libraryId={libraryId} />}
             </div>
 
             {/* Footer Quick Info */}
             <div className="flex items-center gap-4 p-6 bg-blue-50/50 rounded-3xl border border-blue-100">
                 <Info className="h-5 w-5 text-blue-600" />
                 <p className="text-xs font-bold text-blue-800 leading-relaxed">
-                    All configuration changes are applied in real-time to your library listing.
-                    Ensure to verify pricing before saving.
+                    All configuration changes will be verified by admin, please allow some time to get approved.
                 </p>
             </div>
         </div>
