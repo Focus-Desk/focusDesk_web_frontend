@@ -69,6 +69,8 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
         planType: "Fixed" as "Fixed" | "Float",
         price: "",
         hours: "0",
+        months: "1",
+        days: "0",
         selectedConfigId: "",
         selectedSlotIds: [] as string[],
         slotPools: [] as string[],
@@ -163,13 +165,13 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
     const handleCreatePlan = async () => {
         try {
             const isFixed = planForm.planType === "Fixed";
-            const hasRequiredFields = planForm.planName && planForm.price && planForm.hours;
+            const hasRequiredFields = planForm.planName && planForm.price && planForm.hours && (parseInt(planForm.months) > 0 || parseInt(planForm.days) > 0);
             const hasValidSlots = isFixed ? planForm.selectedSlotIds.length > 0 : true;
 
             if (!hasRequiredFields || !hasValidSlots) {
                 toast.error(isFixed
-                    ? "Please fill in all fields and select at least one shift segment"
-                    : "Please fill in the plan name, price, and hours");
+                    ? "Please fill in all fields (including validity) and select at least one shift segment"
+                    : "Please fill in all fields including validity (Months/Days)");
                 return;
             }
 
@@ -179,6 +181,8 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 planType: planForm.planType,
                 price: parseFloat(planForm.price),
                 hours: Math.ceil(parseFloat(planForm.hours)),
+                months: parseInt(planForm.months) || 0,
+                days: parseInt(planForm.days) || 0,
                 slotIds: planForm.selectedSlotIds,
                 slotPools: planForm.slotPools,
                 description: planForm.description
@@ -197,6 +201,8 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 planType: "Fixed",
                 price: "",
                 hours: "0",
+                months: "1",
+                days: "0",
                 selectedConfigId: "",
                 selectedSlotIds: [],
                 slotPools: [],
@@ -386,7 +392,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                     <div className="space-y-1">
                                         <button
                                             onClick={() => {
-                                                setPlanForm({ ...planForm, planType: "Fixed", hours: "0", selectedSlotIds: [], selectedConfigId: "" });
+                                                setPlanForm({ ...planForm, planType: "Fixed", hours: "0", selectedSlotIds: [], selectedConfigId: "", months: "1", days: "0" });
                                                 setIsCreateModalOpen(true);
                                                 setIsTypeSelectorOpen(false);
                                             }}
@@ -399,7 +405,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                setPlanForm({ ...planForm, planType: "Float", hours: "12", selectedSlotIds: [], selectedConfigId: "" });
+                                                setPlanForm({ ...planForm, planType: "Float", hours: "12", selectedSlotIds: [], selectedConfigId: "", months: "1", days: "0" });
                                                 setIsCreateModalOpen(true);
                                                 setIsTypeSelectorOpen(false);
                                             }}
@@ -470,7 +476,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Monthly Pricing (₹)</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Plan Price (₹)</Label>
                                 <div className="relative">
                                     <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-gray-400">₹</span>
                                     <Input
@@ -483,7 +489,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Total Duration (Hrs)</Label>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Daily Hours (Hrs)</Label>
                                 {planForm.planType === 'Fixed' ? (
                                     <div className="h-14 flex items-center px-5 rounded-2xl bg-gray-100 border border-gray-100 text-sm font-black text-blue-600">
                                         {planForm.hours} Hours
@@ -500,6 +506,36 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                         <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">Hrs</span>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* VALIDITY SECTION */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 border-y border-gray-50 py-6">
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Validity (Months)</Label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        value={planForm.months}
+                                        onChange={e => setPlanForm({ ...planForm, months: e.target.value })}
+                                        placeholder="1"
+                                        className="h-14 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5 pr-12"
+                                    />
+                                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">m</span>
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Validity (Extra Days)</Label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        value={planForm.days}
+                                        onChange={e => setPlanForm({ ...planForm, days: e.target.value })}
+                                        placeholder="0"
+                                        className="h-14 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5 pr-12"
+                                    />
+                                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">d</span>
+                                </div>
                             </div>
                         </div>
 
