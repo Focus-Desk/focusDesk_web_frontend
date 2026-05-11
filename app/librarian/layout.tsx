@@ -48,9 +48,7 @@ export default function LibrarianLayout({
                     <header className="h-20 w-full flex items-center px-6 border-b bg-white relative z-50 justify-between shrink-0">
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-3 mr-2">
-                                <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
-                                    <LibraryIcon className="h-6 w-6 text-white" />
-                                </div>
+                                <img src="/logo.png" alt="Logo" className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" />
                                 <span className="font-bold text-xl text-gray-800 tracking-tight whitespace-nowrap hidden sm:block">
                                     Focus Desk
                                 </span>
