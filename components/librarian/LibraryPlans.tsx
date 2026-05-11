@@ -70,7 +70,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
         price: "",
         hours: "0",
         months: "1",
-        days: "0",
+        days: "30",
         selectedConfigId: "",
         selectedSlotIds: [] as string[],
         slotPools: [] as string[],
@@ -165,13 +165,13 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
     const handleCreatePlan = async () => {
         try {
             const isFixed = planForm.planType === "Fixed";
-            const hasRequiredFields = planForm.planName && planForm.price && planForm.hours && (parseInt(planForm.months) > 0 || parseInt(planForm.days) > 0);
+            const hasRequiredFields = planForm.planName && planForm.price && planForm.hours && parseInt(planForm.months) > 0;
             const hasValidSlots = isFixed ? planForm.selectedSlotIds.length > 0 : true;
 
             if (!hasRequiredFields || !hasValidSlots) {
                 toast.error(isFixed
-                    ? "Please fill in all fields (including validity) and select at least one shift segment"
-                    : "Please fill in all fields including validity (Months/Days)");
+                    ? "Please fill in all fields (including name, price, hours, months) and select shift segments"
+                    : "Please fill in all fields including name, price, hours, and months");
                 return;
             }
 
@@ -181,8 +181,8 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 planType: planForm.planType,
                 price: parseFloat(planForm.price),
                 hours: Math.ceil(parseFloat(planForm.hours)),
-                months: parseInt(planForm.months) || 0,
-                days: parseInt(planForm.days) || 0,
+                months: parseInt(planForm.months) || 1,
+                days: parseInt(planForm.days) || 30,
                 slotIds: planForm.selectedSlotIds,
                 slotPools: planForm.slotPools,
                 description: planForm.description
@@ -202,7 +202,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                 price: "",
                 hours: "0",
                 months: "1",
-                days: "0",
+                days: "30",
                 selectedConfigId: "",
                 selectedSlotIds: [],
                 slotPools: [],
@@ -281,7 +281,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                         </Badge>
                                         {(plan.months > 0 || plan.days > 0) && (
                                             <Badge variant="outline" className="text-gray-500 border-gray-100 rounded-lg px-3 py-1 text-[9px] font-black uppercase tracking-widest">
-                                                Validity: {plan.months > 0 && `${plan.months}m `}{plan.days > 0 && `${plan.days}d`}
+                                                Validity: {plan.months}m ({plan.days} days/m)
                                             </Badge>
                                         )}
                                     </div>
@@ -325,7 +325,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                         ) : (
                                             <div className="flex items-baseline gap-1.5">
                                                 <span className="text-4xl font-black text-gray-900 tracking-tighter">₹{plan.price}</span>
-                                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">/ MONTH</span>
+                                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">/ {plan.months} MONTH</span>
                                             </div>
                                         )}
                                     </div>
@@ -392,7 +392,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                     <div className="space-y-1">
                                         <button
                                             onClick={() => {
-                                                setPlanForm({ ...planForm, planType: "Fixed", hours: "0", selectedSlotIds: [], selectedConfigId: "", months: "1", days: "0" });
+                                                setPlanForm({ ...planForm, planType: "Fixed", hours: "0", selectedSlotIds: [], selectedConfigId: "", months: "1", days: "30" });
                                                 setIsCreateModalOpen(true);
                                                 setIsTypeSelectorOpen(false);
                                             }}
@@ -405,7 +405,7 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                setPlanForm({ ...planForm, planType: "Float", hours: "12", selectedSlotIds: [], selectedConfigId: "", months: "1", days: "0" });
+                                                setPlanForm({ ...planForm, planType: "Float", hours: "12", selectedSlotIds: [], selectedConfigId: "", months: "1", days: "30" });
                                                 setIsCreateModalOpen(true);
                                                 setIsTypeSelectorOpen(false);
                                             }}
@@ -525,16 +525,22 @@ export default function LibraryPlans({ libraryId }: LibraryPlansProps) {
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Validity (Extra Days)</Label>
-                                <div className="relative">
-                                    <Input
-                                        type="number"
-                                        value={planForm.days}
-                                        onChange={e => setPlanForm({ ...planForm, days: e.target.value })}
-                                        placeholder="0"
-                                        className="h-14 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5 pr-12"
-                                    />
-                                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">d</span>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Days In a Month</Label>
+                                <div className="flex gap-3 mt-1">
+                                    {['28', '30'].map((day) => (
+                                        <button
+                                            key={day}
+                                            onClick={() => setPlanForm({ ...planForm, days: day })}
+                                            className={cn(
+                                                "flex-1 h-14 rounded-2xl border font-black text-sm transition-all",
+                                                planForm.days === day 
+                                                    ? "bg-gray-900 border-gray-900 text-white shadow-lg" 
+                                                    : "bg-gray-50 border-gray-100 text-gray-400 hover:bg-white hover:border-gray-200"
+                                            )}
+                                        >
+                                            {day} Days
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>
