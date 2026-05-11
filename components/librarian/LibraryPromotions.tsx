@@ -81,7 +81,6 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
     });
 
     const [ruleForm, setRuleForm] = useState({
-        planId: "",
         months: 4,
         percentOff: 0,
     });
@@ -123,14 +122,12 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
         if (item) {
             setEditingItem(item);
             setRuleForm({
-                planId: item.planId,
                 months: item.months,
                 percentOff: item.percentOff,
             });
         } else {
             setEditingItem(null);
             setRuleForm({
-                planId: "",
                 months: 4,
                 percentOff: 0,
             });
@@ -180,14 +177,8 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
 
     const handleSaveRule = async () => {
         try {
-            if (!ruleForm.planId) {
-                toast.error("Please select a base plan");
-                return;
-            }
-
             const payload = {
                 libraryId,
-                planId: ruleForm.planId,
                 months: ruleForm.months,
                 percentOff: ruleForm.percentOff,
             };
@@ -354,7 +345,6 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {rules.map((rule: any) => {
-                        const plan = plans?.find((p: any) => p.id === rule.planId);
                         return (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -364,7 +354,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                             >
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
-                                        <h4 className="text-lg font-black text-gray-900 leading-tight mb-1">{plan?.planName || "General Plan"}</h4>
+                                        <h4 className="text-lg font-black text-gray-900 leading-tight mb-1">Standard Package</h4>
                                         <Badge variant="outline" className="text-[8px] h-4 rounded-md uppercase font-black tracking-widest border-amber-100 text-amber-600">
                                             {rule.months} Months Bundle
                                         </Badge>
@@ -445,7 +435,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                     value={offerForm.title}
                                     onChange={e => setOfferForm({ ...offerForm, title: e.target.value })}
                                     placeholder="e.g. Festival Special 2026"
-                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm"
+                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -454,7 +444,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                     value={offerForm.couponCode}
                                     onChange={e => setOfferForm({ ...offerForm, couponCode: e.target.value.toUpperCase() })}
                                     placeholder="DIWALI2026"
-                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm"
+                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5"
                                 />
                             </div>
                         </div>
@@ -478,7 +468,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                     value={offerForm.discountValue}
                                     onChange={e => setOfferForm({ ...offerForm, discountValue: e.target.value })}
                                     placeholder="20"
-                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm"
+                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -488,7 +478,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                     value={offerForm.maxDiscount}
                                     onChange={e => setOfferForm({ ...offerForm, maxDiscount: e.target.value })}
                                     placeholder="500"
-                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm"
+                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-sm px-5"
                                 />
                             </div>
                         </div>
@@ -500,7 +490,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                     type="date"
                                     value={offerForm.validFrom}
                                     onChange={e => setOfferForm({ ...offerForm, validFrom: e.target.value })}
-                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 font-bold text-sm"
+                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 font-bold text-sm px-5"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -509,7 +499,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                     type="date"
                                     value={offerForm.validTo}
                                     onChange={e => setOfferForm({ ...offerForm, validTo: e.target.value })}
-                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 font-bold text-sm"
+                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 font-bold text-sm px-5"
                                 />
                             </div>
                         </div>
@@ -591,16 +581,11 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                     </div>
 
                     <div className="p-6 sm:p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Base Subscription</Label>
-                            <select
-                                value={ruleForm.planId}
-                                onChange={e => setRuleForm({ ...ruleForm, planId: e.target.value })}
-                                className="w-full h-11 sm:h-12 rounded-xl border border-gray-100 bg-gray-50 px-4 font-bold text-sm outline-none appearance-none"
-                            >
-                                <option value="">Select Plan</option>
-                                {plans?.map((p: any) => <option key={p.id} value={p.id}>{p.planName}</option>)}
-                            </select>
+                        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-start gap-3">
+                            <Info className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                            <p className="text-[10px] font-medium text-amber-800 leading-relaxed">
+                                Package rules are applied to all plans in your library. For example, a 4-month rule will give a discount whenever a student books any plan for 4 months.
+                            </p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 sm:gap-6">
@@ -611,7 +596,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                     onChange={e => setRuleForm({ ...ruleForm, months: parseInt(e.target.value) || 1 })}
                                     className="w-full h-11 sm:h-12 rounded-xl border border-gray-100 bg-gray-50 px-4 font-bold text-sm outline-none appearance-none"
                                 >
-                                    {[1, 3, 4, 6, 12].map(m => <option key={m} value={m}>{m} Months</option>)}
+                                    {[3, 4, 6, 12].map(m => <option key={m} value={m}>{m} Months</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
@@ -623,7 +608,7 @@ export default function LibraryPromotions({ libraryId }: LibraryPromotionsProps)
                                         const val = parseInt(e.target.value);
                                         setRuleForm({ ...ruleForm, percentOff: isNaN(val) ? 0 : val });
                                     }}
-                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 font-bold text-sm"
+                                    className="h-11 sm:h-12 rounded-xl border-gray-100 bg-gray-50 font-bold text-sm px-5"
                                 />
                             </div>
                         </div>
