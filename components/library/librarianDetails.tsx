@@ -4,7 +4,7 @@
 'use client';
 
 import { Dispatch, SetStateAction, useState } from 'react';
-import { useUpdateLibrarianMutation } from '../../state/api';
+import { useOnboardLibrarianMutation } from '../../state/api';
 import { uploadToCloudinary } from '../../state/photoUpload';
 import { SubmitButton } from '@/components/ui/submitButton';
 import { Label } from '../ui/label';
@@ -116,7 +116,7 @@ export default function LibrarianDetailsForm({ userId, email, isReadOnly, setCur
     // NEW: Local state for Pincode validation error
     const [pincodeError, setPincodeError] = useState('');
 
-    const [updateLibrarian, { isLoading: isUpdating }] = useUpdateLibrarianMutation();
+    const [onboardLibrarian, { isLoading: isUpdating }] = useOnboardLibrarianMutation();
 
     const isLoading = isUpdating || isUploadingPhoto || isUploadingProof;
 
@@ -306,6 +306,7 @@ export default function LibrarianDetailsForm({ userId, email, isReadOnly, setCur
             // Map form fields to backend-expected structure explicitly
             const payload = {
                 userId,
+                email,
                 firstName: formData.kyc_firstName,
                 lastName: formData.kyc_lastName,
                 contactNumber: formData.contactNumber,
@@ -328,7 +329,7 @@ export default function LibrarianDetailsForm({ userId, email, isReadOnly, setCur
                 addressProofUrl, // Already uploaded to Cloudinary
             };
 
-            const result = await updateLibrarian(payload).unwrap();
+            const result = await onboardLibrarian(payload).unwrap();
             router.push(`/librarian/dashboard`);
             setApiStatus('success');
             onSuccess(result);

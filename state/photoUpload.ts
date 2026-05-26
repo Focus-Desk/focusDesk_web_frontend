@@ -8,16 +8,20 @@
 export const uploadToCloudinary = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
     if (!uploadPreset) {
-        throw new Error("Cloudinary upload preset is not configured.");
+        const msg = 'Cloudinary upload preset is not configured. Set NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in your environment (.env.local for local development or in your hosting provider).';
+        console.error(msg);
+        throw new Error(msg);
     }
     formData.append('upload_preset', uploadPreset);
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     if (!cloudName) {
-        throw new Error("Cloudinary cloud name is not configured.");
+        const msg = 'Cloudinary cloud name is not configured. Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME in your environment (.env.local for local development or in your hosting provider).';
+        console.error(msg);
+        throw new Error(msg);
     }
 
     const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${file.type.startsWith('video/') ? 'video' : 'image'}/upload`;
@@ -30,7 +34,8 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error.message || 'Cloudinary upload failed.');
+            console.error('Cloudinary upload error response:', errorData);
+            throw new Error(errorData?.error?.message || 'Cloudinary upload failed.');
         }
 
         const data = await response.json();

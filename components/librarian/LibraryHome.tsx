@@ -6,8 +6,12 @@ import {
     useGetLibraryBookingsQuery,
     useGetComplaintsByLibraryQuery,
     useGetLibraryReviewsForLibrarianQuery,
-    useGetPauseRequestsByLibraryQuery
+    useGetPauseRequestsByLibraryQuery,
+    useUpdateComplaintStatusMutation,
+    useUpdatePauseRequestStatusMutation
 } from "@/state/api";
+import { toast } from "sonner";
+import ConfirmBookingModal from "./ConfirmBookingModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,13 +27,16 @@ import {
     CheckCircle2,
     X,
     AlertTriangle,
-    ClipboardList
+    ClipboardList,
+    Loader2,
+    Home,
+    LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays, isAfter, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import router from "next/router";
+
 interface LibraryHomeProps {
     libraryId: string;
 }
@@ -44,6 +51,9 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
     const { data: reviewsData, isLoading: isLoadingReviews } = useGetLibraryReviewsForLibrarianQuery(libraryId);
     const { data: pauseRequestsData, isLoading: isLoadingPauseRequests } = useGetPauseRequestsByLibraryQuery(libraryId);
 
+    const [updateComplaintStatus, { isLoading: isUpdatingComplaint }] = useUpdateComplaintStatusMutation();
+    const [updatePauseRequestStatus, { isLoading: isUpdatingPause }] = useUpdatePauseRequestStatusMutation();
+
     const [selectedQuery, setSelectedQuery] = React.useState<any>(null);
 
     const bookings = bookingsData?.data || [];
@@ -54,8 +64,9 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
 
     const pendingComplaints = complaints.filter((c: any) => c.status === "PENDING").map((c: any) => ({ ...c, qType: "COMPLAINT" }));
     const pendingPauseRequests = pauseRequests.filter((p: any) => p.status === "PENDING").map((p: any) => ({ ...p, qType: "PLAN_REQUEST" }));
+    const pendingManualBookings = bookings.filter((b: any) => b.status === "PENDING").map((b: any) => ({ ...b, qType: "MANUAL_BOOKING" }));
 
-    const allPendingRequests = [...pendingComplaints, ...pendingPauseRequests].sort((a, b) =>
+    const allPendingRequests = [...pendingComplaints, ...pendingPauseRequests, ...pendingManualBookings].sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
@@ -101,13 +112,13 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
 
     // Section 2: Library Bookings
     const BookingsList = () => {
-        const displayBookings = bookings.slice(0, 4);
+        const todayBookings = bookings.filter((b: any) => format(new Date(b.createdAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'));
+        const displayBookings = todayBookings.slice(0, 4);
         const router = useRouter();
 
         // Calculate today's total
-        const todayTotal = bookings.reduce((acc: number, b: any) => {
-            const isToday = format(new Date(b.createdAt), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-            return isToday ? acc + (b.totalAmount || 0) : acc;
+        const todayTotal = todayBookings.reduce((acc: number, b: any) => {
+            return acc + (Number(b.totalAmount) || Number(b.bookingDetails?.totalAmount) || 0);
         }, 0);
 
         return (
@@ -197,10 +208,10 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                                             {item.student?.student?.firstName} {item.student?.student?.lastName}
                                         </div>
                                         <div className="text-xs font-medium text-gray-400">
-                                            Student ID: {item.studentId?.slice(0, 6).toUpperCase()}
+                                            Student ID: {item.studentId?.slice(0, 6).toUpperCase() || item.student?.id?.slice(0, 6).toUpperCase()}
                                         </div>
                                         <div className="text-xs font-medium text-gray-400">
-                                            {item.qType === "COMPLAINT" ? "Complaint" : "Plan Pause"}
+                                            {item.qType === "COMPLAINT" ? "Complaint" : item.qType === "PLAN_REQUEST" ? "Plan Pause" : `Booking Approval`}
                                         </div>
                                     </div>
                                     <Button
@@ -297,18 +308,54 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
                             </div>
 
                             <div className="pt-4 flex gap-3">
-                                <Button
-                                    className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-black text-xs uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-blue-100"
-                                    onClick={() => {
-                                        router.push(`/librarian/libraries/${libraryId}?tab=queries`);
-                                        setSelectedQuery(null);
-                                    }}
-                                >
-                                    Go to Resolution Center
-                                </Button>
+                                {selectedQuery.qType === "COMPLAINT" && (
+                                    <Button
+                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black text-xs uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-green-100"
+                                        disabled={isUpdatingComplaint}
+                                        onClick={async () => {
+                                            try {
+                                                await updateComplaintStatus({ id: selectedQuery.id, status: "RESOLVED", reportReason: "", reportDetails: "" }).unwrap();
+                                                toast.success("Complaint resolved");
+                                                setSelectedQuery(null);
+                                            } catch (err) { }
+                                        }}
+                                    >
+                                        {isUpdatingComplaint ? <Loader2 className="h-4 w-4 animate-spin" /> : "Mark as Resolved"}
+                                    </Button>
+                                )}
+                                {selectedQuery.qType === "PLAN_REQUEST" && (
+                                    <>
+                                        <Button
+                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black text-xs uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-green-100"
+                                            disabled={isUpdatingPause}
+                                            onClick={async () => {
+                                                try {
+                                                    await updatePauseRequestStatus({ id: selectedQuery.id, status: "APPROVED", rejectionReason: "" }).unwrap();
+                                                    toast.success("Request approved");
+                                                    setSelectedQuery(null);
+                                                } catch (err) { }
+                                            }}
+                                        >
+                                            {isUpdatingPause ? <Loader2 className="h-4 w-4 animate-spin" /> : "Approve"}
+                                        </Button>
+                                        <Button
+                                            className="flex-1 bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-red-100"
+                                            disabled={isUpdatingPause}
+                                            onClick={async () => {
+                                                try {
+                                                    await updatePauseRequestStatus({ id: selectedQuery.id, status: "REJECTED", rejectionReason: "Rejected by Librarian" }).unwrap();
+                                                    toast.success("Request rejected");
+                                                    setSelectedQuery(null);
+                                                } catch (err) { }
+                                            }}
+                                        >
+                                            {isUpdatingPause ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reject"}
+                                        </Button>
+                                    </>
+                                )}
                                 <Button
                                     variant="outline"
-                                    className="h-14 w-14 rounded-2xl border-gray-100 text-gray-400 hover:text-gray-600"
+                                    className="h-14 w-14 rounded-2xl border-gray-100 text-gray-400 hover:text-gray-600 shrink-0"
                                     onClick={() => setSelectedQuery(null)}
                                 >
                                     <X className="h-5 w-5" />
@@ -428,22 +475,47 @@ export default function LibraryHome({ libraryId }: LibraryHomeProps) {
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
-            {/* Left Column: Welcome + Bookings + Queries */}
-            <div className="lg:col-span-8 space-y-8 flex flex-col">
-                <WelcomeBox />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 min-h-[450px]">
-                    <BookingsList />
-                    <QueriesList />
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div>
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Library Overview</h2>
+                        <p className="text-sm text-gray-500 font-medium mt-0.5">
+                            Welcome back, {librarian?.firstName || "Sheetal"} — {format(new Date(), "EEEE, MMM dd")}
+                        </p>
+                    </div>
                 </div>
-                <RequestDetailModal />
             </div>
 
-            {/* Right Column: Trends + Recent Activity */}
-            <div className="lg:col-span-4 space-y-8">
-                <BookingGraph />
-                <RecentStudent />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Left Column: Welcome + Bookings + Queries */}
+                <div className="lg:col-span-8 space-y-8 flex flex-col">
+                    <WelcomeBox />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 min-h-[450px]">
+                        <BookingsList />
+                        <QueriesList />
+                    </div>
+                    <AnimatePresence>
+                        {selectedQuery && selectedQuery.qType === "MANUAL_BOOKING" ? (
+                            <ConfirmBookingModal
+                                booking={selectedQuery}
+                                libraryId={libraryId}
+                                onClose={() => setSelectedQuery(null)}
+                                onSuccess={() => setSelectedQuery(null)}
+                            />
+                        ) : (
+                            <RequestDetailModal />
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Right Column: Trends + Recent Activity */}
+                <div className="lg:col-span-4 space-y-8">
+                    <BookingGraph />
+                    <RecentStudent />
+                </div>
             </div>
         </div>
     );

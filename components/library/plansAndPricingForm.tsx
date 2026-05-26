@@ -52,6 +52,17 @@ const initialPricingData: PricingData = {
     submittedTabs: [],
 };
 
+const normalizePricingData = (data?: Partial<PricingData> | null): PricingData => ({
+    masterSlots: Array.isArray(data?.masterSlots) ? data!.masterSlots : initialPricingData.masterSlots,
+    slotConfigs: Array.isArray(data?.slotConfigs) ? data!.slotConfigs : initialPricingData.slotConfigs,
+    plans: Array.isArray(data?.plans) ? data!.plans : initialPricingData.plans,
+    seatConfigurations: Array.isArray(data?.seatConfigurations) ? data!.seatConfigurations : initialPricingData.seatConfigurations,
+    lockers: Array.isArray(data?.lockers) ? data!.lockers : initialPricingData.lockers,
+    packageRules: Array.isArray(data?.packageRules) ? data!.packageRules : initialPricingData.packageRules,
+    offers: Array.isArray(data?.offers) ? data!.offers : initialPricingData.offers,
+    submittedTabs: Array.isArray(data?.submittedTabs) ? data!.submittedTabs : initialPricingData.submittedTabs,
+});
+
 
 type FormProps = {
     libraryId: string;
@@ -69,7 +80,7 @@ const tabOrder = ['timeslot', 'plan', 'locker', 'seat', 'package', 'offer'];
 export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentStep, onSuccess, formData, updateFormData }: FormProps) {
 
     // --- LOCAL STATE INITIALIZATION (FROM PERSISTED DATA) ---
-    const initialLocalData = formData.pricingData || initialPricingData;
+    const initialLocalData = normalizePricingData(formData.pricingData);
 
     const [activeTab, setActiveTab] = useState(initialLocalData.submittedTabs.slice(-1)[0] || 'timeslot');
     const [submittedTabs, setSubmittedTabs] = useState(initialLocalData.submittedTabs);
@@ -116,7 +127,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [slotConfigs, plans, lockers, seatConfigurations, packageRules, offers, submittedTabs]);
+    }, [masterSlots, slotConfigs, plans, lockers, seatConfigurations, packageRules, offers, submittedTabs]);
     // --- END SIDE EFFECT ---
 
 
@@ -194,18 +205,18 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
     const submitSlotConfigs = async () => {
         setApiStatus('idle');
 
-        // Filter out empty master slots
-        const validMasterSlots = masterSlots.filter(s => s.tag.trim() !== '');
+        // Filter out empty and already submitted master slots
+        const validMasterSlots = masterSlots.filter(s => s.tag.trim() !== '' && !s.dbId);
 
-        // Filter out empty slot configurations
+        // Filter out empty and already submitted configurations
         const validConfigs = slotConfigs.filter(c =>
-            c.name.trim() !== '' && (c.slotIds || []).length > 0
+            c.name.trim() !== '' && (c.slotIds || []).length > 0 && !c.dbId
         );
 
-        if (validMasterSlots.length === 0 || validConfigs.length === 0) {
-            console.warn("No valid master slots or configurations to submit.");
-            setApiStatus('error');
-            return false;
+        if (validMasterSlots.length === 0 && validConfigs.length === 0) {
+            console.log("No valid new master slots or configs to submit.");
+            setApiStatus('success');
+            return true;
         }
 
         try {
@@ -222,8 +233,13 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                 })
             );
 
-            const masterSlotMapping: Record<number, string> = {};
-            slotResults.forEach(r => masterSlotMapping[r.localId] = r.dbId);
+            // Update master slots state with new DB IDs so we can use them immediately
+            let updatedMasterSlots = [...masterSlots];
+            updatedMasterSlots = updatedMasterSlots.map(s => {
+                const mapping = slotResults.find(r => r.localId === s.id);
+                return mapping ? { ...s, dbId: mapping.dbId } : s;
+            });
+            setMasterSlots(updatedMasterSlots);
 
             // 2. Submit Slot Configurations linking to these UUIDs
             const configResults = await Promise.all(
@@ -235,9 +251,9 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
                     const configId = configRes.data.id;
 
-                    // Link selected master slots to this configuration
+                    // Link selected master slots to this configuration (look up in updated master slots)
                     const selectedDbIds = config.slotIds
-                        .map((localId: number) => masterSlotMapping[localId])
+                        .map((localId: number) => updatedMasterSlots.find(s => s.id === localId)?.dbId)
                         .filter(Boolean);
 
                     if (selectedDbIds.length > 0) {
@@ -250,12 +266,6 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     return { dbId: configId, localId: config.id, slotDbIds: selectedDbIds };
                 })
             );
-
-            // Also update master slots and configs with their DB IDs for future reference
-            setMasterSlots(prev => prev.map(s => {
-                const mapping = slotResults.find(r => r.localId === s.id);
-                return mapping ? { ...s, dbId: mapping.dbId } : s;
-            }));
 
             setSlotConfigs(prev => prev.map(c => {
                 const res = configResults.find(r => r.localId === c.id);
@@ -274,8 +284,11 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitPlans = async () => {
         setApiStatus('idle');
-        const validPlans = plans.filter(p => p.monthlyFee && p.hours && p.planName);
-        if (validPlans.length === 0) return true;
+        const validPlans = plans.filter(p => p.monthlyFee && p.hours && p.planName && !p.dbId);
+        if (validPlans.length === 0) {
+            setApiStatus('success');
+            return true;
+        }
 
         try {
             const results = await Promise.all(
@@ -321,34 +334,38 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitLockers = async () => {
         const validLockers = lockers.filter(l =>
-            l.numberOfLockers.trim() !== '' &&
-            l.charge.trim() !== '' &&
-            parseInt(l.numberOfLockers) > 0
+            l.numberOfLockers.toString().trim() !== '' &&
+            l.charge.toString().trim() !== '' &&
+            parseInt(l.numberOfLockers) > 0 &&
+            !l.dbId // Only submit NEW lockers
         );
         if (validLockers.length === 0) {
-            console.log("No valid lockers to submit — skipping API call.");
+            console.log("No valid new lockers to submit — skipping API call.");
+            setApiStatus('success');
             return true;
         }
         setApiStatus('idle');
         try {
-            const results = await Promise.all(
-                validLockers.map(l => createLocker({
-                    libraryId,
-                    lockerType: l.lockerType,
-                    numberOfLockers: parseInt(l.numberOfLockers),
-                    price: parseFloat(l.charge),
-                    description: l.description
-                }).unwrap())
-            );
-            // Store database IDs for linking to seat configurations
-            setLockers(prev => prev.map((locker, index) => {
-                const resultIndex = validLockers.findIndex(vl => vl.id === locker.id);
-                if (resultIndex !== -1 && results[resultIndex]) {
-                    return { ...locker, dbId: results[resultIndex]?.data?.id || results[resultIndex]?.id || '' };
-                }
+            // Send lockers as a single array payload (groups) as required by the API
+            const groupsPayload = validLockers.map(l => ({
+                lockerType: l.lockerType,
+                numberOfLockers: parseInt(l.numberOfLockers),
+                price: parseFloat(l.charge),
+                description: l.description,
+            }));
+
+            const res = await createLocker({ libraryId, groups: groupsPayload } as any).unwrap();
+
+            // Normalize response: server may return created lockers array under data or directly
+            const createdLockers = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : (res?.created || res?.lockers || []));
+
+            // Store database IDs for linking to seat configurations when possible
+            setLockers(prev => prev.map(locker => {
+                const found = createdLockers.find((cl: any) => cl.lockerType === locker.lockerType || cl.id === locker.dbId || cl.numberOfLockers === Number(locker.numberOfLockers));
+                if (found) return { ...locker, dbId: found.id || found._id || '' };
                 return locker;
             }));
-            console.log("Locker submission results:", results);
+            console.log("Locker submission results:", createdLockers);
             setApiStatus('success');
             return true;
         } catch (error) {
@@ -360,10 +377,12 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
     const submitSeatConfigurations = async () => {
         const validSeatConfigurations = seatConfigurations.filter(sc =>
             sc.seatNumbers.trim() !== '' &&
-            sc.seatType.trim() !== ''
+            sc.seatType.trim() !== '' &&
+            !sc.dbId // Custom handling to prevent duplicate seat ranges
         );
         if (validSeatConfigurations.length === 0) {
-            console.log("No valid seat configurations to submit — skipping API call.");
+            console.log("No valid new seat configurations to submit — skipping API call.");
+            setApiStatus('success');
             return true;
         }
         setApiStatus('idle');
@@ -382,6 +401,9 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                 ranges: allRanges
             }).unwrap();
 
+            // Simulate setting dbId so we don't submit them again
+            setSeatConfigurations(prev => prev.map(sc => validSeatConfigurations.find(v => v.id === sc.id) ? { ...sc, dbId: 'created' } : sc));
+
             setApiStatus('success');
             return true;
         } catch (error) {
@@ -393,17 +415,17 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitPackageRules = async () => {
         const validPackageRules = packageRules.filter(pr =>
-            pr.planId.trim() !== '' && pr.discount.toString().trim() !== ''
+            pr.planId.trim() !== '' && pr.discount.toString().trim() !== '' && !pr.dbId
         );
         if (validPackageRules.length === 0) {
-            console.log("No valid package rules to submit — skipping API call.");
+            console.log("No valid new package rules to submit — skipping API call.");
+            setApiStatus('success');
             return true;
         }
         setApiStatus('idle');
         try {
             const results = await Promise.all(
                 validPackageRules.map(pr => {
-                    // Resolve plan database ID
                     const selectedPlan = plans.find(p => String(p.id) === pr.planId);
                     return createPackageRule({
                         libraryId,
@@ -413,6 +435,15 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     }).unwrap();
                 })
             );
+            
+            setPackageRules(prev => prev.map(pr => {
+                const resultIndex = validPackageRules.findIndex(v => v.id === pr.id);
+                if (resultIndex !== -1 && results[resultIndex]) {
+                    return { ...pr, dbId: (results[resultIndex] as any)?.data?.id || 'created' };
+                }
+                return pr;
+            }));
+
             setApiStatus('success');
             return true;
         } catch (error) {
@@ -423,23 +454,21 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
 
     const submitOffers = async () => {
         const validOffers = offers.filter(o =>
-            o.title.trim() !== '' ||
-            o.couponCode.trim() !== '' ||
-            o.discountValue.toString().trim() !== ''
+            (o.title.trim() !== '' || o.couponCode.trim() !== '' || o.discountValue.toString().trim() !== '') && !o.dbId
         );
         if (validOffers.length === 0) {
-            console.log("No valid offers to submit — skipping API call.");
+            console.log("No valid new offers to submit — skipping API call.");
+            setApiStatus('success');
             return true;
         }
         setApiStatus('idle');
         try {
             const results = await Promise.all(
                 validOffers.map(o => {
-                    // Resolve plan database IDs
                     const resolvedPlanIds = (o.planIds || []).map((localId: string) => {
                         const selectedPlan = plans.find(p => String(p.id) === localId);
                         return selectedPlan?.dbId || localId;
-                    }).filter((id: string) => id); // Filter out empty strings
+                    }).filter((id: string) => id); 
 
                     return createOffer({
                         libraryId,
@@ -456,6 +485,15 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     }).unwrap();
                 })
             );
+            
+            setOffers(prev => prev.map(o => {
+                const resultIndex = validOffers.findIndex(v => v.id === o.id);
+                if (resultIndex !== -1 && results[resultIndex]) {
+                    return { ...o, dbId: (results[resultIndex] as any)?.data?.id || 'created' };
+                }
+                return o;
+            }));
+
             setApiStatus('success');
             return true;
         } catch (error) {
@@ -1159,7 +1197,7 @@ export default function PlansAndPricingForm({ libraryId, isReadOnly, setCurrentS
                     <button
                         type="button"
                         onClick={() => setCurrentStep(currentStep => currentStep - 1)}
-                        className="w-full px-6 py-3 border border-gray-300 rounded-xl bg-transparent text-gray-700 text-lg font-[500] cursor-pointer transition-all duration-300 hover:bg-gray-100"
+                        className="w-full px-6 py-3 border border-gray-300 rounded-xl bg-transparent text-gray-700 text-lg font-medium cursor-pointer transition-all duration-300 hover:bg-gray-100"
                     >
                         Previous
                     </button>

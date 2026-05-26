@@ -1,9 +1,19 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import CustomLogin from "@/components/auth/CustomLogin";
 import { api } from "@/state/api";
+import { Loader2 } from "lucide-react";
+
+const FullPageLoader = ({ message = "Loading..." }: { message?: string }) => (
+  <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+    <div className="flex flex-col items-center gap-4">
+      <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+      <p className="text-gray-500 font-medium animate-pulse">{message}</p>
+    </div>
+  </div>
+);
 
 const Auth = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -12,14 +22,15 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
   const isAuthPage = pathname.match(/^\/(signin|signup)$/);
   const isDashboardPage = pathname.startsWith("/librarian");
 
-  const [mounted, setMounted] = React.useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Use getAuthUser to check authentication status
-  const { data: authData, isLoading: authLoading, isError: authError } = api.useGetAuthUserQuery();
+  const {
+    data: authData,
+    isLoading: authLoading,
+    isFetching: authFetching,
+    isError: authError,
+  } = api.useGetAuthUserQuery();
 
   const isAuthenticated = !!authData && !authError;
 
@@ -30,22 +41,20 @@ const Auth = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isAuthenticated, isAuthPage, router]);
 
-  // Prevent hydration mismatch by waiting for client-side mount
-  if (!mounted || authLoading) {
-    return null;
+  // Wait for hydration
+  if (!mounted) return <FullPageLoader />;
+
+  // Only gate DASHBOARD pages behind auth
+  if (isDashboardPage) {
+    if (authLoading) {
+      return <FullPageLoader message="Loading your dashboard..." />;
+    }
+    if (!isAuthenticated) {
+      return <CustomLogin />;
+    }
   }
 
-  // Handle librarian authentication (this app is librarian-only)
-  if (isDashboardPage && !isAuthenticated) {
-    return <CustomLogin />;
-  }
-
-  // If we are on an auth page, just render the child (which will be CustomLogin or CustomSignup)
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
-
-  // Default to rendering children for public pages or already authenticated sessions
+  // Public pages & auth pages render immediately
   return <>{children}</>;
 };
 

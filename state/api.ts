@@ -1,4 +1,4 @@
-import { createNewUserInDatabase, withToast } from "@/lib/utils";
+import { withToast } from "@/lib/utils";
 import {
   Mentor,
   Librarian,
@@ -10,7 +10,6 @@ import {
   Offer,
 } from "@/types/prismaTypes";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 
 type User = {
   userId: string;
@@ -23,7 +22,7 @@ type OnboardLibrarianArgs = {
   email: string;
   firstName: string;
   lastName: string;
-  profilePhoto?: File;
+  profilePhoto?: string;
   contactNumber: string;
   alternateContactNumber?: string;
   dateOfBirth: string;
@@ -40,7 +39,23 @@ type OnboardLibrarianArgs = {
   gstin?: string;
   aadhaarNumber: string;
   addressProofType: string;
-  addressProof: File;
+  addressProofUrl: string;
+};
+
+type AuthResponse = {
+    success: boolean;
+    message?: string;
+    data?: {
+        user: any;
+        token: string;
+        requiresOTP?: boolean;
+        email?: string;
+    };
+};
+
+type VerifyOTPRequest = {
+    email: string;
+    code: string;
 };
 
 // For updating existing librarian (Step 4 KYC form)
@@ -71,8 +86,11 @@ type UpdateLibrarianArgs = {
 type CreateLibraryStep1Args = {
   librarianId: string;
   libraryName: string;
-  address: string;
+  address?: string;
   contactNumber: string;
+  contactPersonName: string;
+  email: string;
+  interestedInListing: boolean;
 };
 
 type CreateTimeSlotArgs = {
@@ -342,21 +360,12 @@ export type AdminCreateBookingArgs = {
 
 export const api = createApi({
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL+"api",
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL + "api",
     credentials: "include",
     prepareHeaders: async (headers) => {
-      // We no longer manually set Authorization header from localStorage
-      // as cookies are automatically handled by the browser with credentials: 'include'
-
-      // Optional: keep Amplify session as second fallback if needed for mobile/other clients
-      try {
-        const session = await fetchAuthSession();
-        const { idToken } = session.tokens ?? {};
-        if (idToken) {
-          headers.set("Authorization", `Bearer ${idToken}`);
-        }
-      } catch (e) {
-        // No Amplify session found
+      const token = localStorage.getItem("token");
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
       }
       return headers;
     },
@@ -382,6 +391,8 @@ export const api = createApi({
     "PauseRequests",
     "LibrarySeats",
     "AuthUser",
+    "Machines",
+    "ChangeRequests",
   ],
   endpoints: (build) => ({
     getAuthUser: build.query<
@@ -394,43 +405,17 @@ export const api = createApi({
     >({
       queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
         try {
-          // Priority: Check our own secure session cookie first
           const meResponse = await fetchWithBQ("auth/me");
-          if (!meResponse.error) {
-            const data = (meResponse.data as any).data; // Backend returns { success: true, data: { ... } }
-            return {
-              data: {
-                cognitoInfo: { userId: data.userId || data.id, username: data.username || data.email },
-                userInfo: data as Librarian,
-                userRole: (data.user?.role || data.role || "librarian").toLowerCase(),
-              }
-            };
+          if (meResponse.error) {
+            return { error: meResponse.error };
           }
-
-          // Fallback to Amplify session for legacy support/mobile
-          const session = await fetchAuthSession();
-          const { idToken } = session.tokens ?? {};
-          const user = await getCurrentUser();
-          const userRole = "librarian";
-
-          let userDetailsResponse = await fetchWithBQ(`/librarians/${user.userId}`);
-          if (
-            userDetailsResponse.error &&
-            userDetailsResponse.error.status === 404
-          ) {
-            userDetailsResponse = await createNewUserInDatabase(
-              user,
-              idToken,
-              userRole,
-              fetchWithBQ
-            );
-          }
+          const data = (meResponse.data as any).data;
           return {
             data: {
-              cognitoInfo: { ...user },
-              userInfo: userDetailsResponse.data as Librarian,
-              userRole,
-            },
+              cognitoInfo: { userId: data.userId || data.id, username: data.username || data.email },
+              userInfo: data as Librarian,
+              userRole: (data.user?.role || data.role || "librarian").toLowerCase(),
+            }
           };
         } catch (error: any) {
           return { error: error.message || "Could not fetch user data" };
@@ -446,20 +431,50 @@ export const api = createApi({
       }),
       invalidatesTags: ["AuthUser"],
     }),
+    verifyOTP: build.mutation<AuthResponse, VerifyOTPRequest>({
+      query: (credentials) => ({
+        url: 'auth/verify-otp',
+        method: 'POST',
+        body: credentials,
+      }),
+      invalidatesTags: ["AuthUser"],
+    }),
+    googleLogin: build.mutation<AuthResponse, { idToken: string }>({
+      query: (body) => ({
+        url: 'auth/google',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ["AuthUser"],
+    }),
+    connectGoogle: build.mutation<{ success: boolean; message: string }, { idToken: string }>({
+      query: (body) => ({
+        url: 'auth/connect-google',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ["AuthUser"],
+    }),
+    forgotPassword: build.mutation<{ success: boolean; message: string }, { email: string }>({
+      query: (credentials) => ({
+        url: "auth/forgot-password",
+        method: "POST",
+        body: credentials,
+      }),
+    }),
+    resetPassword: build.mutation<any, any>({
+      query: (credentials) => ({
+        url: "auth/reset-password",
+        method: "POST",
+        body: credentials,
+      }),
+    }),
 
     register: build.mutation<any, any>({
       query: (userData) => ({
         url: "auth/register",
         method: "POST",
         body: userData,
-      }),
-      invalidatesTags: ["AuthUser"],
-    }),
-    verifyOTP: build.mutation<any, { email: string; code: string }>({
-      query: (credentials) => ({
-        url: "auth/verify-otp",
-        method: "POST",
-        body: credentials,
       }),
       invalidatesTags: ["AuthUser"],
     }),
@@ -654,6 +669,35 @@ export const api = createApi({
       },
     }),
 
+    updateSlotConfig: build.mutation<{ success: boolean, data: any }, { id: string, data: Partial<CreateSlotConfigArgs> }>({
+      query: ({ id, data }) => ({
+        url: `slot-configs/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Slot configuration updated!",
+          error: "Failed to update slot configuration.",
+        });
+      },
+    }),
+
+    deleteSlotConfig: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({
+        url: `slot-configs/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Slot configuration deleted!",
+          error: "Failed to delete slot configuration.",
+        });
+      },
+    }),
+
     createSlot: build.mutation<{ success: boolean, data: Slot }, CreateSlotArgs>({
       query: (body) => ({
         url: "slot-configs/slots",
@@ -665,6 +709,35 @@ export const api = createApi({
         await withToast(queryFulfilled, {
           success: "Master slot created!",
           error: "Failed to create master slot.",
+        });
+      },
+    }),
+
+    updateSlot: build.mutation<{ success: boolean, data: Slot }, { id: string, data: Partial<CreateSlotArgs> }>({
+      query: ({ id, data }) => ({
+        url: `slot-configs/slots/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Master slot updated!",
+          error: "Failed to update master slot.",
+        });
+      },
+    }),
+
+    deleteSlot: build.mutation<{ success: boolean }, string>({
+      query: (id) => ({
+        url: `slot-configs/slots/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["SlotConfigs"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Master slot deleted!",
+          error: "Failed to delete master slot.",
         });
       },
     }),
@@ -959,6 +1032,14 @@ export const api = createApi({
           error: "Failed to update package rule.",
         });
       },
+    }),
+
+    assignStudentQRToken: build.mutation<any, { studentId: string; libraryId: string; passType?: string }>({
+      query: (body) => ({
+        url: "qr/assign-token",
+        method: "POST",
+        body,
+      }),
     }),
 
     deletePackageRule: build.mutation<{ success: boolean }, string>({
@@ -1339,6 +1420,10 @@ export const api = createApi({
         body,
       }),
     }),
+    getOnboardingStatus: build.query<any, void>({
+      query: () => '/library/onboarding-status',
+      providesTags: ['Libraries'],
+    }),
 
     getStudentBookings: build.query<any, { studentId: string; status?: string }>({
       query: ({ studentId, status }) => {
@@ -1446,20 +1531,80 @@ export const api = createApi({
         });
       },
     }),
+
+    getLibraryAttendance: build.query<any, { libraryId: string; date: string }>({
+      query: ({ libraryId, date }) => `attendance/library/${libraryId}?date=${date}`,
+      providesTags: ["Bookings"],
+    }),
+
+    getStudentScans: build.query<any, { libraryId: string; studentId: string; date: string }>({
+      query: ({ libraryId, studentId, date }) => `attendance/library/${libraryId}/student/${studentId}/scans?date=${date}`,
+    }),
+
+    getLibraryMachines: build.query<any, { libraryId: string }>({
+      query: ({ libraryId }) => `machines/library/${libraryId}`,
+      providesTags: ["Machines"],
+    }),
+
+    toggleMachineStatus: build.mutation<any, { machineId: string; isActive: boolean }>({
+      query: ({ machineId, ...data }) => ({
+        url: `machines/${machineId}/status`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: ["Machines"],
+    }),
+
+    // ── Change Requests (Maker-Checker) ──
+    submitChangeRequest: build.mutation<any, {
+      libraryId: string;
+      targetTable: string;
+      actionType: 'CREATE' | 'UPDATE' | 'DELETE';
+      recordId?: string;
+      payload?: any;
+    }>({
+      query: (body) => ({
+        url: "change-requests/submit",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["ChangeRequests"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        await withToast(queryFulfilled, {
+          success: "Change request submitted for approval!",
+          error: "Failed to submit change request.",
+        });
+      },
+    }),
+
+    getChangeRequestsByLibrary: build.query<{ success: boolean; data: any[] }, { libraryId: string; status?: string; targetTable?: string }>({
+      query: ({ libraryId, status, targetTable }) => {
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (targetTable) params.append('targetTable', targetTable);
+        return `change-requests/library/${libraryId}?${params.toString()}`;
+      },
+      providesTags: ["ChangeRequests"],
+    }),
   }),
 });
 
 export const {
   useGetAuthUserQuery,
   useLoginMutation,
-  useRegisterMutation,
+  useGoogleLoginMutation,
+  useConnectGoogleMutation,
   useVerifyOTPMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+  useRegisterMutation,
   useLogoutMutation,
   useGetLibrarianQuery,
   useOnboardLibrarianMutation,
   useUpdateLibrarianMutation,
   useCreateLibraryStep1Mutation,
   useUpdateLibraryStep2Mutation,
+  useGetOnboardingStatusQuery,
   useGetStudentQuery,
   useUpdateStudentSettingsMutation,
   useGetMentorQuery,
@@ -1506,6 +1651,10 @@ export const {
   useCreateSlotConfigMutation,
   useAddSlotsToConfigMutation,
   useGetSlotConfigsByLibraryIdQuery,
+  useUpdateSlotMutation,
+  useDeleteSlotMutation,
+  useUpdateSlotConfigMutation,
+  useDeleteSlotConfigMutation,
   useGetDetailedLibrarySeatsQuery,
   useSearchStudentByMobileQuery,
   useLazySearchStudentByMobileQuery,
@@ -1533,4 +1682,11 @@ export const {
   useGetLibraryBookingsQuery,
   useApproveBookingMutation,
   useRejectBookingMutation,
+  useAssignStudentQRTokenMutation,
+  useGetStudentScansQuery,
+  useGetLibraryAttendanceQuery,
+  useGetLibraryMachinesQuery,
+  useToggleMachineStatusMutation,
+  useSubmitChangeRequestMutation,
+  useGetChangeRequestsByLibraryQuery,
 } = api;

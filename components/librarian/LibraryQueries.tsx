@@ -140,10 +140,6 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
             setShowRejectionInput(true);
             return;
         }
-        if (status === "REJECTED" && !rejectionReason) {
-            toast.error("Please provide a rejection reason");
-            return;
-        }
 
         try {
             await updatePauseRequestStatus({
@@ -302,12 +298,28 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                                             <div className="mx-6 p-5 bg-gray-50 rounded-xl border border-gray-100">
                                                 <div className="flex flex-col gap-1">
                                                     <p className="text-gray-900 font-extrabold text-sm">
-                                                        {query.qType === "REVIEW" ? "Review" : query.qType === "COMPLAINT" ? "Complaint" : `Plan Pause: ${query.requestedDays || "—"} Days`}
+                                                        {query.qType === "REVIEW" ? "Review" : query.qType === "COMPLAINT" ? "Complaint" : `Plan Pause Request`}
                                                     </p>
                                                     <p className="text-gray-600 text-sm leading-relaxed font-medium line-clamp-2">
                                                         {query.qType === "REVIEW" ? query.comment : query.qType === "COMPLAINT" ? query.complaint : query.reason}
                                                     </p>
                                                 </div>
+                                                {query.qType === "PLAN_REQUEST" && (
+                                                    <div className="mt-4 pt-3 border-t border-gray-200 text-xs font-bold text-gray-500 flex flex-col gap-2">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="uppercase text-[10px] tracking-wider">Requested Days:</span>
+                                                            <span className="text-gray-900 bg-white px-2 py-0.5 rounded border shadow-sm">{query.requestedDays || "—"}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="uppercase text-[10px] tracking-wider">Retain Seat:</span>
+                                                            <span className={cn("px-2 py-0.5 rounded border shadow-sm", query.retainSeat ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>{query.retainSeat ? "Yes" : "No"}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center border-t border-gray-100 pt-2 mt-1">
+                                                            <span className="uppercase text-[10px] tracking-wider text-blue-600">Pause Start Date:</span>
+                                                            <span className="text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 shadow-sm">{new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 {query.qType === "REVIEW" && (
                                                     <div className="flex gap-1 mt-2">
                                                         {[...Array(5)].map((_, i) => (
@@ -400,9 +412,11 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                                                             onClick={() => {
                                                                 setSelectedPauseRequest(query);
                                                                 setShowPauseReason(true);
+                                                                setShowRejectionInput(false);
+                                                                setRejectionReason("");
                                                             }}
                                                         >
-                                                            View Reason
+                                                            Take Action
                                                         </Button>
                                                     )}
                                                     <Button
@@ -531,25 +545,72 @@ export default function LibraryQueries({ libraryId }: LibraryQueriesProps) {
                             onClick={(e) => e.stopPropagation()}
                             className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 space-y-6"
                         >
-                            <h4 className="text-xl font-bold text-gray-900">Reason:</h4>
-                            <p className="text-gray-700 font-medium leading-relaxed">
-                                {selectedPauseRequest.reason}
-                            </p>
-
-                            {showRejectionInput && (
-                                <div className="space-y-2 mt-4">
-                                    <Label className="font-bold">Rejection Reason:</Label>
-                                    <Input placeholder="Enter why this request is rejected..." value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} />
+                            <div className="flex justify-between items-center border-b pb-4">
+                                <h4 className="text-xl font-extrabold text-gray-900">Plan Request Details</h4>
+                                <button onClick={() => setShowPauseReason(false)} className="text-gray-400 hover:text-gray-600">
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Reason</h4>
+                                    <p className="text-gray-800 font-medium bg-gray-50 p-3 rounded-lg border border-gray-100 italic">
+                                        "{selectedPauseRequest.reason}"
+                                    </p>
                                 </div>
-                            )}
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100 flex flex-col items-center justify-center">
+                                        <span className="text-[10px] font-black tracking-widest uppercase text-blue-500 mb-1">Requested Days</span>
+                                        <span className="text-lg font-extrabold text-blue-900">{selectedPauseRequest.requestedDays || "—"}</span>
+                                    </div>
+                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 flex flex-col items-center justify-center">
+                                        <span className="text-[10px] font-black tracking-widest uppercase text-indigo-500 mb-1">Retain Seat</span>
+                                        <span className="text-lg font-extrabold text-indigo-900">{selectedPauseRequest.retainSeat ? "Yes" : "No"}</span>
+                                    </div>
+                                </div>
 
-                            <div className="flex gap-4 pt-4">
-                                <Button className="flex-1 bg-blue-800 hover:bg-blue-900 text-white font-bold h-11" onClick={() => handlePauseDecision("APPROVED")} disabled={isUpdatingPause}>
-                                    {isUpdatingPause ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm"}
-                                </Button>
-                                <Button variant="destructive" className="flex-1 font-bold h-11" onClick={() => handlePauseDecision("REJECTED")} disabled={isUpdatingPause}>
-                                    {showRejectionInput ? "Submit Rejection" : "Reject"}
-                                </Button>
+                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 flex justify-between items-center">
+                                    <span className="text-xs font-bold text-gray-600">Pause Start Date</span>
+                                    <span className="text-sm font-black text-gray-900">{new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                </div>
+                            </div>
+
+                            <AnimatePresence>
+                                {showRejectionInput && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="space-y-2 mt-4 pt-4 border-t"
+                                    >
+                                        <Label className="font-bold text-red-600">Rejection Reason (Optional):</Label>
+                                        <Input placeholder="Enter why this request is rejected..." value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} className="border-red-200 focus:ring-red-500" />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            <div className="flex gap-4 pt-2">
+                                {!showRejectionInput ? (
+                                    <>
+                                        <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12 shadow-lg shadow-green-100 rounded-xl" onClick={() => handlePauseDecision("APPROVED")} disabled={isUpdatingPause}>
+                                            {isUpdatingPause ? <Loader2 className="h-5 w-5 animate-spin" /> : "Approve"}
+                                        </Button>
+                                        <Button variant="destructive" className="flex-1 font-bold h-12 shadow-lg shadow-red-100 rounded-xl bg-red-600 hover:bg-red-700" onClick={() => setShowRejectionInput(true)} disabled={isUpdatingPause}>
+                                            Reject
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button variant="outline" className="flex-1 font-bold h-12 rounded-xl" onClick={() => setShowRejectionInput(false)} disabled={isUpdatingPause}>
+                                            Cancel
+                                        </Button>
+                                        <Button variant="destructive" className="flex-1 font-bold h-12 shadow-lg shadow-red-100 rounded-xl bg-red-600 hover:bg-red-700" onClick={() => handlePauseDecision("REJECTED")} disabled={isUpdatingPause}>
+                                            {isUpdatingPause ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirm Reject"}
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </motion.div>
                     </div>

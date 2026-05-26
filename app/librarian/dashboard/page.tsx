@@ -1,276 +1,164 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, Library, BookOpen, CheckCircle, Clock } from "lucide-react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import {
-  useDeleteLibraryMutation,
-  useGetAuthUserQuery,
-  useGetLibrariesByLibrarianQuery,
-} from "@/state/api";
-import { useEffect } from "react";
 
+import React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+    useGetAuthUserQuery,
+    useGetLibrariesByLibrarianQuery,
+    useGetDetailedLibrarySeatsQuery
+} from "@/state/api";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, UserPlus, Clock, Headset } from "lucide-react";
+import LiveSeatPlan from "@/components/librarian/LiveSeatPlan";
+import StudentManagement from "@/components/librarian/StudentManagement";
+import StudentOnboardingFlow from "@/components/librarian/StudentOnboardingFlow";
+import LibraryQueries from "@/components/librarian/LibraryQueries";
+import LibraryBookings from "@/components/librarian/LibraryBookings";
+import LibraryConfiguration from "@/components/librarian/LibraryConfiguration";
+import LibraryHome from "@/components/librarian/LibraryHome";
+import LibraryAttendance from "@/components/librarian/LibraryAttendance";
+import LibraryHardware from "@/components/librarian/LibraryHardware";
+import LibrarianProfile from "@/components/librarian/LibrarianProfile";
+import LibraryTransactions from "@/components/librarian/LibraryTransactions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LibrarianDashboard() {
-  interface Librarian {
-    userId: string;
-    username: string;
-    email: string;
-    profilePhoto: string;
-  }
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const activeTab = searchParams.get("tab") || "home";
 
-  interface Library {
-    id: string;
-    libraryName: string;
-    address: string;
-    reviewStatus: "PENDING" | "APPROVED" | "REJECTED";
-    photos?: string[];
-  }
+    const { data: authData, isLoading: authLoading } = useGetAuthUserQuery();
+    const librarian = authData?.userRole === "librarian" ? authData.userInfo : null;
 
-  const { data: authData, isLoading: authLoading, error: authError } =
-    useGetAuthUserQuery();
-  const librarian =
-    authData?.userRole === "librarian" ? (authData.userInfo as any as Librarian) : null;
-
-  // Only call the libraries query if librarian userId exists
-  const {
-    data: libraries,
-    isLoading: librariesLoading,
-    error: librariesError,
-  } = useGetLibrariesByLibrarianQuery(librarian?.userId ?? "", {
-    skip: !librarian?.userId,
-  });
-
-  const [deleteLibrary, { isLoading: deleting }] = useDeleteLibraryMutation();
-  const router = useRouter();
-
-  const reviewedCount = libraries?.filter((lib) => lib.reviewStatus !== "PENDING")
-    .length || 0;
-  const pendingCount = libraries?.length
-    ? libraries.length - reviewedCount
-    : 0;
-
-  const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this library?"
+    const { data: librariesData, isLoading: librariesLoading } = useGetLibrariesByLibrarianQuery(
+        (librarian as any)?.userId ?? "",
+        { skip: !librarian }
     );
-    if (!confirmDelete) return;
 
-    try {
-      await deleteLibrary(id).unwrap();
-      console.log("Library deleted successfully!")
-      toast.success("Library deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting library:", error);
-      toast.error("Failed to delete library");
+    const libraryData = librariesData && librariesData.length > 0 ? librariesData[0] : null;
+    const libraryId = libraryData?.id;
+    const isLibraryActive = libraryData?.isActive && libraryData?.reviewStatus === "APPROVED";
+
+    const [selectedSlotId, setSelectedSlotId] = React.useState<string>("all");
+
+    const { data: detailedData, isLoading: detailedLoading, error } = useGetDetailedLibrarySeatsQuery(
+        { id: libraryId as string, slotId: selectedSlotId },
+        { skip: !libraryId || !isLibraryActive }
+    );
+
+    if (authLoading || librariesLoading || (isLibraryActive && detailedLoading)) {
+        return <LibraryManagementSkeleton />;
     }
-  };
 
-  if (authLoading) {
-    return <div className="p-8 text-center">Loading your dashboard...</div>;
-  }
-
-  if (authError || !librarian) {
-    return (
-      <div className="p-8 text-center text-red-600">
-        Unable to load librarian profile.
-      </div>
-    );
-  }
-
-  if (librariesError) {
-    toast.error("Failed to load libraries.");
-  }
-
-  return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="space-y-6">
-        {/* Librarian Profile Card */}
-        <Card className="mb-6 overflow-hidden shadow-lg">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
-            <div className="flex items-center gap-6">
-              <Avatar className="w-20 h-20 border-4 border-white shadow-md">
-                <AvatarImage src={librarian.profilePhoto} alt={librarian.username} />
-                <AvatarFallback className="text-xl bg-blue-500 text-white">
-                  {librarian.username?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">{librarian.username}</h2>
-                <p className="text-gray-500 flex items-center gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                  {librarian.email}
-                </p>
-              </div>
+    if (!libraryId) {
+        return (
+            <div className="p-8 text-center space-y-4 pt-10">
+                <div className="text-gray-500 font-medium">You don't have any libraries registered yet.</div>
+                <Button onClick={() => router.push("/librarian/add-library")}>
+                    Register New Library
+                </Button>
             </div>
-          </div>
-        </Card>
+        );
+    }
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {/* Total Libraries */}
-          <Card className="shadow-md hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm font-medium">Total Libraries</p>
-                  <h3 className="text-3xl font-bold text-gray-800 mt-1">
-                    {libraries?.length || 0}
-                  </h3>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-full">
-                  <Library className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    if (libraryData && !isLibraryActive) {
+        return (
+            <div className="p-8 h-full flex items-center justify-center pt-20">
+                <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-gray-100 shadow-xl text-center space-y-6">
+                    <div className="mx-auto w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                        <Clock className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold text-gray-900">Review Pending</h2>
+                        <p className="text-gray-500 text-sm leading-relaxed">
+                            Your library <strong>{libraryData.libraryName}</strong> has been created and is currently under review by our team.
+                            You will be notified once it is approved and activated.
+                        </p>
+                    </div>
 
-          {/* Reviewed */}
-          <Card className="shadow-md hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm font-medium">Reviewed</p>
-                  <h3 className="text-3xl font-bold text-green-600 mt-1">{reviewedCount}</h3>
+                    <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 text-left mt-6">
+                        <h3 className="font-semibold text-gray-900 text-sm mb-1 flex items-center gap-2">
+                            <Headset className="w-4 h-4 text-blue-600" /> Need Help?
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                            If you have any questions or need to expedite the process, please contact our support team at <a href="mailto:support@focusdesk.in" className="text-blue-600 font-medium hover:underline">support@focusdesk.in</a>.
+                        </p>
+                    </div>
                 </div>
-                <div className="bg-green-100 p-3 rounded-full">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+        );
+    }
 
-          {/* Pending */}
-          <Card className="shadow-md hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm font-medium">Pending Review</p>
-                  <h3 className="text-3xl font-bold text-amber-500 mt-1">{pendingCount}</h3>
-                </div>
-                <div className="bg-amber-100 p-3 rounded-full">
-                  <Clock className="w-6 h-6 text-amber-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+    if (error || !detailedData?.success) {
+        return (
+            <div className="p-8 text-center space-y-4 pt-10">
+                <div className="text-red-600 font-medium">Failed to load library data.</div>
+            </div>
+        );
+    }
 
-        {/* Libraries Table */}
-        <Card className="shadow-lg mb-8 overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
-            <CardTitle className="flex items-center gap-2 text-gray-800">
-              <BookOpen className="w-5 h-5 text-blue-600" />
-              Your Libraries
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {librariesLoading ? (
-              <div className="p-8 text-center text-gray-500">Loading libraries...</div>
-            ) : libraries?.length ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="w-24">Photo</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Address</TableHead>
-                      <TableHead className="text-right">Status</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {libraries.map((library) => (
-                      <TableRow
-                        key={library.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <TableCell>
-                          <div className="w-16 h-16 rounded-lg overflow-hidden shadow-sm border border-gray-200">
-                            <img
-                              src={library.photos?.[0] || "/placeholder.jpg"}
-                              alt={library.libraryName}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium text-gray-900">
-                          {library.libraryName}
-                        </TableCell>
-                        <TableCell className="text-gray-600 flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          {library.address}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {library.reviewStatus === "APPROVED" ? (
-                            <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                              Approved
-                            </Badge>
-                          ) : library.reviewStatus === "PENDING" ? (
-                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">
-                              Pending
-                            </Badge>
-                          ) : library.reviewStatus === "REJECTED" ? (
-                            <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
-                              Rejected
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
-                              Unknown
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right flex items-center justify-end gap-2">
-                          <Badge
-                            className="bg-blue-100 text-blue-600 hover:bg-blue-200 cursor-pointer"
-                            onClick={() => router.push(`/librarian/libraries/${library.id}`)}
-                          >
-                            Manage
-                          </Badge>
-                          <Badge
-                            className={`bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer ${deleting ? "opacity-50 pointer-events-none" : ""
-                              }`}
-                            onClick={() => handleDelete(library.id)}
-                          >
-                            Delete
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="p-8 text-center text-gray-500">
-                No libraries found. Add your first library to get started.
-              </div>
+    const { library, seats } = detailedData.data;
+
+    return (
+        <div className="transition-all duration-700">
+            {activeTab === "home" && <LibraryHome libraryId={libraryId} />}
+
+            {activeTab === "seats" && (
+                <LiveSeatPlan
+                    seats={seats}
+                    libraryName={library.libraryName}
+                    libraryId={libraryId}
+                    selectedSlotId={selectedSlotId}
+                    onSlotChange={setSelectedSlotId}
+                    onStudentClick={(studentId) => router.replace(`?tab=seats&studentId=${studentId}`, { scroll: false })}
+                />
             )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+
+            {activeTab === "onboarding" && (
+                <div className="bg-white rounded-3xl border shadow-sm p-4 md:p-8">
+                    <div className="flex items-center justify-between mb-8 pb-4 border-b">
+                        <div className="flex items-center gap-3">
+                            <UserPlus className="h-6 w-6 text-blue-600" />
+                            <h2 className="text-2xl font-bold text-gray-800">Student Onboarding</h2>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            onClick={() => router.push(`?tab=students`)}
+                            className="text-gray-500 hover:text-gray-700"
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Directory
+                        </Button>
+                    </div>
+                    <StudentOnboardingFlow libraryId={libraryId} />
+                </div>
+            )}
+
+            {activeTab === "queries" && <LibraryQueries libraryId={libraryId} />}
+            {activeTab === "bookings" && <LibraryBookings libraryId={libraryId} />}
+            {activeTab === "plans" && <LibraryConfiguration libraryId={libraryId} />}
+            {activeTab === "attendance" && <LibraryAttendance libraryId={libraryId} />}
+            {activeTab === "hardware" && <LibraryHardware libraryId={libraryId} />}
+            {activeTab === "transactions" && <LibraryTransactions libraryId={libraryId} />}
+            {activeTab === "profile" && <LibrarianProfile />}
+
+            <StudentManagement seats={seats} mainTab={activeTab} libraryId={libraryId as string} />
+        </div>
+    );
+}
+
+function LibraryManagementSkeleton() {
+    return (
+        <div className="space-y-8 pt-4">
+            <div className="bg-white p-8 rounded-3xl border h-48 space-y-4">
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-4 w-96" />
+            </div>
+            <div className="mt-8 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <Skeleton className="h-96 lg:col-span-2 rounded-3xl" />
+                    <Skeleton className="h-96 rounded-3xl" />
+                </div>
+            </div>
+        </div>
+    );
 }

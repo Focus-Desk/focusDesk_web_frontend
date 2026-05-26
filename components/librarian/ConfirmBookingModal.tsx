@@ -188,9 +188,11 @@ export default function ConfirmBookingModal({
                                         <SelectValue placeholder="Select yourself" />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
-                                        {librarians?.data?.map(l => (
-                                            <SelectItem key={l.id} value={l.id}>{l.librarian?.firstName} {l.librarian?.lastName}</SelectItem>
-                                        ))}
+                                        {librarians?.data?.map(l => {
+                                            const name = [l.librarian?.firstName, l.librarian?.lastName].filter(Boolean).join(" ");
+                                            const display = name || l.email || "Librarian (Incomplete Profile)";
+                                            return <SelectItem key={l.id} value={l.id}>{display}</SelectItem>;
+                                        })}
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -8,9 +8,7 @@ import BasicDetailsForm from '@/components/library/basicDetailsForm';
 import DetailedListingForm from '@/components/library/detailedListingForm';
 import PlansAndPricingForm from '@/components/library/plansAndPricingForm';
 import LibrarianDetailsForm from '@/components/library/librarianDetails';
-import { useGetAuthUserQuery } from '@/state/api';
-// Import the persistent state hook
-import { usePersistedFormState } from '@/lib/hooks/usePersistedFormState';
+import { useGetAuthUserQuery, useGetOnboardingStatusQuery } from '@/state/api';
 
 type DetailedData = { [key: string]: any };
 type LibrarianData = { [key: string]: any };
@@ -38,7 +36,6 @@ interface OnboardingData {
     city: string;
     state: string;
     pincode: string;
-    libraryContactNo: string;
     googleMapLink: string;
     totalSeats: string;
     openingTime: string;
@@ -71,7 +68,7 @@ interface OnboardingData {
 const initialOnboardingData: OnboardingData = {
     librarianId: null, userId: '', email: '', firstName: '', lastName: '',
     libraryName: '', address: '', contactNumber: '', personName: '', interestedInListing: false,
-    libraryAddress: '', city: '', state: '', pincode: '', libraryContactNo: '', googleMapLink: '',
+    libraryAddress: '', city: '', state: '', pincode: '', googleMapLink: '',
     totalSeats: '', openingTime: '09:00', closingTime: '21:00', managerName: '', managerPhone: '', managerEmail: '',
     libraryId: null,
     kyc_firstName: '', kyc_lastName: '', dateOfBirth: '', alternateContactNumber: '',
@@ -87,42 +84,41 @@ export default function AddLibraryPage() {
     const [currentStep, setCurrentStep] = useState(1);
     const [highestCompletedStep, setHighestCompletedStep] = useState<number>(0);
 
-    // NEW: Use persistent state for all form data
-    const [formData, setFormData] = usePersistedFormState<OnboardingData>(
-        'libraryOnboardingData',
-        initialOnboardingData
-    );
+    const [formData, setFormData] = useState<OnboardingData>(initialOnboardingData);
 
-    const { data: authUserData, isLoading } = useGetAuthUserQuery();
+    const { data: authUserData, isLoading: isAuthLoading } = useGetAuthUserQuery();
+    const { data: onboardingData, isLoading: isOnboardingLoading } = useGetOnboardingStatusQuery();
 
-    // Helper to update the persisted state
+    const isLoading = isAuthLoading || isOnboardingLoading;
+
+    // Helper to update the form state
     const updateFormData = (data: Partial<OnboardingData>) => {
         setFormData(prev => ({ ...prev, ...data }));
     };
 
-    // 1. Initial Load Effect: Load Step/Highest Completed Step from localStorage
+    // 1. Initial Load Effect: Sync from Backend Onboarding Status
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            try {
-                const storedStep = localStorage.getItem('currentStep');
-                if (storedStep) {
-                    const step = parseInt(storedStep, 10);
-                    // Ensure step is at least 1
-                    setCurrentStep(step > 0 ? step : 1);
-                }
-            } catch (error) {
-                console.error('Error restoring meta state:', error);
+        if (onboardingData) {
+            setHighestCompletedStep(onboardingData.highestCompletedStep || 0);
+            setCurrentStep(onboardingData.currentStep || 1);
+            
+            if (onboardingData.data) {
+                // Merge backend data with our initial state structure
+                setFormData(prev => ({
+                    ...prev,
+                    ...onboardingData.data
+                }));
             }
         }
-    }, []);
+    }, [onboardingData]);
 
-    // 2. Sync Auth data into the persisted form data (Pre-filling logic)
+    // 2. Sync Auth data into the form data (Pre-filling logic)
     useEffect(() => {
         if (authUserData) {
             const updates: Partial<OnboardingData> = {
-                userId: authUserData.cognitoInfo.userId,
+                userId: authUserData.userInfo.userId,
                 email: authUserData.userInfo.email,
-                librarianId: authUserData.userInfo.id,
+                librarianId: authUserData.userInfo.userId,
                 firstName: authUserData.userInfo.firstName || '',
                 lastName: authUserData.userInfo.lastName || '',
             };
@@ -143,9 +139,6 @@ export default function AddLibraryPage() {
 
     const updateCurrentStep = (step: number) => {
         setCurrentStep(step);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('currentStep', step.toString());
-        }
     };
 
     const handleStepClick = (step: number) => {
@@ -174,12 +167,6 @@ export default function AddLibraryPage() {
 
     const handleLibrarianSuccess = async (_librarianData: LibrarianData) => {
         setHighestCompletedStep(prev => Math.max(prev, 4));
-
-        // OPTIONAL: Clear persistence on successful final submission
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('libraryOnboardingData');
-            localStorage.removeItem('currentStep');
-        }
     };
 
     const renderCurrentStep = () => {
@@ -227,6 +214,22 @@ export default function AddLibraryPage() {
         }
     };
 
+    if (highestCompletedStep >= 4 && !isLoading) {
+        return (
+            <div className="bg-gray-50 min-h-screen py-12 flex flex-col items-center justify-center px-4">
+                <div className="bg-white p-8 rounded-xl shadow-md max-w-md text-center">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Library Already Registered</h2>
+                    <p className="text-gray-600 mb-6">
+                        You already have a fully registered library in the system. To manage your library, please use your dashboard.
+                    </p>
+                    <a href="/librarian/dashboard" className="px-6 py-2 bg-[#2a2a2a] text-[#ffd100] font-semibold rounded-md hover:bg-[#3f3f3f] transition">
+                        Go to Dashboard
+                    </a>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-gray-50 min-h-screen py-8">
             <div className="max-w-4xl mx-auto px-4">
@@ -236,7 +239,7 @@ export default function AddLibraryPage() {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Refreshing...
+                        Loading your details...
                     </div>
                 )}
                 <div className="mb-12">
